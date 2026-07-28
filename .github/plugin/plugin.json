@@ -1,0 +1,10 @@
+{
+  "name": "copilot-skills",
+  "description": "Personal Copilot CLI skills. Includes review-lens: review a Rust pull request, branch, commit or working-tree diff with a library-maintainer lens covering public API surface, unnecessary abstraction, correctness, dependency and semver exposure, naming, tests and docs.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Martin Tomka",
+    "email": "martintmk@users.noreply.github.com"
+  },
+  "keywords": ["review", "rust", "code-review", "pull-request", "api-design"]
+}
