@@ -4,9 +4,10 @@ description: >
   Review a Rust pull request, branch, commit or working-tree diff with a
   library-maintainer lens: public API surface, unnecessary abstraction,
   correctness, cancellation, dependency and semver exposure, hot-path complexity,
-  naming, tests and user-facing docs. Use whenever asked to review Rust changes,
-  including "review this PR" or "review like me". Not for formatting-only passes
-  or specialist security reviews.
+  naming, tests and user-facing docs. Posts the review directly to the pull
+  request as AI-attributed inline comments anchored to the relevant code. Use
+  whenever asked to review Rust changes, including "review this PR" or "review
+  like me". Not for formatting-only passes or specialist security reviews.
 ---
 
 # Review Lens
@@ -29,7 +30,13 @@ concrete, severity honest.**
    or unnecessary.
 6. Large diff: review in passes — public API + manifests, then correctness, then
    tests + docs. Never sample instead of reviewing correctness.
-7. Report high-confidence findings only. Do not post to GitHub unless asked.
+7. Report high-confidence findings only.
+8. Verify before asserting. Check out the PR head in a worktree and prove the
+   claim — run the test, write a throwaway probe, build it. A finding backed by
+   observed output ("verified: `X` → `Y`") carries weight; a guess wastes the
+   author's time. Revert probes and remove the worktree afterwards.
+9. Post the review to the PR (see **Posting the review**). This is the default
+   outcome, not an opt-in — the review is not delivered until it is on the PR.
 
 ## The lens, in priority order
 
@@ -132,6 +139,13 @@ Before accepting a new trait, wrapper, layer or helper:
 
 ## Voice
 
+- **Say you are an AI agent.** The review must never read as if a human
+  maintainer wrote it. Lead the review body with an explicit attribution line —
+  in **microsoft/oxidizer** the house marker is `[Copilot speaking]`, so use
+  that; elsewhere use `_Automated review by an AI agent (GitHub Copilot CLI),
+  requested by @<user>._` Never write in the requesting human's first person or
+  sign off as them. Findings are still stated with the maintainer lens below —
+  attribution is about *who is speaking*, not about hedging the substance.
 - **Short.** One or two sentences. No preamble, no restating the code.
 - **Question when probing, state plainly when certain.** "is this something that
   should be public?" for design uncertainty; "this method is not needed" for a
@@ -159,9 +173,51 @@ Before accepting a new trait, wrapper, layer or helper:
 
 Findings in impact order. Each: `path:line`, the concern, its consumer or runtime
 impact, and an alternative when confident. Mark non-blocking items explicitly.
-End with `approve`, `approve with non-blocking comments`, or `changes requested`,
-based solely on the findings. If nothing meaningful is wrong, say so — never
-manufacture findings.
+Reach a verdict of `approve`, `approve with non-blocking comments`, or
+`changes requested`, based solely on the findings. If nothing meaningful is
+wrong, say so — never manufacture findings.
+
+## Posting the review
+
+Post one **GitHub review**, not a scatter of loose comments. Every finding goes
+inline, anchored to the code it is about; the review body carries only the AI
+attribution line, the two-sentence summary, the verdict, and design notes that
+belong to no single line.
+
+```
+gh api repos/<owner>/<repo>/pulls/<n>/reviews --method POST --input review.json
+```
+
+`review.json` is `{ body, event, comments[] }`, where `event` is
+`REQUEST_CHANGES`, `COMMENT` or `APPROVE`, and each comment is
+`{ path, line, side, body }` plus `start_line` + `start_side` for a range.
+
+Mechanics that actually bite:
+
+- **Generate the JSON with a script** (`python -c` / a temp `.py` doing
+  `json.dump`). Bodies contain backticks, newlines and ` ```suggestion ` blocks;
+  hand-escaped JSON fails or silently mangles the comment.
+- **Line numbers are post-change lines on the PR head**, not on your local
+  default branch. Read them from the checked-out worktree, or from
+  `raw.githubusercontent.com/<owner>/<repo>/<head-ref>/<path>`.
+- **The anchor must fall inside a diff hunk** — context lines count, everything
+  else is rejected. New files: any line. Modified files: check the hunk ranges in
+  `gh pr diff` first. If a finding's ideal line is outside the diff, anchor to
+  the nearest in-hunk line of the same construct and say what you mean; never
+  drop the finding to satisfy the anchor.
+- **A ` ```suggestion ` block replaces exactly the anchored range**, so set
+  `start_line`/`line` to the precise lines the replacement stands in for.
+- **`APPROVE` and `REQUEST_CHANGES` are rejected on your own PR.** Fall back to
+  `event: "COMMENT"` and state the verdict in the body.
+- **Verify after posting.** Query the review's comments back and confirm each one
+  landed on the intended path and lines. A `422` means a bad anchor — fix it and
+  repost, don't quietly lose the comment.
+- **Clean up**: delete the payload script and JSON, revert probe edits, remove
+  the worktree and branch.
+
+Then report the review URL and a one-line-per-finding table to the user. Keep the
+full prose review in the chat response too — the user should not have to open
+GitHub to see what you said.
 
 ## Repository adaptation
 

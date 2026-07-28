@@ -19,7 +19,7 @@ Update later with:
 
 | Skill | What it does |
 | ----- | ------------ |
-| [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff with a library-maintainer lens: public API surface first, then unnecessary abstraction, correctness, dependency and semver exposure, hot-path complexity, naming, tests and docs. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff with a library-maintainer lens: public API surface first, then unnecessary abstraction, correctness, dependency and semver exposure, hot-path complexity, naming, tests and docs. Posts the result to the PR as inline comments. |
 
 ### `review-lens`
 
@@ -27,6 +27,11 @@ Derived empirically from a year of real PR review comments, so the priority
 order reflects what actually gets raised in review rather than generic Rust
 advice. Its `Repository adaptation` section carries workspace-specific
 instincts for `microsoft/oxidizer` and generalises everywhere else.
+
+Findings are verified against a checked-out PR head before being asserted, then
+posted as a single GitHub review with each finding anchored to the code it is
+about. Every review is explicitly attributed to an AI agent — it never reads as
+if a human maintainer wrote it.
 
 Trigger it with "review this PR", "review my changes", or "review like me".
 
