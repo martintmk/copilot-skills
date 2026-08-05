@@ -2,18 +2,20 @@
 name: review-lens
 description: >
   Review a Rust pull request, branch, commit or working-tree diff with a
-  library-maintainer lens: public API surface, unnecessary abstraction,
-  correctness, cancellation, dependency and semver exposure, hot-path complexity,
-  naming, tests and user-facing docs. Posts the review directly to the pull
-  request as AI-attributed inline comments anchored to the relevant code. Use
-  whenever asked to review Rust changes, including "review this PR" or "review
-  like me". Not for formatting-only passes or specialist security reviews.
+  library-maintainer lens: internal correctness, state and error paths,
+  cancellation, public API and semver exposure, unnecessary abstraction,
+  dependencies, hot-path complexity, naming, tests and user-facing docs. Posts
+  the review directly to the pull request as explicitly AI-attributed inline
+  comments anchored to the relevant code. Use whenever asked to review Rust
+  changes, including "review this PR" or "review like me". Not for
+  formatting-only passes or specialist security reviews.
 ---
 
 # Review Lens
 
-Review the way a library maintainer does: **public surface first, terse,
-concrete, severity honest.**
+Review the way a library maintainer does: **follow the behaviour end to end,
+inspect the implementation behind it, stay terse, concrete and severity
+honest.**
 
 ## Procedure
 
@@ -23,13 +25,15 @@ concrete, severity honest.**
    `gh pr diff <n>`, else `git diff origin/<default>...HEAD`.
 3. Review only behaviour the diff introduces or changes. Raise a pre-existing
    problem only when the change worsens or depends on it.
-4. Identify the changed **public** surface: exported items, trait bounds, feature
-   flags, dependency types in signatures, serialization formats, observable
-   behaviour. This is where most findings are.
-5. Read affected callers, tests and manifests before concluding an API is wrong
-   or unnecessary.
-6. Large diff: review in passes — public API + manifests, then correctness, then
-   tests + docs. Never sample instead of reviewing correctness.
+4. Map every changed behaviour from entry point to effect. Read the internal
+   implementation, callers, state transitions, error paths, cleanup, concurrency
+   boundaries and tests. Do not stop at the public signature.
+5. Identify changed contracts, both public and internal: exported items, trait
+   bounds, feature flags, serialization formats, observable behaviour, invariants
+   between modules, and assumptions made by callers.
+6. Large diff: review in passes — correctness and internal control flow, public
+   API + manifests, then tests + docs. Cover all changed production code; never
+   sample instead of reviewing correctness.
 7. Report high-confidence findings only.
 8. Verify before asserting. Check out the PR head in a worktree and prove the
    claim — run the test, write a throwaway probe, build it. A finding backed by
@@ -38,9 +42,44 @@ concrete, severity honest.**
 9. Post the review to the PR (see **Posting the review**). This is the default
    outcome, not an opt-in — the review is not delivered until it is on the PR.
 
-## The lens, in priority order
+## The lens
 
-### 1. Public API surface — the dominant concern
+The order is a search strategy, not a quota. Spend attention where the change
+puts risk: an internal state-machine rewrite deserves more scrutiny than an
+unchanged public wrapper.
+
+### 1. Correctness and internal behaviour — the dominant concern
+
+Trace the implementation rather than reviewing signatures in isolation:
+
+- **Control flow.** Follow success, empty, retry, partial-failure and shutdown
+  paths. Check that every branch preserves the intended result and side effects.
+- **State and invariants.** Identify what must be true before and after each
+  mutation. Look for stale state, invalid transitions, double completion,
+  lost updates and order-dependent behaviour.
+- **Errors.** Check which errors are transformed, retried, logged or discarded.
+  Do not accept success-shaped fallbacks, broad catches or loss of useful error
+  context unless the contract explicitly requires it.
+- **Resources and lifecycle.** Inspect ownership, cleanup, drop order, task
+  termination and partial initialization. Ensure early returns release or retain
+  resources intentionally.
+- **Concurrency.** Check races, lock scope and ordering, atomic semantics,
+  wakeups, stampedes, backpressure and work performed while holding locks.
+- **Cancellation and drop safety.** Determine what remains committed if a future
+  is dropped at each await point and whether another task can observe a
+  half-applied operation.
+- **Boundaries.** Validate inputs where trust or representation changes. Check
+  integer conversions, indexing, time arithmetic, protocol parsing and
+  assumptions about external data.
+- **Interactions.** Read affected callers and callees. A locally plausible
+  implementation can still violate a caller's retry, ordering, ownership or
+  idempotency assumptions.
+
+Do not ignore private code because it is not semver-visible. Internal defects
+that cause incorrect output, hangs, leaks, panics, data loss or operational
+confusion are blocking findings.
+
+### 2. Public API and contracts
 
 - **Can it be private?** For each new `pub`, ask whether downstream users need it;
   if not, suggest `pub(crate)`.
@@ -69,7 +108,7 @@ concrete, severity honest.**
   whether an existing seal is really needed — downstream types often have a
   legitimate reason to implement.
 
-### 2. Is this abstraction necessary?
+### 3. Is this abstraction necessary?
 
 Before accepting a new trait, wrapper, layer or helper:
 
@@ -81,31 +120,24 @@ Before accepting a new trait, wrapper, layer or helper:
 - If it is genuinely useful, it belongs in the lower-level component — otherwise
   keep it `pub(crate)`.
 
-### 3. Correctness and contracts
+### 4. Tests and evidence
 
-- Concurrency: does `get_or_insert`-shaped code have stampede protection?
-- Cancellation and drop safety: what happens if the future is dropped in flight?
-- Validation: which inputs are rejected, and what happens at the boundary?
-- Tests: does the test distinguish the behaviour, or is it coverage-shaped? Name
-  the specific missing scenario.
-- Benchmarks: do they model the real workload and the real operation?
-
-### 4. Naming and consistency
-
-- Match the surrounding pattern in the same crate (`new_tokio`, not `tokio`).
-- Concise; drop padding words that add no meaning.
-- Telemetry names **and values** follow OpenTelemetry semantic conventions —
-  dot-separated namespaces.
-- A rename must also update user-facing references (root README / changelog crate
-  lists) and the PR title; per-crate READMEs and changelogs may be generated —
-  follow repo policy.
+- Does each test distinguish the intended behaviour, or is it coverage-shaped?
+  Name the specific missing scenario.
+- Cover failure, cancellation, boundary and state-transition paths, not only the
+  successful public call.
+- Check that mocks and fixtures preserve the production ordering and lifecycle
+  relevant to the claim.
+- Benchmarks must model the real workload and operation.
 
 ### 5. Performance — classify the path first
 
-- Ask **"is this actually on a hot path?"** If not, reject API or dependency
-  complexity added to avoid an allocation.
-- If it is: inspect allocations, clones, atomics and repeated no-op work
-  (e.g. iterating a collection to call a no-op on every element).
+- Ask **"is this actually on a hot path?"** If not, reject implementation or
+  dependency complexity added to avoid an allocation.
+- If it is: inspect algorithmic growth, allocations, clones, lock contention,
+  atomics, syscalls and repeated no-op work.
+- Look for accidental unbounded queues, scans, retries, buffering or task
+  creation even when each individual operation appears cheap.
 - Do not recommend a specific container or hasher by reflex; weigh the workload
   benefit against the complexity and dependency cost.
 
@@ -119,7 +151,17 @@ Before accepting a new trait, wrapper, layer or helper:
   dependency's minimum without a newer API, behaviour or fix that needs it. Mass
   bumps force a release cascade and block pending PRs.
 
-### 7. Semver and foundational stability
+### 7. Naming and consistency
+
+- Match the surrounding pattern in the same crate (`new_tokio`, not `tokio`).
+- Concise; drop padding words that add no meaning.
+- Telemetry names **and values** follow OpenTelemetry semantic conventions —
+  dot-separated namespaces.
+- A rename must also update user-facing references (root README / changelog crate
+  lists) and the PR title; per-crate READMEs and changelogs may be generated —
+  follow repo policy.
+
+### 8. Semver and foundational stability
 
 - If crate A's types appear in crate B's public API, a breaking A is breaking for
   B. Trace the cascade and name the crates it hits.
@@ -128,7 +170,7 @@ Before accepting a new trait, wrapper, layer or helper:
 - For pre-1.0, low-adoption APIs, weigh a direct breaking fix against carrying a
   deprecation; follow the repo's release policy.
 
-### 8. Docs and design documents
+### 9. Docs and design documents
 
 - Docs belong on the main type, not scattered across trait impls. Be concise.
 - Don't describe semantics via an internal dependency — state the actual value
@@ -139,26 +181,29 @@ Before accepting a new trait, wrapper, layer or helper:
 
 ## Voice
 
-- **Say you are an AI agent.** The review must never read as if a human
-  maintainer wrote it. Lead the review body with an explicit attribution line —
-  in **microsoft/oxidizer** the house marker is `[Copilot speaking]`, so use
-  that; elsewhere use `_Automated review by an AI agent (GitHub Copilot CLI),
-  requested by @<user>._` Never write in the requesting human's first person or
-  sign off as them. Findings are still stated with the maintainer lens below —
-  attribution is about *who is speaking*, not about hedging the substance.
+- **Say you are an AI agent in every posted message.** The review must never read
+  as if a human maintainer wrote it. Start the review body with
+  `[Copilot speaking] Automated review by GitHub Copilot CLI, requested by
+  @<user>.` Prefix **every inline comment** with exactly
+  `[Copilot speaking]: `, including suggestions and nits. Never rely on
+  body-level attribution to cover inline comments. Never write in the requesting
+  human's first person or sign off as them. Attribution is about *who is
+  speaking*, not about hedging the substance.
 - **Short.** One or two sentences. No preamble, no restating the code.
 - **Question when probing, state plainly when certain.** "is this something that
   should be public?" for design uncertainty; "this method is not needed" for a
   settled point.
 - **Bring the alternative.** Use a ` ```suggestion ` block with the exact
   replacement, or sketch the signature for a design change.
-- **Justify in consumer terms:** "As a consumer of `Spawner`, I don't care how it
-  was created, I just want to spawn tasks."
+- **Justify in impact terms.** Name the runtime, operational or consumer effect,
+  not just the local code shape: "This can publish the same completion twice"
+  or "As a consumer of `Spawner`, I don't care how it was created."
 - **Set severity from impact, not personality.** Block correctness, safety,
   public-contract and semver defects. Mark preferences and cosmetics non-blocking
-  and prefix them `nit:` — "personally it just looks little ugly. Nothing to
-  block PR about." For genuinely non-blocking scope, prefer a follow-up issue over
-  holding the PR.
+  with `nit:` after the attribution prefix:
+  `[Copilot speaking]: nit: personally it just looks little ugly. Nothing to
+  block PR about.` For genuinely non-blocking scope, prefer a follow-up issue
+  over holding the PR.
 - **Retract plainly** when shown wrong.
 
 ## Avoid low-signal comments
@@ -183,6 +228,12 @@ Post one **GitHub review**, not a scatter of loose comments. Every finding goes
 inline, anchored to the code it is about; the review body carries only the AI
 attribution line, the two-sentence summary, the verdict, and design notes that
 belong to no single line.
+
+Before posting, assert that `body` starts with
+`[Copilot speaking] Automated review by GitHub Copilot CLI, requested by ` and
+every entry in `comments[]` has a `body` starting with
+`[Copilot speaking]: `. Treat a missing prefix as an invalid payload and fix it
+rather than posting.
 
 ```
 gh api repos/<owner>/<repo>/pulls/<n>/reviews --method POST --input review.json

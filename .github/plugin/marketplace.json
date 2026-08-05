@@ -11,8 +11,8 @@
   "plugins": [
     {
       "name": "copilot-skills",
-      "description": "Personal Copilot CLI skills. Includes review-lens: review a Rust pull request, branch, commit or working-tree diff with a library-maintainer lens covering public API surface, unnecessary abstraction, correctness, dependency and semver exposure, naming, tests and docs, then post the review to the PR as AI-attributed inline comments.",
-      "version": "0.2.0",
+      "description": "Personal Copilot CLI skills. Includes review-lens: review a Rust pull request, branch, commit or working-tree diff with a library-maintainer lens covering internal correctness, control flow, public API and semver exposure, abstraction, tests, performance, dependencies, naming and docs, then post the review to the PR as explicitly AI-attributed inline comments.",
+      "version": "0.3.0",
       "author": {
         "name": "Martin Tomka",
         "email": "martintmk@users.noreply.github.com"
