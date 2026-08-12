@@ -19,7 +19,7 @@ Update later with:
 
 | Skill | What it does |
 | ----- | ------------ |
-| [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent covering public API surface, constructors and defaults, dependencies, consistency, forensic correctness, performance, naming, telemetry, tests and docs. Proves findings by building and running them, then posts a structured, AI-attributed review to the PR (GitHub review or Azure DevOps threads). |
+| [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent covering public API surface, dependencies, correctness, performance, naming, telemetry, tests and docs. Every correctness or behavioral finding is first proved with a failing unit test that is included in the comment and recommended for the permanent suite, then the structured, AI-attributed review is posted to the PR (GitHub review or Azure DevOps threads). |
 
 ### `review-lens`
 
@@ -27,10 +27,12 @@ Derived empirically from a year of real PR review comments, so the priority
 order — public API surface, dependencies, consistency, forensic correctness —
 reflects what actually gets raised in review rather than generic Rust advice. It
 works as an autonomous AI reviewing agent: it checks out the PR head and proves
-findings by building and running them (tests, Miri, adversarial inputs,
-benchmarks), quoting the exact output, before asserting them. Its `Repository
-adaptation` section carries workspace-specific instincts for `microsoft/oxidizer`
-and `ox-sdk`, and generalises everywhere else.
+every correctness or behavioral finding with a failing unit test before asserting
+it. The complete test is included in the comment and recommended for the
+permanent suite; Miri, adversarial inputs and benchmarks provide additional
+evidence where appropriate. Its `Repository adaptation` section carries
+workspace-specific instincts for `microsoft/oxidizer` and `ox-sdk`, and
+generalises everywhere else.
 
 Findings are posted as a single structured review, explicitly attributed to an AI
 agent so none read as if a human maintainer wrote them, with each one anchored to
