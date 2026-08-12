@@ -19,19 +19,22 @@ Update later with:
 
 | Skill | What it does |
 | ----- | ------------ |
-| [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff with a library-maintainer lens covering internal correctness and control flow, public API and semver exposure, abstraction, tests, performance, dependencies, naming and docs. Posts the result to the PR as explicitly AI-attributed inline comments. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent covering public API surface, constructors and defaults, dependencies, consistency, forensic correctness, performance, naming, telemetry, tests and docs. Proves findings by building and running them, then posts a structured, AI-attributed review to the PR (GitHub review or Azure DevOps threads). |
 
 ### `review-lens`
 
 Derived empirically from a year of real PR review comments, so the priority
-order reflects what actually gets raised in review rather than generic Rust
-advice. Its `Repository adaptation` section carries workspace-specific
-instincts for `microsoft/oxidizer` and generalises everywhere else.
+order — public API surface, dependencies, consistency, forensic correctness —
+reflects what actually gets raised in review rather than generic Rust advice. It
+works as an autonomous AI reviewing agent: it checks out the PR head and proves
+findings by building and running them (tests, Miri, adversarial inputs,
+benchmarks), quoting the exact output, before asserting them. Its `Repository
+adaptation` section carries workspace-specific instincts for `microsoft/oxidizer`
+and `ox-sdk`, and generalises everywhere else.
 
-Findings are verified against a checked-out PR head before being asserted, then
-posted as a single GitHub review with each finding anchored to the code it is
-about. The review body and every inline comment are explicitly attributed to an
-AI agent — none read as if a human maintainer wrote them.
+Findings are posted as a single structured review, explicitly attributed to an AI
+agent so none read as if a human maintainer wrote them, with each one anchored to
+the code it is about — as a GitHub review or as Azure DevOps threads.
 
 Trigger it with "review this PR", "review my changes", or "review like me".
 
