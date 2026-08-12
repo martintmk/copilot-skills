@@ -254,7 +254,7 @@ onto every PR; apply the ones the change actually risks:
 
 ## Voice and severity
 
-- **Attribute the review to the AI.** Put `[Copilot speaking]` once at the top of
+- **Attribute the review to the AI.** Put `[AI Agent]` once at the top of
   the review summary, with `_Automated review by an AI agent (GitHub Copilot CLI),
   requested by @<user>._` on its own line. Prefix every individual GitHub inline
   comment and every Azure DevOps thread with `[AI Agent]` on its first
