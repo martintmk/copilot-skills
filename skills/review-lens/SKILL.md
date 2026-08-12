@@ -256,11 +256,9 @@ onto every PR; apply the ones the change actually risks:
 
 - **Attribute the review to the AI.** Put `[Copilot speaking]` once at the top of
   the review summary, with `_Automated review by an AI agent (GitHub Copilot CLI),
-  requested by @<user>._` on its own line. On GitHub the inline comments are part
-  of that one AI-submitted review, so they inherit the attribution — don't prefix
-  each one (the bot doesn't). On Azure DevOps, threads stand alone, so open each
-  thread's first line with a short agent tag. Never write in the requester's first
-  person or imply they wrote it.
+  requested by @<user>._` on its own line. Prefix every individual GitHub inline
+  comment and every Azure DevOps thread with `[AI Agent]` on its first
+  line. Never write in the requester's first person or imply they wrote it.
 - **One claim per comment, normally compact.** State the defect, the verification
   ("Verified: …") when you ran one, and the fix — a `suggestion` block for a
   self-contained edit, otherwise a precise prose description ("accept
@@ -312,7 +310,8 @@ is wrong, say so; never manufacture findings.
 
 ## Delivering the review
 
-Post inline, anchored to the code each finding is about; the summary carries the AI
+Post inline, anchored to the code each finding is about. Begin every individual
+comment with `[AI Agent]` on its own line; the summary carries the AI
 attribution, the local-validation line, the verdict, and design notes that belong
 to no single line.
 
@@ -365,8 +364,9 @@ lines, `LEFT` only for a removed line. Mechanics that bite:
   `1` for `rightFileStartOffset` and the exact character count + 1 for
   `rightFileEndOffset`; `0` and arbitrary large offsets are rejected. Put the
   summary in one more `create` with no file path.
-- Start each `content` with the short agent tag so attribution is unmistakable —
-  ADO threads stand alone, so this is where the AI attribution lives.
+- Start each `content` with `[AI Agent]` on its own line so attribution is
+  unmistakable — ADO threads stand alone, so this is where the AI attribution
+  lives.
 - Threads are posted one at a time and aren't atomic: read them back
   (`ado-repo_pull_request_thread` `action:list`) to confirm each anchored, and
   recover any that failed rather than leaving a half-posted review.
