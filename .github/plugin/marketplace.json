@@ -11,8 +11,8 @@
   "plugins": [
     {
       "name": "copilot-skills",
-      "description": "Personal Copilot CLI skills. Includes review-lens: review a Rust pull request, branch, commit or working-tree diff as an autonomous AI reviewing agent that proves every correctness or behavioral finding with a failing unit test included in the comment and recommended for the permanent suite — alongside public API surface, dependencies, performance, naming, telemetry and docs — then posts a structured, AI-attributed review to the PR (GitHub review or Azure DevOps threads).",
-      "version": "0.4.2",
+      "description": "Personal Copilot CLI skills. Includes review-lens: review Rust changes with public API as the dominant lens, followed by exhaustive correctness and risk-based dependency, performance, test and documentation passes, then post concise proof-carrying comments in a structured AI-attributed review.",
+      "version": "0.4.3",
       "author": {
         "name": "Martin Tomka",
         "email": "martintmk@users.noreply.github.com"

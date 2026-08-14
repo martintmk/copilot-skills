@@ -19,18 +19,21 @@ Update later with:
 
 | Skill | What it does |
 | ----- | ------------ |
-| [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent covering public API surface, dependencies, correctness, performance, naming, telemetry, tests and docs. Every correctness or behavioral finding is first proved with a failing unit test that is included in the comment and recommended for the permanent suite, then the structured, AI-attributed review is posted to the PR (GitHub review or Azure DevOps threads). |
+| [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent. Public API is the dominant lens: it inventories and evaluates the complete changed contract before performing exhaustive correctness and risk-based dependency, performance, naming, telemetry, test and documentation passes. Focused failing tests are included when they are useful permanent regression coverage, and every posted comment starts with `[AI AGENT]: `. |
 
 ### `review-lens`
 
-Derived empirically from a year of real PR review comments, so the priority
-order — public API surface, dependencies, consistency, forensic correctness —
-reflects what actually gets raised in review rather than generic Rust advice. It
-works as an autonomous AI reviewing agent: it checks out the PR head and proves
-every correctness or behavioral finding with a failing unit test before asserting
-it. The complete test is included in the comment and recommended for the
-permanent suite; Miri, adversarial inputs and benchmarks provide additional
-evidence where appropriate. Its `Repository adaptation` section carries
+Derived empirically from a year of real PR review comments, so public API design
+is the dominant concern rather than one checklist item among many. It evaluates
+the complete changed contract—exports, re-exports, implementability, representation,
+features and semver commitments—without neglecting exhaustive correctness and
+risk-based dependency, performance, naming, telemetry, test and documentation
+review. It checks out the PR head and proves correctness or behavioral findings
+with targeted tests, Miri, adversarial inputs and benchmarks. Inline comments
+lead with consumer impact and cite the decisive result; when a focused failing
+test demonstrates the defect and belongs in the permanent suite, the complete
+test and recommendation are included after the finding. Its
+`Repository adaptation` section carries
 workspace-specific instincts for `microsoft/oxidizer` and `ox-sdk`, and
 generalises everywhere else.
 
