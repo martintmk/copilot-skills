@@ -58,12 +58,19 @@ description. Acknowledge *why* the code is the way it is before correcting it.
    - Local: a branch → `git diff <target>...HEAD`; a single commit →
      `git show <sha>`; uncommitted work → `git diff` / `git diff --staged` plus
      untracked files, reviewed in place (a fresh worktree won't contain them).
-3. **Decide trust, then build a baseline.** A worktree is not a sandbox: only
-   check out and build/run a PR whose author and provenance you trust, or do it in
-   an isolated, credential-free environment (see Verification discipline). When you
-   do, run the smallest CI-equivalent baseline the risk warrants — e.g. "168 tests,
-   57 doctests, `clippy --all-features --all-targets`, default-feature build — all
-   pass" — as the yardstick your findings and summary are measured against.
+3. **Decide trust, then check out — read CI, don't re-run it.** A worktree is not a
+   sandbox: only check out and build/run a PR whose author and provenance you trust,
+   or do it in an isolated, credential-free environment (see Verification
+   discipline). The PR's own CI already runs the full lint, format and test suite,
+   so **reproducing it locally is wasted time** — do not run `just check`/`just
+   lint`/`just format-check` or whole-crate test suites as a blanket baseline. It
+   also produces false positives the review then has to retract: `just format-check`,
+   for one, fails on a Windows `MAX_PATH` limit while the PR's formatting CI is green.
+   Read the check status instead — `gh pr checks <n>` (GitHub) /
+   `ado-repo_pull_request` statuses (ADO) — and treat green CI as your baseline.
+   Build or run only the *narrowest* thing a specific finding needs to prove it (see
+   Verification discipline); when CI is red, open the failing job and review that,
+   rather than re-deriving it.
 4. **Complete the public-contract gate before correctness work.** Build a private
    inventory of every changed exported item and re-export, trait bound, public
    enum variant, feature flag, dependency type in a signature, serialization
@@ -395,7 +402,8 @@ components, not a fixed template — its substantive body can be a single senten
 ("I found four correctness defects in legacy decoding …; **Verdict: changes
 requested.**") or a paragraph beginning immediately after the `[AI AGENT]: `
 prefix. After that prefix, compose the summary in this order when the components
-apply: what you validated locally (with the baseline numbers you actually ran);
+apply: what you verified (the targeted tests/probes you actually ran and the PR's
+CI status you relied on — not a re-run of the full suite);
 a public-surface coverage line naming the crates/modules or API categories
 reviewed; the public API design findings; the remaining
 correctness/dependency/performance/test/doc findings; the verdict; and, only if
@@ -501,9 +509,11 @@ summarise in chat rather than pasting the whole review back.
 a `Clock` exists), `anyspawn`/`Spawner`, `seatbelt` (retry/timeout/circuit-breaker;
 align resilience names to it), `testing_aids`, `tracing`. Instincts: `opentelemetry_sdk`
 is too heavy where `opentelemetry` suffices; `chrono`/`time` are legacy versus `jiff`.
-Build/lint/verify via `just` — `just lint` and `just format-check` to *validate*
-(`just format-nightly` rewrites files, so don't run it as a check) — and
-`cargo +nightly miri test` for unsafe/allocator code. Cite
+Prove a *specific* finding with the narrowest command — a single
+`just package=<crate> test <name>`, a `cargo build -p <crate>`, or
+`cargo +nightly miri test` for unsafe/allocator code. Do **not** run `just lint`,
+`just check` or `just format-check` as a validation pass: CI already owns lint and
+formatting, and `just format-check` fails spuriously on Windows (`MAX_PATH`). Cite
 `microsoft.github.io/rust-guidelines` (`M-*`) when it settles a point.
 
 **ox-sdk** (o365exchange Azure DevOps, internal — `crates_internal/*`,
