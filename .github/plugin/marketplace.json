@@ -11,14 +11,14 @@
   "plugins": [
     {
       "name": "copilot-skills",
-      "description": "Personal Copilot CLI skills. Includes review-lens: review Rust changes with public API as the dominant lens, followed by exhaustive correctness and risk-based dependency, performance, test and documentation passes, then post concise proof-carrying comments in a structured AI-attributed review.",
-      "version": "0.4.5",
+      "description": "Personal Copilot CLI skills. Includes review-lens for proof-carrying Rust change reviews and review-public-api for output-only cargo public-api audits against idiomatic and Pragmatic Rust API guidance.",
+      "version": "0.5.0",
       "author": {
         "name": "Martin Tomka",
         "email": "martintmk@users.noreply.github.com"
       },
       "repository": "https://github.com/martintmk/copilot-skills",
-      "keywords": ["review", "rust", "code-review", "pull-request", "api-design"],
+      "keywords": ["review", "rust", "code-review", "pull-request", "api-design", "cargo-public-api"],
       "source": "."
     }
   ]
