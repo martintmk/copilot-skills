@@ -20,6 +20,7 @@ Update later with:
 | Skill | What it does |
 | ----- | ------------ |
 | [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent. Public API is the dominant lens: it inventories and evaluates the complete changed contract before performing exhaustive correctness and risk-based dependency, performance, naming, telemetry, test and documentation passes. Focused failing tests are included when they are useful permanent regression coverage, and every posted comment starts with `[AI AGENT]: `. |
+| [`review-public-api`](skills/review-public-api/SKILL.md) | Reviews a Rust library's exported contract strictly from `cargo public-api` output, without reading source code. It applies common idiomatic Rust API practices first, then API-visible Pragmatic Rust Guidelines; small PRs are scoped to changed public items. |
 
 ### `review-lens`
 
@@ -42,6 +43,26 @@ agent so none read as if a human maintainer wrote them, with each one anchored t
 the code it is about — as a GitHub review or as Azure DevOps threads.
 
 Trigger it with "review this PR", "review my changes", or "review like me".
+
+### `review-public-api`
+
+Runs full and simplified `cargo public-api` listings, then inventories the
+selected public items before reviewing common idiomatic Rust API practices,
+module shape, naming, traits, signatures, construction, errors, and evolution
+hazards. It layers the API-relevant Pragmatic Rust Guidelines on top and uses
+exact output excerpts as evidence.
+
+The skill deliberately does not inspect Rust source, manifests, docs, tests,
+diffs, or rustdoc JSON, so it does not speculate about behavior, correctness,
+safety, documentation, or performance. It runs `cargo public-api
+--all-features` by default so feature-gated public APIs are included; explicit
+package, feature, target, and semver-baseline scopes override that default.
+For a PR with only a few public additions or changes, its findings are limited
+to those changed items and their immediate API family rather than unrelated
+existing surface.
+
+Trigger it with "review this crate's public API" or "audit the Rust API using
+cargo public-api".
 
 ## Layout
 
