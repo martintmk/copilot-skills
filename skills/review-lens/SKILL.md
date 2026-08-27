@@ -2,20 +2,18 @@
 name: review-lens
 description: >
   Review a Rust pull request, branch, commit or working-tree diff as an
-  autonomous AI reviewing agent that applies @martintmk's library-maintainer
-  priorities — public API surface, constructors and defaults, dependency and
-  feature weight, consistency, forensic correctness, allocations, time/clock and
-  error conventions, telemetry, tests and docs — but works the way the review bot
-  does: it inventories the changed public contract before implementation details,
-  checks out the head, and proves correctness or behavioral findings with targeted
-  tests, builds, Miri, adversarial inputs or benchmarks. It anchors on exact
-  observed output, labels severity, and speaks explicitly as an AI. When a concise
-  failing test is the clearest proof and a useful regression guard, it includes
-  that test in the comment and recommends adding it to the permanent suite. Posts
-  a structured, AI-attributed review to the PR (GitHub review or Azure DevOps
-  threads). Use whenever asked to review Rust changes, including "review this PR"
-  or "review like me". Not for formatting-only passes or specialist security
-  reviews.
+  autonomous AI reviewing agent applying @martintmk's library-maintainer
+  priorities: public API surface, constructors and defaults, dependency and
+  feature weight, consistency, correctness, allocations, time/clock and error
+  conventions, telemetry, tests and docs. Inventories the changed public contract
+  before implementation details, checks out the head, and proves findings with
+  targeted tests, builds, Miri, adversarial inputs or benchmarks. Anchors on
+  exact observed output, labels severity, and speaks explicitly as an AI.
+  Includes a concise failing test when it is the clearest proof and a useful
+  regression guard. Posts a structured, AI-attributed review to the PR (GitHub
+  review or Azure DevOps threads). Use whenever asked to review Rust changes,
+  including "review this PR" or "review like me". Not for formatting-only passes
+  or specialist security reviews.
 ---
 
 # Review Lens
