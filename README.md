@@ -20,7 +20,7 @@ Update later with:
 | Skill | What it does |
 | ----- | ------------ |
 | [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent. Public API is the dominant lens: it inventories and evaluates the complete changed contract before performing exhaustive correctness and risk-based dependency, performance, naming, telemetry, test and documentation passes. Focused failing tests are included when they are useful permanent regression coverage, and every posted comment starts with `[AI AGENT]: `. |
-| [`review-public-api`](skills/review-public-api/SKILL.md) | Reviews a Rust library's exported contract strictly from `cargo public-api` output, without reading source code. It applies common idiomatic Rust API practices first, then API-visible Pragmatic Rust Guidelines; small PRs are scoped to changed public items. |
+| [`review-public-api`](skills/review-public-api/SKILL.md) | Reviews a Rust library's exported contract from `cargo public-api` output, then uses an isolated rustdoc JSON pass to filter claims refuted by the API docs. It applies common idiomatic Rust API practices first, then API-visible Pragmatic Rust Guidelines; small PRs are scoped to changed public items. |
 
 ### `review-lens`
 
@@ -52,14 +52,16 @@ module shape, naming, traits, signatures, construction, errors, and evolution
 hazards. It layers the API-relevant Pragmatic Rust Guidelines on top and uses
 exact output excerpts as evidence.
 
-The skill deliberately does not inspect Rust source, manifests, docs, tests,
-diffs, or rustdoc JSON, so it does not speculate about behavior, correctness,
-safety, documentation, or performance. It runs `cargo public-api
---all-features` by default so feature-gated public APIs are included; explicit
-package, feature, target, and semver-baseline scopes override that default.
-For a PR with only a few public additions or changes, its findings are limited
-to those changed items and their immediate API family rather than unrelated
-existing surface.
+The main review deliberately does not inspect Rust source, manifests, docs,
+tests, diffs, or rustdoc JSON, so it does not speculate about behavior,
+correctness, safety, documentation quality, or performance. After drafting its
+report, it delegates a matching cargo rustdoc JSON build to a separate agent,
+which associates claims with API docs and removes or narrows statements those
+docs refute. It runs `cargo public-api --all-features` by default so
+feature-gated public APIs are included; explicit package, feature, target, and
+semver-baseline scopes override that default. For a PR with only a few public
+additions or changes, its findings are limited to those changed items and their
+immediate API family rather than unrelated existing surface.
 
 Trigger it with "review this crate's public API" or "audit the Rust API using
 cargo public-api".
@@ -73,6 +75,7 @@ cargo public-api".
                               Copilot plugin marketplace entry
 agency.json                   engine + category metadata
 skills/<name>/SKILL.md        one directory per skill
+skills/<name>/*.md            supporting procedures referenced by a skill
 ```
 
 ## Adding a skill

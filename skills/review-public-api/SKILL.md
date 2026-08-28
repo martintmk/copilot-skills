@@ -1,31 +1,45 @@
 ---
 name: review-public-api
 description: >
-  Review a Rust library crate's exported API using only cargo-public-api output,
-  without reading Rust source, manifests, docs, tests, diffs, or rustdoc JSON.
-  Use when asked to review, audit, or critique a crate's public API for a clean,
-  idiomatic, consumer-friendly, and evolvable design, applying common Rust API
-  best practices with API-visible Pragmatic Rust Guidelines on top. For small
-  PRs, focuses findings on the changed public items shown by an API diff. Runs
-  cargo public-api and reports evidence-backed findings. Not for implementation,
-  correctness, safety, documentation, performance, or general code review.
+  Review a Rust library crate's exported API first using only cargo-public-api
+  output, without reading Rust source, manifests, docs, tests, or diffs. Then use
+  a separate agent and cargo-generated rustdoc JSON to remove or narrow claims
+  refuted by the real API docs. Use when asked to review, audit, or critique a
+  crate's public API for a clean, idiomatic, consumer-friendly, and evolvable
+  design, applying common Rust API best practices with API-visible Pragmatic Rust
+  Guidelines on top. For small PRs, focuses findings on the changed public items
+  shown by an API diff. Not for implementation, correctness, safety,
+  documentation quality, performance, or general code review.
 ---
 
 # Review Public API
 
 Review the public contract of a Rust library from the consumer's perspective.
-`cargo public-api` output is the sole source of evidence. Judge only what the
-output makes observable, applying idiomatic Rust API conventions and the
-API-relevant [Pragmatic Rust Guidelines][pragmatic-rust].
+`cargo public-api` output is the sole source for generating candidate findings.
+Judge only what the output makes observable, applying idiomatic Rust API
+conventions and the API-relevant [Pragmatic Rust Guidelines][pragmatic-rust].
+Before returning the review, a separate agent uses generated rustdoc JSON only
+to remove or narrow candidate statements that the API docs refute or answer.
 
-## Hard boundary: output only
+## Hard boundary: output-only review, docs-only filtering
 
-- Do not open or search Rust source, `Cargo.toml`, `Cargo.lock`, build scripts,
-  docs, tests, examples, diffs, generated rustdoc JSON, or repository history.
-- Do not use `cargo metadata`, rust-analyzer, rustdoc pages, code search, or
-  inferred implementation details to supplement the review.
+- During the initial review, do not open or search Rust source, `Cargo.toml`,
+  `Cargo.lock`, build scripts, docs, tests, examples, diffs, generated rustdoc
+  JSON, or repository history.
+- During the initial review, do not use `cargo metadata`, rust-analyzer, rustdoc
+  pages, code search, or inferred implementation details to supplement the
+  review.
 - You may use the user's stated scope and intended use cases to understand the
-  request, but every finding must be proven by exact `cargo public-api` output.
+  request, but every candidate finding must be proven by exact
+  `cargo public-api` output.
+- The only documentation exception is the mandatory post-processing pass. It
+  runs in a separate agent after the provisional report exists and may inspect
+  only the generated rustdoc JSON fields needed to associate public items with
+  their docs. It must not inspect source, manifests, tests, examples, diffs, or
+  rendered rustdoc pages.
+- Documentation may remove a finding, answer a design question, or narrow
+  overbroad wording. It must never create, strengthen, or raise the severity of a
+  finding.
 - Tool version/help text and build diagnostics may guide tool operation, but are
   not evidence about API quality.
 - Do not modify the reviewed repository. Store any captured output outside it
@@ -33,8 +47,10 @@ API-relevant [Pragmatic Rust Guidelines][pragmatic-rust].
 
 This boundary means the review cannot establish implementation correctness,
 runtime behavior, validation, panic behavior, soundness, allocation or
-performance characteristics, documentation quality, or whether sensitive data
-is redacted. Do not turn those unknowns into findings.
+performance characteristics, overall documentation quality, or whether
+sensitive data is redacted. The post-processor treats docs as evidence of
+documented API intent and usage, not proof of implementation behavior. Do not
+turn those unknowns into findings.
 
 ## Procedure
 
@@ -132,10 +148,22 @@ is redacted. Do not turn those unknowns into findings.
      Guidelines. Honor guideline intent and stated exceptions; do not flag a
      pattern merely because it resembles a discouraged example.
 
-9. **Report only proof-carrying findings.** Quote the decisive emitted line or
-   lines exactly. Separate definite findings from context-dependent design
-   questions. If the tool cannot expose the evidence, omit the claim and name
-   the limitation once in the coverage section.
+9. **Draft only proof-carrying candidate findings.** Quote the decisive emitted
+   line or lines exactly. Separate definite findings from context-dependent
+   design questions. If the tool cannot expose the evidence, omit the claim and
+   name the limitation once in the coverage section. Do not return this
+   provisional report yet.
+
+10. **Post-process the complete draft in a separate agent.** Follow the
+    [rustdoc JSON post-processing procedure](rustdoc-post-processing.md). Give a
+    fresh agent the provisional report, reviewed crate and working directory,
+    exact package/features/target/baseline scope, and toolchain context. That
+    agent generates matching cargo rustdoc JSON outside the repository,
+    associates each claim with the relevant item docs, and returns a filtered
+    report with refuted statements removed or narrowed. Keep doc inspection out
+    of this agent's context and publish only the filtered report. If the
+    post-processor or JSON generation fails, do not present the provisional
+    claims as verified; return `blocked` with the decisive diagnostic.
 
 ## Review lenses
 
@@ -309,9 +337,25 @@ most API cleanliness findings are `medium` or `low`. Present a
 context-dependent alternative under **Design questions**, not as a defect.
 Never manufacture certainty from a missing line in simplified output.
 
+## Post-processing
+
+Treat the complete report from the output-only review as provisional. Before
+returning it, launch a fresh agent with the handoff defined in the
+[rustdoc JSON post-processing procedure](rustdoc-post-processing.md). The
+post-processor, not the parent review agent, generates and reads matching cargo
+rustdoc JSON, associates docs with each claim, and filters the report at
+statement level.
+
+This pass is mandatory even when the API evidence appears decisive: docs can
+establish an intended constraint, explain that a documented guideline exception
+applies, or answer a design question. The post-processor may remove or narrow
+such statements, but it may not add findings or use docs as proof of runtime
+behavior. Publish its filtered report without loading the docs into the parent
+agent's context.
+
 ## Output
 
-Return:
+Return only the report produced by the rustdoc JSON post-processor:
 
 ```text
 # Public API review: <package>
@@ -334,7 +378,8 @@ Guideline: <ID or convention>
 <brief, specific strengths; omit generic praise>
 
 ## Coverage and limitations
-<item families/configurations reviewed and what output-only review cannot assess>
+<item families/configurations reviewed, rustdoc JSON verification coverage, and
+what this review cannot assess>
 ```
 
 If there are no findings, say so explicitly and still report the configurations
