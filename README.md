@@ -21,6 +21,7 @@ Update later with:
 | ----- | ------------ |
 | [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent. Public API is the dominant lens: it inventories and evaluates the complete changed contract before performing exhaustive correctness and risk-based dependency, performance, naming, telemetry, test and documentation passes. Focused failing tests are included when they are useful permanent regression coverage, and every posted comment starts with `[AI AGENT]: `. |
 | [`review-public-api`](skills/review-public-api/SKILL.md) | Reviews a Rust library's exported contract from `cargo public-api` output, then uses an isolated rustdoc JSON pass to filter claims refuted by the API docs. It applies common idiomatic Rust API practices first, then API-visible Pragmatic Rust Guidelines; small PRs are scoped to changed public items. |
+| [`rust-public-docs`](skills/rust-public-docs/SKILL.md) | Retrieves a crate's public API documentation from cargo rustdoc JSON, scoped to a change (PR diff, branch, commit, working tree) or an explicit item list. Returns a compact docs bundle instead of raw JSON, so it can be reused as a retrieval primitive by other skills and agents. |
 
 ### `review-lens`
 
@@ -65,6 +66,24 @@ immediate API family rather than unrelated existing surface.
 
 Trigger it with "review this crate's public API" or "audit the Rust API using
 cargo public-api".
+
+### `rust-public-docs`
+
+A retrieval primitive rather than a review skill. It resolves a change — PR
+diff, branch, commit, working tree, or an explicit item list — to the public
+items it touches, generates rustdoc JSON with `cargo +nightly rustdoc
+--output-format json`, and returns a compact docs bundle: public path, item
+kind, doc text, documented attributes, member docs, and resolved doc links.
+
+Raw JSON never leaves the skill, so callers get authoritative documentation
+without paying the context cost of parsing it. `review-public-api` uses it for
+the post-processing pass that filters claims the docs refute, and any other
+skill or agent needing real API docs can invoke it the same way. It reports
+undocumented items as a fact, and deliberately makes no design or correctness
+judgement.
+
+Trigger it with "what do the changed public APIs document?" or "get the public
+docs for these items".
 
 ## Layout
 
