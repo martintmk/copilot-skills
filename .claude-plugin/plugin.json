@@ -1,10 +1,19 @@
 {
   "name": "copilot-skills",
-  "description": "Personal Copilot CLI skills. Includes review-lens for proof-carrying Rust change reviews, review-public-api for cargo-public-api audits with rustdoc-backed claim verification, and rust-public-docs for change-scoped public API documentation retrieval.",
-  "version": "0.6.0",
+  "description": "Personal Copilot CLI skills for Rust reviews and docs plus GitHub MCP PR classification persisted as JSON files.",
+  "version": "0.7.0",
   "author": {
     "name": "Martin Tomka",
     "email": "martintmk@users.noreply.github.com"
   },
-  "keywords": ["review", "rust", "code-review", "pull-request", "api-design", "cargo-public-api", "rustdoc"]
+  "keywords": [
+    "review",
+    "rust",
+    "code-review",
+    "pull-request",
+    "api-design",
+    "cargo-public-api",
+    "rustdoc",
+    "github-mcp"
+  ]
 }

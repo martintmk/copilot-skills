@@ -22,6 +22,7 @@ Update later with:
 | [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent. Public API is the dominant lens: it inventories and evaluates the complete changed contract before performing exhaustive correctness and risk-based dependency, performance, naming, telemetry, test and documentation passes. Focused failing tests are included when they are useful permanent regression coverage, and every posted comment starts with `[AI AGENT]: `. |
 | [`review-public-api`](skills/review-public-api/SKILL.md) | Reviews a Rust library's exported contract from `cargo public-api` output, then uses an isolated rustdoc JSON pass to filter claims refuted by the API docs. It applies common idiomatic Rust API practices first, then API-visible Pragmatic Rust Guidelines; small PRs are scoped to changed public items. |
 | [`rust-public-docs`](skills/rust-public-docs/SKILL.md) | Retrieves a crate's public API documentation from cargo rustdoc JSON, scoped to a change (PR diff, branch, commit, working tree) or an explicit item list. Returns a compact docs bundle instead of raw JSON, so it can be reused as a retrieval primitive by other skills and agents. |
+| [`github-pr-info-fetcher`](skills/github-pr-info-fetcher/SKILL.md) | Maintains a folder of `<pr-number>.json` files for a repository's open, ready-for-review PRs through the GitHub MCP server, then evaluates queued files one by one with the current AI model to produce a brief and interest decision for the caller's query. |
 
 ### `review-lens`
 
@@ -84,6 +85,24 @@ judgement.
 
 Trigger it with "what do the changed public APIs document?" or "get the public
 docs for these items".
+
+### `github-pr-info-fetcher`
+
+Maintains one JSON file per open, ready-for-review PR in a caller-provided output
+folder, without AI, then queues the files that need evaluation and runs one
+detached AI pass per PR. The maintenance phase only refreshes deterministic
+fields such as title, author, status, review count, and `source_updated_at`, and
+drops files for PRs that are merged, closed, or converted to draft. The
+evaluation phase fetches the changed files and diff context needed to judge
+whether the actual change matches the caller's interest query.
+
+Each file stores a brief, a boolean interest flag, and a short reason, and the
+skill re-evaluates a file when the upstream PR changes or the cached AI result
+is older than seven days. Downstream tools read `<output_folder>/*.json`
+directly; no database is involved.
+
+Trigger it with "cache the interesting open PRs in owner/repo into this folder"
+or "refresh PR information for this repository using this interest query".
 
 ## Layout
 
