@@ -1,7 +1,7 @@
 {
   "name": "copilot-skills",
   "description": "Personal Copilot CLI skills for Rust reviews and docs plus GitHub MCP PR classification persisted as JSON files.",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "author": {
     "name": "Martin Tomka",
     "email": "martintmk@users.noreply.github.com"

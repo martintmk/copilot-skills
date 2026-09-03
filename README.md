@@ -1,9 +1,24 @@
 # copilot-skills
 
 Personal [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli)
-skills, packaged as a plugin so they stay in sync across machines.
+skills, packaged as a cross-engine Agency-style plugin so they stay in sync
+across machines.
 
 ## Install
+
+With Agency:
+
+```
+agency plugin install github:martintmk/copilot-skills:.
+```
+
+For a single Agency session without installing:
+
+```
+agency copilot --plugin github:martintmk/copilot-skills:.
+```
+
+With GitHub Copilot CLI directly:
 
 ```
 /plugins install martintmk/copilot-skills
@@ -107,11 +122,12 @@ or "refresh PR information for this repository using this interest query".
 ## Layout
 
 ```
-.github/plugin/plugin.json    Copilot plugin manifest
-.claude-plugin/plugin.json    Claude Code plugin manifest (same contents)
+.claude-plugin/plugin.json    Shared Copilot and Claude plugin manifest
+.claude-plugin/marketplace.json
+                              Claude plugin marketplace entry
 .github/plugin/marketplace.json
                               Copilot plugin marketplace entry
-agency.json                   engine + category metadata
+agency.json                   Agency engine, author, category, and platform metadata
 skills/<name>/SKILL.md        one directory per skill
 skills/<name>/*.md            supporting procedures referenced by a skill
 ```
@@ -120,5 +136,5 @@ skills/<name>/*.md            supporting procedures referenced by a skill
 
 Create `skills/<name>/SKILL.md` with YAML frontmatter containing `name` and a
 `description` precise enough that the agent knows when to fire it — and when not
-to. Bump `version` in both plugin manifests and the marketplace entry, then
-push.
+to. Bump `version` in `.claude-plugin/plugin.json` and both marketplace entries,
+then push.

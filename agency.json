@@ -1,4 +1,11 @@
 {
-  "engines": ["copilot", "claude"],
-  "category": "developer-tools"
+  "authors": [
+    {
+      "name": "Martin Tomka",
+      "email": "martintmk@users.noreply.github.com"
+    }
+  ],
+  "engines": ["*"],
+  "category": "developer-tools",
+  "platforms": ["windows", "linux", "macos"]
 }
