@@ -98,11 +98,15 @@ as questions.
 
 ## Findings
 
-Report defects in impact order, each with the code anchor, the triggering input
-or sequence, the runtime consequence, the decisive verification, and the fix.
+Follow the shared **findings contract** in `review-delivery`. Each finding also
+names the triggering input or sequence and the decisive verification, prefixed
+`Verified:`.
+
 Include a complete focused failing test when it directly demonstrates the defect
-and should become permanent regression coverage; otherwise cite the result.
-End with a line naming the paths traced and what remained unverified.
+and should become permanent regression coverage; otherwise cite the result. A
+defect you could not reproduce is a question, not a finding.
+
+Coverage line: the paths traced and what remained unverified.
 
 When invoked directly rather than through `review-lens`, first read the
 repository's own rules from the base revision and treat green CI as the

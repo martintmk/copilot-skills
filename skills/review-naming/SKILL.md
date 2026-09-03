@@ -67,10 +67,17 @@ with the API design review.
 
 ## Findings
 
-Report with the code anchor, the sibling or convention it diverges from, and the
-exact replacement name or simplification. Prefer a `suggestion` block when the
-fix is a self-contained rename on the anchored line. Do not flag names that are
-merely different from your own preference.
+Follow the shared **findings contract** in `review-delivery`. Each finding also
+quotes the sibling or convention it diverges from — that citation is the evidence
+— and gives the exact replacement name or simplification.
+
+Prefer a `suggestion` block when the fix is a self-contained rename on the
+anchored line. Do not flag a name that is merely different from your own
+preference. These are usually `nit:` or `non-blocking:` unless the name ships in
+a public API that is about to be released.
+
+Coverage line: the names and abstractions reviewed, and any convention you could
+not establish from the surrounding code.
 
 When invoked directly rather than through `review-lens`, first read the
 repository's own rules from the base revision and treat green CI as the

@@ -57,11 +57,15 @@ Performance claims need numbers, not adjectives.
 
 ## Findings
 
-Report in impact order with the code anchor, the path classification, the cost
-(allocation per call, extra dispatch, contention), the measurement if you took
-one, and the concrete fix. Explicitly mark a suggestion as non-blocking when it
-is off the hot path or unmeasured. If the change is performance-neutral, say so
-rather than inventing micro-optimizations.
+Follow the shared **findings contract** in `review-delivery`. Each finding also
+names the path classification and the cost — allocation per call, extra dispatch,
+contention — plus the measurement if you took one.
+
+Mark a finding `non-blocking:` when it is off the hot path or unmeasured. If the
+change is performance-neutral, say so rather than inventing micro-optimizations.
+
+Coverage line: the paths classified, what you measured, and what remained
+unmeasured.
 
 When invoked directly rather than through `review-lens`, first read the
 repository's own rules from the base revision and treat green CI as the

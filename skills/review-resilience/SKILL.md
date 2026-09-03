@@ -94,11 +94,12 @@ call sites, configuration, and focused tests.
 
 ## Findings
 
-Return only actionable findings, ordered by impact. Each finding must include:
+Follow the shared **findings contract** in `review-delivery`. Each finding also
+names:
 
-- an exact code anchor and triggering failure path;
-- the incorrect or lost classification, or duplicated resilience mechanism;
-- runtime impact; and
+- the triggering failure path;
+- the incorrect or lost classification, or the duplicated resilience mechanism;
+  and
 - a specific recipe-based `Recovery` fix or version-correct `seatbelt`
   replacement.
 
@@ -108,5 +109,11 @@ probe, quote the command and result, then remove the probe. If execution is
 unavailable, state the concern as a question or coverage limitation, not a
 finding.
 
-End with one coverage line naming the reviewed errors and resilience mechanisms.
-If there are no findings, say so without inventing recommendations.
+Coverage line: the errors and resilience mechanisms reviewed, and the resolved
+`recoverable` and `seatbelt` versions the review was based on.
+
+When invoked directly rather than through `review-lens`, first read the
+repository's own rules from the base revision and treat green CI as the
+baseline; `review-lens` carries the workspace-specific adaptation.
+
+Post through the `review-delivery` skill when the review targets a PR.

@@ -92,15 +92,23 @@ on both revisions and compare the exact outcome. Modify only a temporary
 worktree, use a trusted checkout or isolated environment, quote the command and
 decisive result, and remove probes afterward.
 
-Return only actionable findings, ordered by impact:
+Follow the shared **findings contract** in `review-delivery`. Each finding also
+names the baseline contract, the head delta, and the missing justification or
+coverage, with the exact restoration or replacement.
 
-- **Blocking:** unjustified observable behavior change, lost distinct test
-  coverage, or a test-only bypass reachable in production.
-- **Non-blocking:** materially brittle, non-idiomatic, or duplicated test
+Severity in this area is strongly category-linked, though impact still decides a
+genuine edge case:
+
+- **Blocking** (unlabelled): unjustified observable behavior change, lost
+  distinct test coverage, or a test-only bypass reachable in production.
+- **`non-blocking:`**: materially brittle, non-idiomatic, or duplicated test
   infrastructure.
 
-Each finding names the `path:line`, baseline contract, head delta, missing
-justification or coverage, and exact restoration/replacement. After findings,
-or as the sole approval output when there are none, include one coverage line
-listing deleted/changed tests, behavior deltas, and test utility features
-reviewed.
+Coverage line: the deleted and changed tests, behavior deltas, and test utility
+features reviewed.
+
+When invoked directly rather than through `review-lens`, first read the
+repository's own rules from the base revision and treat green CI as the
+baseline; `review-lens` carries the workspace-specific adaptation.
+
+Post through the `review-delivery` skill when the review targets a PR.

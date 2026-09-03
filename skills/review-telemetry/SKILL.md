@@ -79,11 +79,17 @@ that a rename is breaking.
 
 ## Findings
 
-Report with the code anchor, the exact signal name and attributes, the convention
-or sibling it diverges from, the operator-visible consequence (broken query,
-cardinality blow-up, per-request allocation), and the concrete fix. If the change
-adds no telemetry where a comparable component instruments its behavior, say so
-once rather than demanding instrumentation the change does not need.
+Follow the shared **findings contract** in `review-delivery`. Each finding also
+names the exact signal name and attributes, the convention or sibling it diverges
+from, and the operator-visible consequence — broken query, cardinality blow-up,
+per-emission allocation.
+
+If the change adds no telemetry where a comparable component instruments its
+behavior, say so once rather than demanding instrumentation the change does not
+need.
+
+Coverage line: the signals reviewed and any emitted name or attribute set you
+could not confirm from the instrument definitions or telemetry tests.
 
 When invoked directly rather than through `review-lens`, first read the
 repository's own rules from the base revision and treat green CI as the

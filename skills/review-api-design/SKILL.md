@@ -109,11 +109,15 @@ versioning and release treatment for an intentional break.
 
 ## Findings
 
-Report in impact order with the code anchor, the consumer-visible consequence,
-and a concrete fix. Design findings may be argued precisely from the code,
-manifests and repository rules without executing anything; verify a claimed break
-where it is cheap. Always state what public surface was reviewed, even when it
-produced no finding.
+Follow the shared **findings contract** in `review-delivery`. Each finding also
+names the exported item and the disposition it failed, and states the
+consumer-visible consequence across releases.
+
+Design findings may be argued precisely from the code, manifests and repository
+rules without executing anything; verify a claimed break where that is cheap.
+
+Coverage line: the public surface reviewed — crates, modules or API families —
+stated even when the gate produced no finding.
 
 When invoked directly rather than through `review-lens`, first read the
 repository's own rules from the base revision and treat green CI as the

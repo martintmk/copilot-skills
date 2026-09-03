@@ -16,6 +16,37 @@ Turn finished findings into one posted review. Every message is explicitly
 attributed to an AI agent, anchored to the code it is about, and honest about
 what was verified.
 
+## Findings contract
+
+Every `review-*` skill emits findings in this shape, so a single review reads the
+same way no matter which areas ran. Each skill adds its own area-specific field
+and evidence rule on top; none of them redefine this shape.
+
+1. **Order by impact**, most consequential first. Return only actionable
+   findings — never pad a review to look thorough.
+2. **Anchor each finding as `path:line`** and name the symbol it is about.
+3. **State the claim, the consequence, and the fix**: what contract, convention
+   or behavior the change breaks; the consumer-, operator- or runtime-visible
+   effect; and a specific correction, as a `suggestion` block when it is the
+   exact replacement for the anchored range.
+4. **Label severity from impact, not category**, using only this vocabulary:
+   - unlabelled — blocking;
+   - `non-blocking:` — a real issue that should not gate the change;
+   - `nit:` — cosmetic;
+   - `**Design note, no change requested:**` — an observation being recorded.
+5. **Separate verified from reasoned.** Prefix a reproduced finding with
+   `Verified:` and quote the decisive result. State anything you could not check
+   rather than guessing, and raise an unprovable behavioral suspicion as a
+   question rather than a finding.
+6. **End with one coverage line** naming what the area actually reviewed and what
+   it could not assess — even when nothing was wrong.
+7. **Say so plainly when there are no findings.** The coverage line is then the
+   whole output. Never manufacture findings.
+
+**Verdict vocabulary**, used by the summary and by report-only skills:
+`approve`, `approve with non-blocking comments`, `changes requested`, or
+`blocked` when the review could not run at all (state the decisive diagnostic).
+
 ## Voice and severity
 
 - **Attribute every message to the AI.** Start the summary, every GitHub inline
@@ -44,8 +75,8 @@ what was verified.
   *different* line than the anchor.
 - **Label severity only when it is not obvious:** `nit:` for cosmetics,
   `non-blocking:` for a real but non-gating issue, `**Design note, no change
-  requested:**` for an observation. State the verdict in the summary, not on
-  each finding.
+  requested:**` for an observation, and no label for a blocking finding. State
+  the verdict in the summary, not on each finding.
 - **Set severity from impact, not category.** A public-contract or semver issue
   is usually blocking, but weigh novelty, real consumer impact, precedent,
   mitigation and scope: a new public conversion that merely inherits a
@@ -74,9 +105,9 @@ design findings; the remaining correctness, dependency, performance, test and
 doc findings; the verdict; and any `Design note, no change requested`.
 
 If a review area's gate produced no finding, say so explicitly rather than
-silently omitting it. Reach a verdict — `approve`, `approve with non-blocking
-comments`, or `changes requested` — from the findings alone. If nothing
-meaningful is wrong, say so; never manufacture findings.
+silently omitting it. Reach a verdict from the findings alone, using the verdict
+vocabulary in the findings contract above. If nothing meaningful is wrong, say
+so; never manufacture findings.
 
 ## GitHub PR
 

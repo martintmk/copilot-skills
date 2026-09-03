@@ -66,9 +66,12 @@ areas a change actually risks are loaded.
    (paginate) and don't repeat a point already made or resolved. Leave
    lint and formatting to the tooling.
 6. **Deliver one review** with the `review-delivery` skill — GitHub review, ADO
-   threads, or a local report. The summary must state what public surface was
-   reviewed, even when it produced no finding. Revert every probe and remove any
-   temporary worktree afterwards.
+   threads, or a local report. Every area returns findings in the shared
+   **findings contract** defined there, so merge them into a single impact-ordered
+   list and concatenate their coverage lines rather than re-formatting each area
+   differently. The summary must state what public surface was reviewed, even when
+   it produced no finding. Revert every probe and remove any temporary worktree
+   afterwards.
 
 ## Review areas
 

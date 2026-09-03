@@ -326,7 +326,9 @@ provide additional safety, maintainability, or UX value.
 
 A finding must contain:
 
-1. **Severity and item** — `high`, `medium`, or `low`, plus the exact public path.
+1. **Severity and item** — a label from the shared **findings contract** in
+   `review-delivery` (unlabelled for blocking, `non-blocking:`, or `nit:`), plus
+   the exact public path.
 2. **Evidence** — the smallest exact `cargo public-api` excerpt proving the
    shape. Include related lines when absence would otherwise be ambiguous.
 3. **Consumer impact** — the concrete usability, interoperability, type-identity,
@@ -335,10 +337,11 @@ A finding must contain:
    patch.
 5. **Guideline** — the applicable Pragmatic Rust ID or idiomatic Rust convention.
 
-Use `high` only for a concrete, substantial consumer or compatibility problem;
-most API cleanliness findings are `medium` or `low`. Present a
-context-dependent alternative under **Design questions**, not as a defect.
-Never manufacture certainty from a missing line in simplified output.
+Leave a finding unlabelled only for a concrete, substantial consumer or
+compatibility problem; most API cleanliness findings are `non-blocking:` or
+`nit:`. Present a context-dependent alternative under **Design questions**, not
+as a defect. Never manufacture certainty from a missing line in simplified
+output.
 
 ## Post-processing
 
@@ -364,7 +367,7 @@ Return only the report produced by the rustdoc JSON post-processor:
 # Public API review: <package>
 
 Scope: <tool version, package, features, target, and optional baseline>
-Verdict: <clean | clean with questions | needs changes | blocked>
+Verdict: <approve | approve with non-blocking comments | changes requested | blocked>
 
 ## Findings
 ### [severity] <public path>: <consumer-facing headline>
@@ -373,7 +376,6 @@ Evidence:
 Impact: <specific consequence>
 Recommendation: <specific API shape>
 Guideline: <ID or convention>
-
 ## Design questions
 <context-dependent choices, each with exact API evidence>
 
@@ -388,5 +390,10 @@ what this review cannot assess>
 If there are no findings, say so explicitly and still report the configurations
 and API families covered. If extraction fails, use `blocked`, include the
 decisive diagnostic, and do not issue an API verdict.
+
+Severity labels and verdict values come from the shared **findings contract** in
+`review-delivery`, so a finding from this report can be merged into a combined
+review without re-labelling. This skill returns the report rather than posting
+it.
 
 [pragmatic-rust]: https://microsoft.github.io/rust-guidelines/
