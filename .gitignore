@@ -1,0 +1,4 @@
+# Personal review-feedback exports used to derive the review skills.
+# These contain private GitHub and internal Azure DevOps comments and must
+# never be committed to this public repository.
+my-reviews/
