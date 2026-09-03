@@ -9,25 +9,26 @@ across machines.
 With Agency:
 
 ```
-agency plugin install github:martintmk/copilot-skills:.
+agency plugin install market:copilot-skills@martintmk/copilot-skills
 ```
 
 For a single Agency session without installing:
 
 ```
-agency copilot --plugin github:martintmk/copilot-skills:.
+agency copilot --plugin market:copilot-skills@martintmk/copilot-skills
 ```
 
 With GitHub Copilot CLI directly:
 
 ```
-/plugins install martintmk/copilot-skills
+copilot plugin marketplace add martintmk/copilot-skills
+copilot plugin install copilot-skills@martintmk-skills
 ```
 
 Update later with:
 
 ```
-/plugins update copilot-skills
+copilot plugin update copilot-skills@martintmk-skills
 ```
 
 ## Skills
@@ -234,19 +235,21 @@ full treatment without any one skill carrying all of it.
 ## Layout
 
 ```
-.claude-plugin/plugin.json    Shared Copilot and Claude plugin manifest
 .claude-plugin/marketplace.json
-                              Claude plugin marketplace entry
-.github/plugin/marketplace.json
-                              Copilot plugin marketplace entry
-agency.json                   Agency engine, author, category, and platform metadata
-skills/<name>/SKILL.md        one directory per skill
-skills/<name>/*.md            supporting procedures referenced by a skill
+                                      Claude plugin marketplace entry
+.github/plugin/marketplace.json      Copilot plugin marketplace entry
+plugins/copilot-skills/
+  .claude-plugin/plugin.json          Shared Copilot and Claude plugin manifest
+  agency.json                         Agency engine, author, category, and platform metadata
+  README.md                           Plugin documentation
+  skills/<name>/SKILL.md              one directory per skill
+  skills/<name>/*.md                  supporting procedures referenced by a skill
 ```
 
 ## Adding a skill
 
-Create `skills/<name>/SKILL.md` with YAML frontmatter containing `name` and a
-`description` precise enough that the agent knows when to fire it — and when not
-to. Bump `version` in `.claude-plugin/plugin.json` and both marketplace entries,
-then push.
+Create `plugins/copilot-skills/skills/<name>/SKILL.md` with YAML frontmatter
+containing `name` and a `description` precise enough that the agent knows when
+to fire it — and when not to. Bump `version` in
+`plugins/copilot-skills/.claude-plugin/plugin.json` and both marketplace
+entries, then push.
