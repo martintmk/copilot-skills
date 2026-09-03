@@ -1,5 +1,5 @@
 ---
-name: rust-public-docs
+name: review-public-docs
 description: >
   Retrieve a Rust crate's public API documentation from cargo-generated rustdoc
   JSON, scoped to a specific change such as a PR diff, branch, commit, working
@@ -11,7 +11,7 @@ description: >
   prose quality, implementation correctness, or reading rendered docs.rs pages.
 ---
 
-# Rust Public Docs
+# Review Public Docs
 
 Produce authoritative documentation for a Rust crate's **public** API, scoped to
 what a change actually touches. Cargo-generated rustdoc JSON is the only source.

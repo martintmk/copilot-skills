@@ -34,7 +34,7 @@ to remove or narrow candidate statements that the API docs refute or answer.
   `cargo public-api` output.
 - The only documentation exception is the mandatory post-processing pass. It
   runs in a separate agent after the provisional report exists and obtains docs
-  through the `rust-public-docs` skill, which owns rustdoc JSON generation and
+  through the `review-public-docs` skill, which owns rustdoc JSON generation and
   traversal. That skill may resolve revisions and build a baseline in a
   throwaway worktree; the post-processor itself reasons only from the returned
   docs bundle, never from source, manifests, tests, examples, diff text, or
@@ -160,7 +160,7 @@ turn those unknowns into findings.
     [rustdoc JSON post-processing procedure](rustdoc-post-processing.md). Give a
     fresh agent the provisional report, reviewed crate and working directory,
     exact package/features/target/baseline scope, and toolchain context. That
-    agent obtains the matching documentation through the `rust-public-docs`
+    agent obtains the matching documentation through the `review-public-docs`
     skill rather than parsing rustdoc JSON itself, associates each claim with
     the relevant item docs, and returns a filtered report with refuted
     statements removed or narrowed. Keep doc inspection out of this agent's
@@ -346,7 +346,7 @@ Treat the complete report from the output-only review as provisional. Before
 returning it, launch a fresh agent with the handoff defined in the
 [rustdoc JSON post-processing procedure](rustdoc-post-processing.md). That
 post-processor, not the parent review agent, obtains the matching documentation
-via the `rust-public-docs` skill, associates docs with each claim, and filters
+via the `review-public-docs` skill, associates docs with each claim, and filters
 the report at statement level.
 
 This pass is mandatory even when the API evidence appears decisive: docs can

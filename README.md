@@ -36,7 +36,7 @@ Update later with:
 | ----- | ------------ |
 | [`review-lens`](skills/review-lens/SKILL.md) | Reviews a Rust PR, branch, commit or working-tree diff as an autonomous AI reviewing agent. Public API is the dominant lens: it inventories and evaluates the complete changed contract before performing exhaustive correctness and risk-based dependency, performance, naming, telemetry, test and documentation passes. Focused failing tests are included when they are useful permanent regression coverage, and every posted comment starts with `[AI AGENT]: `. |
 | [`review-public-api`](skills/review-public-api/SKILL.md) | Reviews a Rust library's exported contract from `cargo public-api` output, then uses an isolated rustdoc JSON pass to filter claims refuted by the API docs. It applies common idiomatic Rust API practices first, then API-visible Pragmatic Rust Guidelines; small PRs are scoped to changed public items. |
-| [`rust-public-docs`](skills/rust-public-docs/SKILL.md) | Retrieves a crate's public API documentation from cargo rustdoc JSON, scoped to a change (PR diff, branch, commit, working tree) or an explicit item list. Returns a compact docs bundle instead of raw JSON, so it can be reused as a retrieval primitive by other skills and agents. |
+| [`review-public-docs`](skills/review-public-docs/SKILL.md) | Retrieves a crate's public API documentation from cargo rustdoc JSON, scoped to a change (PR diff, branch, commit, working tree) or an explicit item list. Returns a compact docs bundle instead of raw JSON, so it can be reused as a retrieval primitive by other skills and agents. |
 | [`github-pr-info-fetcher`](skills/github-pr-info-fetcher/SKILL.md) | Maintains a folder of `<pr-number>.json` files for a repository's open, ready-for-review PRs through the GitHub MCP server, then evaluates queued files one by one with the current AI model to produce a brief and interest decision for the caller's query. |
 
 ### `review-lens`
@@ -83,7 +83,7 @@ immediate API family rather than unrelated existing surface.
 Trigger it with "review this crate's public API" or "audit the Rust API using
 cargo public-api".
 
-### `rust-public-docs`
+### `review-public-docs`
 
 A retrieval primitive rather than a review skill. It resolves a change — PR
 diff, branch, commit, working tree, or an explicit item list — to the public
