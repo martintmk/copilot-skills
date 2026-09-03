@@ -37,6 +37,10 @@ never the whole crate when a change scope exists.
 not infer runtime behavior. Report what is documented and what is undocumented;
 that is a fact about the docs, not a review finding.
 
+This skill is deliberately exempt from the shared **findings contract** in
+`review-delivery`: it returns a docs bundle, never findings, severities or a
+verdict, and it never posts.
+
 Each requested item gets one **resolution status** and, when a baseline was
 compared, one orthogonal **change marker**. Keeping the two axes separate
 matters: an added item is both `found` and `added`, so a single mixed list would

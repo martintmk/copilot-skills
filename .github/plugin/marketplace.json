@@ -11,8 +11,8 @@
   "plugins": [
     {
       "name": "copilot-skills",
-      "description": "Personal Copilot CLI skills for Rust reviews and docs plus GitHub MCP PR classification persisted as JSON files.",
-      "version": "0.7.2",
+      "description": "Personal Copilot CLI skills for Rust reviews, public API docs, resilience, and testing.",
+      "version": "0.8.0",
       "author": {
         "name": "Martin Tomka",
         "email": "martintmk@users.noreply.github.com"
@@ -26,7 +26,12 @@
         "api-design",
         "cargo-public-api",
         "rustdoc",
-        "github-mcp"
+        "resilience",
+        "recoverable",
+        "seatbelt",
+        "testing",
+        "telemetry",
+        "performance"
       ],
       "source": "."
     }
