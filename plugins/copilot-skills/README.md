@@ -78,11 +78,13 @@ filters out drafts, the user's own PRs, and PRs the user has already reviewed,
 then selects PRs opened in the last seven days plus older PRs involving
 foundational APIs, infrastructure fixes, or an explicit mention of the user.
 
-Reports are sent through `teams-self-message`. A persistent local state file
-records PR URLs only after successful delivery, so later scans send only PRs
-that have never appeared in an earlier report. Trigger it with "find PRs I
-should review", "track open PRs in these repositories", or schedule that prompt
-for a recurring digest.
+Reports are sent through `teams-self-message` as structured Teams HTML with
+category headings, compact PR entries, clickable links, and a specific
+`Why review` explanation for every item. A persistent local state file records
+PR URLs only after successful delivery, so later scans send only PRs that have
+never appeared in an earlier report. Trigger it with "find PRs I should review",
+"track open PRs in these repositories", or schedule that prompt for a recurring
+digest.
 
 ### `review-api-design`
 

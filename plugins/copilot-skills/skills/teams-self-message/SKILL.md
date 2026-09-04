@@ -1,25 +1,31 @@
 ---
 name: teams-self-message
 description: >
-  Send a text message to the current user's Microsoft Teams self-chat. Use when
-  the user says "message myself", "send me a Teams message", "send this to my
-  Teams", or invokes this skill with message text. The message is posted as the
-  user to the Teams "Just me" chat, so Teams may not produce an incoming-message
-  notification.
+  Send a text or HTML message to the current user's Microsoft Teams self-chat.
+  Use when the user says "message myself", "send me a Teams message", "send this
+  to my Teams", or invokes this skill with message content. The message is
+  posted as the user to the Teams "Just me" chat, so Teams may not produce an
+  incoming-message notification.
 ---
 
 # Teams Self Message
 
-Send the user's supplied text once to their Microsoft Teams self-chat.
+Send the user's supplied content once to their Microsoft Teams self-chat.
 
 ## Input
 
-Treat the text accompanying the invocation as the message body. Preserve its
+Treat the content accompanying the invocation as the message body. Preserve its
 wording, punctuation, and line breaks. Remove only an invocation wrapper such as
 `/teams-self-message` when it is not part of the intended message.
 
-If no message text was supplied, use `ask_user` to request it. Do not invent a
-message.
+Use plain text by default. Use HTML only when the user or calling skill
+explicitly requests an HTML message or supplies a complete HTML body intended
+for Teams. Do not interpret arbitrary user text as HTML. When constructing HTML
+from dynamic or untrusted values, HTML-escape those values before inserting
+them into the template.
+
+If no message content was supplied, use `ask_user` to request it. Do not invent
+a message.
 
 ## Procedure
 
@@ -31,7 +37,8 @@ message.
 
    `/me/chats/48:notes/messages`
 
-3. Use this JSON body, substituting the supplied text for `<message>`:
+3. For plain text, use this JSON body, substituting the supplied text for
+   `<message>`:
 
    ```json
    {
@@ -41,6 +48,21 @@ message.
      }
    }
    ```
+
+   For explicitly requested HTML, use:
+
+   ```json
+   {
+     "body": {
+       "contentType": "html",
+       "content": "<message>"
+     }
+   }
+   ```
+
+   Use Teams-safe structural HTML such as `<p>`, `<strong>`, `<br>`, `<ol>`,
+   `<ul>`, `<li>`, and `<a href="...">`. Do not use Markdown inside an HTML
+   message.
 
    Do not add `@odata.type` fields. The Teams self-chat endpoint rejects the
    item-body type emitted by that payload shape.

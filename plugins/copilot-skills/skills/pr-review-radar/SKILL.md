@@ -146,31 +146,54 @@ Sort new matches in this order:
 3. Infrastructure.
 4. Recent only.
 
-Within a group, show newest first. Send one plain-text message through the
-`teams-self-message` skill with this shape:
+Within a group, show newest first. Send one HTML message through the
+`teams-self-message` skill. Explicitly tell that skill to use `contentType:
+html`.
 
-```text
-PRs awaiting your review (4 September 2026)
+Use a compact, scannable structure:
 
-Please review these newly discovered pull requests:
+```html
+<h2>PR Review Radar — 4 September 2026</h2>
+<p><strong>2 new pull requests awaiting review</strong></p>
 
-1. Title: Add retry classification to the shared HTTP client
-   Repository: owner/repository
-   Link: Add retry classification to the shared HTTP client
-   URL: https://github.com/owner/repository/pull/123
-   Why review: Foundational API: changes the shared HTTP retry policy. Recent:
-   opened 2 days ago.
+<h3>Foundational API (1)</h3>
+<ol>
+  <li>
+    <strong>Add retry classification to the shared HTTP client</strong><br>
+    owner/repository<br>
+    <strong>Why review:</strong> Changes the shared HTTP retry policy and its
+    public error classification. Opened 2 days ago.<br>
+    <a href="https://github.com/owner/repository/pull/123">Open PR #123</a>
+  </li>
+</ol>
 
-2. Title: Repair release package signing
-   Repository: organization/project/repository
-   Link: Repair release package signing
-   URL: https://dev.azure.com/organization/project/_git/repository/pullrequest/456
-   Why review: Infrastructure: repairs the package-signing workflow.
+<h3>Infrastructure (1)</h3>
+<ol start="2">
+  <li>
+    <strong>Repair release package signing</strong><br>
+    organization/project/repository<br>
+    <strong>Why review:</strong> Repairs the package-signing step used by the
+    release workflow.<br>
+    <a href="https://dev.azure.com/organization/project/_git/repository/pullrequest/456">
+      Open PR 456
+    </a>
+  </li>
+</ol>
 ```
 
-Because `teams-self-message` sends plain text, place the canonical URL on its own
-`URL` line so Teams can make it clickable. The `Link` line is the human-readable
-link label requested for the report; do not use Markdown link syntax.
+Render only headings for groups that contain matches. Every item must include:
+
+1. The PR title in bold.
+2. The repository.
+3. A labeled **Why review:** explanation that says why the change is interesting
+   or consequential, not merely which category matched. Ground it in the
+   description, changed paths, API summary, or discussion evidence.
+4. One clickable HTML link using the canonical PR URL.
+
+Do not include redundant `Link:` and `URL:` fields. Do not use Markdown because
+Teams does not render it in this message path. HTML-escape every dynamic value
+from the PR, including titles, repository names, reasons, and URLs, before
+placing it in the HTML template.
 
 Keep each reason to one or two concise sentences. Include all and only the new
 matching PRs.
