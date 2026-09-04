@@ -35,6 +35,7 @@ copilot plugin update copilot-skills@martintmk-skills
 
 | Skill | What it does |
 | ----- | ------------ |
+| [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | Scans recently opened, still-open GitHub and Azure DevOps PRs for unanswered human feedback directed at the user, prioritizes responses that are demonstrably blocking someone, and sends only new actionable items to the user's Teams self-chat. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Scans configured GitHub and Azure DevOps repositories for open PRs the user has not reviewed, selects recent, foundational-API, infrastructure, and mentioned PRs, then sends only newly discovered matches to the user's Teams self-chat. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Orchestrates a Rust review of a PR, branch, commit or working-tree diff. Establishes scope, base revision, trust and CI baseline, reviews dependencies/features and docs inline, then routes the areas a change actually risks to the specialized `review-*` skills and delivers one AI-attributed review. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Reviews a change's public contract from the diff and source: visibility and layering, semver cascade, constructors, builders and defaults, strong types and enums, trait sealing, macros as public API, and error and panic conventions. |
@@ -70,6 +71,22 @@ explicitly attributed to an AI agent so none read as if a human maintainer wrote
 them, with each one anchored to the code it is about.
 
 Trigger it with "review this PR", "review my changes", or "review like me".
+
+### `pr-feedback-radar`
+
+Tracks unanswered human feedback across open GitHub and Azure DevOps PRs created
+in the last seven days. It includes unresolved requests on the user's PRs,
+direct questions and mentions, and human follow-ups that ask for the user's
+review, re-review, decision, change, or acknowledgement. Bot, service, system,
+already answered, resolved, and merely informational comments are excluded.
+
+Reports are sent through `teams-self-message` as structured Teams HTML. Every
+entry explains `Why respond`, and PRs where evidence shows the user is blocking
+another person appear first as high priority. Feedback is deduplicated by
+provider comment identity and content, so a PR can appear again for a new or
+materially edited human follow-up without repeating the same comment on every
+scan. Trigger it with "find PR feedback I need to answer", "show unanswered PR
+comments", or schedule that prompt for a recurring digest.
 
 ### `pr-review-radar`
 
