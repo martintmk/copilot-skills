@@ -35,6 +35,7 @@ copilot plugin update copilot-skills@martintmk-skills
 
 | Skill | What it does |
 | ----- | ------------ |
+| [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Scans configured GitHub and Azure DevOps repositories for open PRs the user has not reviewed, selects recent, foundational-API, infrastructure, and mentioned PRs, then sends only newly discovered matches to the user's Teams self-chat. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Orchestrates a Rust review of a PR, branch, commit or working-tree diff. Establishes scope, base revision, trust and CI baseline, reviews dependencies/features and docs inline, then routes the areas a change actually risks to the specialized `review-*` skills and delivers one AI-attributed review. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Reviews a change's public contract from the diff and source: visibility and layering, semver cascade, constructors, builders and defaults, strong types and enums, trait sealing, macros as public API, and error and panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Hunts behavioral defects — version gates, boundaries, resource models, cancellation and drop safety, time arithmetic, round-trip claims — and owns the shared verification discipline that every other review skill follows. |
@@ -69,6 +70,19 @@ explicitly attributed to an AI agent so none read as if a human maintainer wrote
 them, with each one anchored to the code it is about.
 
 Trigger it with "review this PR", "review my changes", or "review like me".
+
+### `pr-review-radar`
+
+Tracks open PRs across a saved list of GitHub and Azure DevOps repositories. It
+filters out drafts, the user's own PRs, and PRs the user has already reviewed,
+then selects PRs opened in the last seven days plus older PRs involving
+foundational APIs, infrastructure fixes, or an explicit mention of the user.
+
+Reports are sent through `teams-self-message`. A persistent local state file
+records PR URLs only after successful delivery, so later scans send only PRs
+that have never appeared in an earlier report. Trigger it with "find PRs I
+should review", "track open PRs in these repositories", or schedule that prompt
+for a recurring digest.
 
 ### `review-api-design`
 
