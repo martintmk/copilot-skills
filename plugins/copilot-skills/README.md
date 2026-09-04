@@ -37,6 +37,7 @@ copilot plugin update copilot-skills@martintmk-skills
 | ----- | ------------ |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | Scans recently opened, still-open GitHub and Azure DevOps PRs for unanswered human feedback directed at the user, prioritizes responses that are demonstrably blocking someone, and sends only new actionable items to the user's Teams self-chat. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Scans configured GitHub and Azure DevOps repositories for open PRs the user has not reviewed, selects recent, foundational-API, infrastructure, and mentioned PRs, then sends only newly discovered matches to the user's Teams self-chat. |
+| [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Decides what an unattended agent may do about the feedback on the PR it is working on: automation signals are closed autonomously, human feedback waits for an explicit instruction, unverified authorship counts as human, and major API changes, major behavior changes and conflicting requests are always deferred. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Orchestrates a Rust review of a PR, branch, commit or working-tree diff. Establishes scope, base revision, trust and CI baseline, reviews dependencies/features and docs inline, then routes the areas a change actually risks to the specialized `review-*` skills and delivers one AI-attributed review. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Reviews a change's public contract from the diff and source: visibility and layering, semver cascade, constructors, builders and defaults, strong types and enums, trait sealing, macros as public API, and error and panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Hunts behavioral defects — version gates, boundaries, resource models, cancellation and drop safety, time arithmetic, round-trip claims — and owns the shared verification discipline that every other review skill follows. |
@@ -102,6 +103,26 @@ PR URLs only after successful delivery, so later scans send only PRs that have
 never appeared in an earlier report. Trigger it with "find PRs I should review",
 "track open PRs in these repositories", or schedule that prompt for a recurring
 digest.
+
+### `feedback-autonomy`
+
+The policy an agent applies to the feedback on the single PR it is working on
+when nobody is watching. Human feedback is the scarce signal, so it is never
+answered or acted on automatically — it waits for a person to explicitly say to
+act. Automation signals are the opposite: failing tests, coverage gaps,
+surviving mutants, lint and spelling are closed unattended and verified by
+re-running the exact command that produced them.
+
+Two gates decide each item. Authorship needs positive provider proof of a bot —
+actor type, `[bot]` login, GitHub App, ADO service identity, or a pipeline
+surface — and anything unverified counts as human. Impact then stops even a
+proven bot request when the smallest correct fix would be a major API change, a
+major behavior change, or a conflict no person has decided; cosmetic work passes
+freely. Deferred items are left untouched and reported with the gate that
+stopped them, so nothing is silently dropped.
+
+Trigger it with "should I fix this feedback automatically?" or load it at the
+start of an unattended PR-fixing session.
 
 ### `review-api-design`
 
