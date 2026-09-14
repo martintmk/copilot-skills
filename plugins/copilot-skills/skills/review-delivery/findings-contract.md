@@ -5,6 +5,11 @@ once in a fresh worker for final delivery.
 Area skills add domain-specific evidence within this shape, not new templates.
 `review-public-docs` is exempt: it returns a documentation bundle, not findings.
 
+Use this shape for findings in intermediate area results, filtered API reports,
+standalone reports and posted PR threads. Every finding, including a design
+note, requires a title, **Problem** and **Why this matters**. Actionable
+findings also require **Suggested fix**. Do not defer these fields until delivery.
+
 ## Attribution and comment shape
 
 Start each review summary, finding, standalone report and PR thread with the
@@ -14,8 +19,14 @@ requester wrote the review, or quote, indent or backtick the attribution.
 ```markdown
 **Posted by an AI agent · Non-blocking**
 
+**<Concrete defect affecting a named surface>**
+
+**Problem**
+<What the code currently does or fails to guarantee, with decisive evidence
+when useful.>
+
 **Why this matters**
-<Concrete problem and consumer/runtime impact, with decisive evidence when useful.>
+<Concrete consumer/runtime impact.>
 
 **Suggested fix**
 <Specific correction and, only when useful, why it fits.>
@@ -27,12 +38,21 @@ The example's severity is not a default. The allowed first lines are:
 - `**Posted by an AI agent · Non-blocking**` - a real issue that should not gate.
 - `**Posted by an AI agent · Nit**` - cosmetic.
 - `**Posted by an AI agent · Design note, no change requested**` - an observation,
-  with **Why this matters** only; do not invent a fix.
+  with a concise bold observation title, **Problem** and **Why this matters**.
+  **Problem** describes the observed constraint or trade-off and supporting
+  evidence without asserting a defect; **Why this matters** explains its
+  significance. Omit only **Suggested fix**; no change is requested.
 
-Use both exact section headings for actionable findings, normally one or two
-sentences each. Clean summaries and coverage-only reports need attribution, not
-empty finding sections. Keep questions explicitly conditional, not disguised
-as defects.
+After the attribution and blank line, every finding needs a concise bold title
+naming the affected surface, understandable without the code anchor. For
+actionable findings, make it a diagnosis: state what is wrong, not merely the
+topic or proposed fix. Follow the title with **Problem**, **Why this matters**
+and, when requesting a change, **Suggested fix**, in that order. Use these exact
+headings, normally one or two sentences each, including for non-blocking
+findings and nits. The title identifies the issue; **Problem** explains it
+rather than repeating the title. Clean summaries and coverage-only reports
+need attribution, not empty finding sections. Keep questions explicitly
+conditional, not disguised as defects.
 
 ## Evidence, correction and severity
 
@@ -41,17 +61,19 @@ anchor as location metadata; use body line references only for a different
 location. Output-only API reports use exact public paths instead of source
 anchors and must not inspect source to obtain line numbers.
 
-Put decisive evidence under **Why this matters** and the correction under
-**Suggested fix**. Preserve domain proof requirements and material uncertainty;
-concision is not permission to weaken the investigation. Omit routine
-`Verified:` paragraphs, investigation narration, redundant code restatements,
-generic advice and speculative API-evolution arguments. Explain existing intent
-or a trade-off only when it changes the recommendation.
+Put the current defect or observed constraint and decisive evidence under
+**Problem**, and its consequence under **Why this matters**. For actionable
+findings, put the correction under **Suggested fix**. Preserve domain proof
+requirements and material uncertainty; concision is not permission to weaken the
+investigation. Omit routine `Verified:` paragraphs, investigation narration,
+redundant code restatements, generic advice and speculative API-evolution
+arguments. Explain existing intent or a trade-off only when it changes the
+recommendation or is the subject of a design note.
 
 An exact-range `suggestion` fence belongs under **Suggested fix**. Include a
 complete focused failing test there only when useful as permanent regression
 coverage, and name its destination. Longer necessary proof may be collapsed
-under **Why this matters**. Keep Markdown and fences at column zero.
+under **Problem**. Keep Markdown and fences at column zero.
 
 Set severity from concrete impact, not category alone. A substantial public
 contract break is usually blocking; a new conversion inheriting a pre-existing

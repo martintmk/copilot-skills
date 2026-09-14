@@ -151,10 +151,12 @@ from discussion activity or tool enumeration order.
    conclusions or another review's reasoning. A same-head new request still
    receives a fresh pass. Still-applicable unresolved issues affect the outcome
    even when duplicate inline findings are omitted. Apply shared evidence and
-   [finding/delivery rules](../review-delivery/SKILL.md), including AI
-   attribution, **Why this matters** and **Suggested fix**; do not fork them.
-   On target/requester's or posting actor's own PR, use GitHub `COMMENT` and
-   no ADO vote; never self-approve.
+   [finding/delivery rules](../review-delivery/SKILL.md): every finding, including
+   a design note, needs AI attribution, a bold title, **Problem** and
+   **Why this matters**. Actionable findings use a diagnosis title and
+   **Suggested fix**; clean summaries need no finding sections. Do not fork the
+   format. On target/requester's or posting actor's own PR, use GitHub `COMMENT`
+   and no ADO vote; never self-approve.
 4. Require coordinator confirmation that all required Review Lens work is complete,
    plus bound-provider read-back of **all** findings, summary and required votes.
    A posted diagnostic cannot make blocked/incomplete review coverage complete.

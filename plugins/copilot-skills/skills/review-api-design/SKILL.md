@@ -129,10 +129,13 @@ versioning and release treatment for an intentional break.
 
 ## Evidence and findings
 
-Name the exported item and failed inventory disposition, dependency/feature
-decision, or internal error boundary. State the concrete consumer or maintainer
-consequence. Discuss compatibility only when it establishes that consequence or
-changes the fix.
+For actionable findings, use the shared attribution and a concise bold diagnosis
+title naming the affected contract. **Problem** identifies the exported item
+and failed inventory disposition, dependency/feature decision, or internal error
+boundary, with decisive evidence. **Why this matters** states the concrete
+consumer or maintainer consequence. **Suggested fix** specifies the corrected
+contract, dependency/feature choice or error policy. Discuss compatibility only
+when it establishes that consequence or changes the fix.
 
 Design findings may be argued precisely from the code, manifests and repository
 rules without executing anything; verify a claimed break where that is cheap.

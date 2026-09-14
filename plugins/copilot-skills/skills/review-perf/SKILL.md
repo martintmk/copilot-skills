@@ -63,8 +63,12 @@ costs rather than reporting the same allocation or per-call work twice.
 
 ## Findings
 
-Name the path classification and cost — allocation per call, extra dispatch,
-contention — plus the measurement if you took one.
+For actionable findings, use the shared attribution and a concise bold diagnosis
+title naming the affected path. **Problem** gives its classification, the
+avoidable work or hard-wired time/randomness source, and decisive evidence,
+including measurements when taken. **Why this matters** states the concrete cost
+or testability impact. **Suggested fix** gives the specific correction without
+adding unjustified complexity. Keep unmeasured runtime claims conditional.
 
 Mark a finding `Non-blocking` when it is off the hot path or unmeasured. If the
 change is performance-neutral, say so rather than inventing micro-optimizations.

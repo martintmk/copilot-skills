@@ -80,12 +80,15 @@ finding.
 ## Evidence and findings
 
 Ground findings in emitted instrument definitions and existing telemetry tests
-or exported-signal snapshots, not surrounding prose. Name the exact signal and
-attribute set, the convention or sibling it diverges from, and the
-operator-visible consequence — broken query, cardinality blow-up, duplicated
-signal. Documented telemetry tables and dashboards are consumer evidence that a
-rename is breaking. Keep per-emission cost claims subject to `review-perf`'s
-measurement requirements.
+or exported-signal snapshots, not surrounding prose. For actionable findings,
+use the shared attribution and a concise bold diagnosis title naming the
+affected signal. **Problem** gives the exact signal and attribute set, the
+convention or sibling it diverges from, and decisive evidence.
+**Why this matters** states the operator-visible consequence: broken queries,
+cardinality blow-up or duplicated signals. **Suggested fix** specifies the
+corrected signal contract or instrumentation. Documented telemetry tables and
+dashboards are consumer evidence that a rename is breaking. Keep per-emission
+cost claims subject to `review-perf`'s measurement requirements.
 
 If the change adds no telemetry where a comparable component instruments its
 behavior, say so once rather than demanding instrumentation the change does not

@@ -91,10 +91,12 @@ Continue filtering other premises; do not add a discrepancy finding or replace
 this mandatory pass with another review.
 
 Do not add findings, evidence for a new claim, recommendations, praise, stronger
-wording, severity or runtime proof. A surviving fix may be narrowed with its
-finding, never expanded beyond the original recommendation. Recompute any
-standalone verdict from the surviving findings, respecting area-worker and
-own-PR presentation rules; filtering must not make it more adverse.
+wording, severity or runtime proof. When narrowing a finding, keep its title,
+**Problem** and **Why this matters** aligned with the surviving claim. For an
+actionable finding, **Suggested fix** may be narrowed with it, never expanded
+beyond the original recommendation. Recompute any standalone verdict from the
+surviving findings, respecting area-worker and own-PR presentation rules;
+filtering must not make it more adverse.
 
 Examples: facade docs can refute an "accidental foreign re-export" premise;
 docs defining a boolean can remove an ambiguity claim without defeating an
@@ -119,9 +121,12 @@ per-claim decisions or an investigation transcript.
 
 Preserve the [findings contract](../review-delivery/findings-contract.md):
 standalone **Posted by an AI agent** attribution (optional severity in the same
-bold line), then **Why this matters** and **Suggested fix** for actionable
-findings. Keep decisive API evidence under Why and the specific better shape
-under Fix. The output-only parent returns the filtered area result or standalone
-report unchanged, not the internal status/filtering log. Combined presentation
-and delivery belong to the coordinator; this pass never posts. The designated
-owner removes temporary resources after all consumers finish.
+bold line), then a concise bold title, **Problem** and **Why this matters** for
+every finding, including design notes. Actionable findings use a diagnosis
+title and end with **Suggested fix**. Keep decisive API evidence under
+**Problem**, consumer impact under **Why this matters**, and the specific better
+shape under **Suggested fix** when a change is requested. Clean summaries need
+no finding sections. The output-only parent returns the filtered area result
+or standalone report unchanged, not the internal status/filtering log.
+Combined presentation and delivery belong to the coordinator; this pass never
+posts. The designated owner removes temporary resources after all consumers finish.

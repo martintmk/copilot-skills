@@ -51,8 +51,12 @@ Stage-specific inputs are deliberate exceptions, not shared conversation:
 
 ## Return, then deliver once
 
-Area workers return findings and coverage to the coordinator; retrieval and
-filtering return their defined data/results. Workers do not switch into another
+Area workers return findings and coverage to the coordinator using the
+[findings contract](../review-delivery/findings-contract.md). Every finding
+already includes attribution, a bold title, **Problem** and **Why this matters**
+before handoff. Actionable findings also include **Suggested fix**; design notes
+omit only that section. Retrieval returns data instead; filtering preserves
+the shared format for surviving findings. Workers do not switch into another
 review area or post findings independently.
 
 The coordinator owns merging and the combined verdict, then starts **one fresh

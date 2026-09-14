@@ -66,11 +66,14 @@ evidence to those findings rather than also raising a naming-only duplicate.
 ## Evidence and findings
 
 Naming and abstraction findings are argued from the code and the surrounding
-family, not executed. Quote the sibling that establishes the convention — that
-citation is the evidence. Where the existing code is deliberately inconsistent,
-say so and recommend the smaller change. Give the exact replacement name or
-simplification; prefer a `suggestion` block for a self-contained rename on the
-anchored line.
+family, not executed. For actionable findings, use the shared attribution and a
+concise bold diagnosis title naming the divergence or unnecessary abstraction.
+**Problem** quotes the sibling that establishes the convention and identifies
+the conflicting name or shape. **Why this matters** explains the concrete
+confusion or maintenance burden. **Suggested fix** gives the exact replacement
+name or simplification; put a `suggestion` block there for a self-contained
+rename on the anchored line. Where the existing code is deliberately
+inconsistent, say so and recommend the smaller change.
 
 These are usually `Nit` or `Non-blocking` unless the name ships in a public API
 that is about to be released, in which case it is a contract decision and belongs

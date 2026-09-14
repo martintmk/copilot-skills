@@ -99,8 +99,12 @@ weakened assertions and explicit contract deltas. When a behavioral claim
 depends on runtime behavior, report the focused command and exact base/head
 outcomes required by the shared verification rules.
 
-Name the baseline contract, head delta and missing justification or coverage,
-with the exact restoration or replacement.
+For actionable findings, use the shared attribution and a concise bold diagnosis
+title naming the affected test or behavioral contract. **Problem** identifies
+the baseline contract, head delta and missing justification or coverage, with
+decisive evidence. **Why this matters** explains the behavior that changes for
+consumers or could regress unnoticed. **Suggested fix** gives the exact
+restoration, replacement or coverage for the authorized behavior.
 
 Severity in this area is strongly category-linked, though impact still decides a
 genuine edge case:

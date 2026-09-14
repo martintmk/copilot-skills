@@ -99,9 +99,12 @@ middleware equivalents, not a recommendation to add Oxidizer crates.
 
 ## Evidence and findings
 
-Name the triggering failure path, incorrect or lost classification or duplicated
-mechanism, and a recipe-based `Recovery` fix or version-correct `seatbelt`
-replacement (or the repository equivalent).
+For actionable findings, use the shared attribution and a concise bold diagnosis
+title naming the recovery defect. **Problem** gives the triggering failure path,
+incorrect or lost classification or duplicated mechanism, and decisive evidence.
+**Why this matters** states the resulting recovery or reliability impact.
+**Suggested fix** gives a recipe-based `Recovery` correction or version-correct
+`seatbelt` replacement (or the repository equivalent).
 
 Static API and dependency findings may be argued from code and resolved docs.
 Executable recovery or middleware claims require a reproduced outcome under

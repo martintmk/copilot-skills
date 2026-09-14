@@ -65,9 +65,11 @@ Follow [shared context](../review-lens/review-context.md) and the
 
 ## Findings
 
-Name both locations and the concrete consumer consequence under **Why this
-matters**; give the correction and affected surfaces under **Suggested fix**.
-Static contradictions need precise excerpts, not a test run for its own sake.
+For actionable findings, use the shared attribution and a concise bold diagnosis
+title naming the contradiction and affected surface. Put both locations and
+precise excerpts under **Problem**, the concrete consumer consequence under
+**Why this matters**, and the correction and affected surfaces under
+**Suggested fix**. Static contradictions do not need a test run for its own sake.
 Do not invent certainty when the behavior or intended contract is unknown.
 
 Coverage: claims/documents compared, public-doc/example gaps, applicable

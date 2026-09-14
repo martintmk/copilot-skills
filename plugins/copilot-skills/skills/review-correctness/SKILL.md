@@ -74,7 +74,10 @@ loss is blocking even though it is not semver-visible.
 
 ## Findings
 
-Each finding names the triggering input or sequence and quotes the decisive
-reproduced result.
+For actionable findings, use the shared attribution and a concise bold diagnosis
+title naming the reproduced defect. **Problem** gives the triggering input or
+sequence and quotes the decisive reproduced result. **Why this matters** states
+the consumer or runtime consequence. **Suggested fix** gives the specific
+correction and, when useful, the focused regression test.
 
 Coverage line: the paths traced and what remained unverified.

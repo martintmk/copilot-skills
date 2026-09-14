@@ -77,13 +77,23 @@ focused skill to review only that area.
    duplicate root causes and dispatches one fresh `review-delivery` worker.
 
 The [findings contract](skills/review-delivery/findings-contract.md) owns the
-AI attribution, severity and **Why this matters** / **Suggested fix** format.
+shared format. Every finding starts with AI attribution and a bold title,
+followed by **Problem** (issue and evidence) and **Why this matters** (impact).
+Actionable findings use a diagnosis title and end with **Suggested fix**
+(correction). This applies to intermediate specialist results, filtered API
+reports, standalone reports and PR threads, including non-blocking findings and
+nits. Design notes still require **Problem**: use an observation title and
+describe the constraint or trade-off with evidence, without asserting a defect.
+Only **Suggested fix** is omitted when no change is requested. Clean summaries
+and docs-only bundles do not need finding sections.
+
 Specialists read that compact contract without loading provider posting
-mechanics. The [worker isolation protocol](skills/review-lens/worker-isolation.md)
-also covers standalone requests, docs retrieval and API filtering. Workers do
-not recursively redispatch themselves or reuse contexts across skills/passes.
-The coordinator routes dependency and documentation checks to specialists
-rather than doing inline review work.
+mechanics. The
+[worker isolation protocol](skills/review-lens/worker-isolation.md) also covers
+standalone requests, docs retrieval and API filtering. Workers do not
+recursively redispatch themselves or reuse contexts across skills/passes. The
+coordinator routes dependency and documentation checks to specialists rather
+than doing inline review work.
 
 The mandatory `review-public-api` pass stays output-only and report-only: it
 receives no source-based findings, and its docs-based filtering stays isolated.

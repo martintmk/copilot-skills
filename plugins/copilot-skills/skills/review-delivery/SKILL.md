@@ -35,10 +35,15 @@ This gate does not broaden a directly requested single-area review.
    changed local file, return affected claims to the coordinator before
    posting; re-anchoring alone does not validate old evidence.
 3. Check every body against the contract: exact bold attribution on its own
-   first line, a blank line, then the required finding sections in order.
+   first line, followed by a blank line. Every finding, including a design note,
+   requires a concise bold title, **Problem** and **Why this matters**, in order.
+   Actionable findings use a diagnosis title and end with **Suggested fix**.
+   Design notes use an observation title and describe the constraint or
+   trade-off with evidence under **Problem**; omit only **Suggested fix**.
+   Clean summaries and coverage-only reports do not need finding sections.
    Reject legacy, quoted, backticked, indented or run-in prefixes. Prose and
-   fences start at column zero. Summaries and no-change notes use the contract's
-   exceptions. Inspect serialized bodies, not only the source template.
+   fences start at column zero. Inspect serialized bodies, not only the source
+   template.
 4. On the requester's own PR, use GitHub `COMMENT` / no ADO vote and omit
    `Verdict:` framing. GitHub also rejects `APPROVE` and `REQUEST_CHANGES` when
    the authenticated poster is the author; use `COMMENT` in that case.
@@ -101,8 +106,9 @@ another ADO deployment is not evidence that the same tool exists here.
 ## Report-only and completion
 
 For local or report-only work, return attributed findings in the shared
-two-section shape, coverage and verdict; post nothing. Do not replace full
-findings with a table.
+finding format, followed by coverage and verdict; post nothing. Preserve the
+same design-note and clean-summary exceptions. Do not replace full findings
+with a table.
 
 After external delivery, report the review URL and a compact one-line-per-finding
 table in chat rather than pasting the whole review back. Report partial delivery

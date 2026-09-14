@@ -25,7 +25,10 @@ packages/artifacts or failed generation are blockers, not empty coverage.
 Retrieve authoritative **public** API documentation from cargo-generated
 rustdoc JSON. This is a reusable retrieval primitive, not a reviewer: return
 data and limitations, never findings, severity, verdicts or posts. It is exempt
-from the shared findings contract.
+from the [shared findings contract](../review-delivery/findings-contract.md).
+Do not wrap retrieval results in diagnosis titles or **Problem**,
+**Why this matters** and **Suggested fix** sections; reviewing consumers apply
+that format to their findings, not to this documentation bundle.
 
 Questions about code-vs-doc or docs-vs-doc factual/contract disagreements belong
 to [`review-consistency`](../review-consistency/SKILL.md). Supply the matching

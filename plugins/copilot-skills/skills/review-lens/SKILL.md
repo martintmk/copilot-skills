@@ -42,6 +42,10 @@ This skill owns coordination, not specialist investigation. Read
    including points already raised in discussion. Retain the strongest
    supported evidence, not the longest explanation. Resolve conflicting claims
    with their owners and decisive evidence rather than redoing whole passes.
+   Preserve each finding's attribution and bold title, with the issue/evidence
+   under **Problem** and impact under **Why this matters**. Actionable findings
+   use a diagnosis title and **Suggested fix**; design notes still require
+   **Problem** but omit the fix. Clean summaries need no finding sections.
    Consolidate coverage, including public surface and blocked areas. Require a
    returned coverage record from every dispatched skill before calling the
    review complete; a clean partial roster is not a complete review.

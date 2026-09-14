@@ -298,12 +298,14 @@ concrete consumer or compatibility cost demonstrated by output.
 
 ## Evidence and severity
 
-Within the shared finding shape, **Why this matters** must carry the exact public
-path, smallest decisive `cargo public-api` excerpt, and concrete usability,
-interoperability, type-identity or compatibility cost. Include related emitted
-lines when an absence would otherwise be ambiguous. **Suggested fix** names a
-specific better public shape, not an implementation patch; cite the applicable
-`M-*` ID or Rust convention briefly where useful.
+For actionable findings, use the shared attribution and a concise bold diagnosis
+title naming the public defect and affected surface. **Problem** must carry the
+exact public path and smallest decisive `cargo public-api` excerpt, including
+related emitted lines when an absence would otherwise be ambiguous.
+**Why this matters** states the concrete usability, interoperability,
+type-identity or compatibility cost. **Suggested fix** names a specific better
+public shape, not an implementation patch; cite the applicable `M-*` ID or Rust
+convention briefly where useful.
 
 Most cleanliness concerns are `Non-blocking` or `Nit`; only a demonstrated,
 substantial consumer or compatibility problem merits blocking severity. Put
@@ -326,10 +328,12 @@ Scope: <tool version, package, features, target, and optional baseline>
 Verdict: <approve | approve with non-blocking comments | changes requested | blocked>
 
 ## Findings
-<Shared two-section finding blocks, with exact public paths and API excerpts.>
+<Shared finding blocks: attribution, bold title, **Problem**, **Why this matters**;
+**Suggested fix** for actionable findings; exact public paths and API excerpts.>
 
 ## Design questions
-<context-dependent choices, each with exact API evidence>
+<Conditional design-note blocks: attribution, bold observation title, **Problem**
+with the constraint and exact API evidence, **Why this matters**; no **Suggested fix**.>
 
 ## What is already clean
 <brief, specific strengths; omit generic praise>

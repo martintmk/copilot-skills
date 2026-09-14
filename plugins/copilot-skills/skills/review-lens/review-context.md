@@ -54,7 +54,11 @@ another worker's resources. Use assigned checkouts/worktrees; request missing
 revision isolation from the coordinator instead of creating extra worktrees or
 switching a shared checkout independently. Read the
 [findings contract](../review-delivery/findings-contract.md), not the full
-posting skill, to format results.
+posting skill, to format results. Intermediate area results already include the
+shared attribution, bold title, **Problem** and **Why this matters** for every
+finding, including design notes. Actionable findings use a diagnosis title and
+also include **Suggested fix**; do not leave those sections for delivery to add.
+Clean summaries need no finding sections; docs retrieval returns data, not findings.
 
 For a Review Lens assignment, also return its requested coverage record for
 the pinned snapshot. Every sub-review is dispatched; a worker may establish

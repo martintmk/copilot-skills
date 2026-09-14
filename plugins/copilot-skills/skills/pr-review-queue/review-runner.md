@@ -4,6 +4,12 @@ These are invocation-specific requirements for `pr-review-queue`, not changes
 to the shared review skills. Use Review Lens's existing review, evidence,
 isolation and presentation rules; keep queue bookkeeping here.
 
+Preserve the [findings contract](../review-delivery/findings-contract.md)
+through report-only output, saved artifacts and posting. Every finding,
+including a design note, retains its attribution, bold title, **Problem** and
+**Why this matters**. Actionable findings also require **Suggested fix**. Clean
+summaries and internal receipts are not finding bodies.
+
 ## Two stages, one PR at a time
 
 The queue owns the phase boundary; it does not need callbacks or modifications
