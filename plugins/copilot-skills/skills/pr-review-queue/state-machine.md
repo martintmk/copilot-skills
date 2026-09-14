@@ -30,6 +30,35 @@ summary, even when duplicate inline findings are omitted.
 - Configuration changes also take the lock. Never replace identities or remove
   an in-flight repository mid-transaction; retain removed repositories' history.
 
+`configuration.repositories` is the **active** monitored set. When the user
+explicitly narrows scope, archive the prior configuration and retain removed
+entries in `configuration.inactiveRepositories` (or equivalent history), with
+their identities, blockers and receipts. Do not poll inactive entries or let
+their old preflight blockers disable an otherwise ready active scope.
+Unfinished transactions still block removing their repository. Keep the saved
+cadence unless the user changes it; an empty active list disables monitoring.
+
+### Windows persistence and lock lifetime
+
+PowerShell tool calls use separate processes. A lock acquired in a short-lived
+call is released when that process exits: it does not protect later workers.
+Use an exclusive OS handle held by a live owner across calls, or a create-new
+lock file with explicit ownership/liveness recovery. Record the owner
+PID/start time, session and owned workers without storing credentials. If a
+separate lock-holder is needed, confirm acquisition before touching state,
+keep it alive through the operation, then signal release only after workers
+have stopped and state is durable. Confirm release; do not abandon a detached
+lock-holder after reporting setup complete.
+
+For an existing destination, flush the sibling staging file with
+`FileStream.Flush(true)` before `File.Replace`. Pass a concrete sibling backup
+path: PowerShell can coerce `$null` in the backup-path argument to an empty
+string and fail with "The path is empty." For first creation, move the flushed
+staging file to the absent destination without overwrite. Never delete the
+destination first, truncate it in place, or treat a failed replace as committed.
+Preserve ambiguous staging/backup files for reconciliation; a rolling backup
+does not replace immutable configuration or operation history.
+
 Illustrative version-1 state; IDs/SHAs are placeholders and `15m` is not a default:
 
 ```json
@@ -70,6 +99,11 @@ status before creation; include the key in the fixed tick prompt. Record the
 returned ID/status afterward. Reconcile that exact key against the scheduler
 before retrying an uncertain registration; multiple/unknown matches block.
 One-shot runs leave this record and existing schedules untouched.
+Read back the single registered schedule and its cadence before reporting it
+active. A fixed tick prompt identifies the monitor key/state location, invokes
+this skill as an unattended finite tick, and uses only the saved active scope;
+it never repeats setup or creates another schedule. Record/report the first
+scan policy instead of implying that scheduling already reviewed a PR.
 
 Archive immutable, versioned review results, whole receipts, delivery journals, and request/acknowledgment
 proof before state references them. Keep history across lifecycle/configuration changes and payloads until durable acknowledgment.
@@ -186,8 +220,9 @@ delivery on changes and reconcile first; never change its ID, snapshot, or cycle
   `operationId`, `prKey`, `reviewedBase`, `reviewedHead`, `reviewIds/threadIds`,
   `reviewUrl`, `postingIdentity`, `postedAt`, `verifiedAt`, and `voteStatus`.
 - Accept `verified` only for the exact operation/snapshot after full provider read-back
-  of intended feedback/required votes **and** coordinator-confirmed complete selected
-  Review Lens work. Never infer `reviewComplete` from posted comments or journal existence.
+  of intended feedback/required votes **and** coordinator-confirmed complete
+  Review Lens work with its full snapshot-matching coverage manifest. Never infer
+  `reviewComplete` from posted comments or journal existence.
   It is not an extra receipt field; diagnostics with blocked/incomplete coverage and drafts never qualify.
   No ADO vote on target/poster-owned PRs: use `voteStatus=not-requested`, not cast.
 - Recover by provider IDs first. After a lost response, a unique exact
@@ -203,6 +238,11 @@ delivery on changes and reconcile first; never change its ID, snapshot, or cycle
 - Changed heads/targets/cycles do not invalidate historical receipts or satisfy
   new work. Persist the new observation/debt before settling the old transaction;
   never replace a newer observed head with the old receipt's head during commit.
+- A stronger review-coverage policy does not invalidate durably completed
+  historical receipts or trigger a same-head replay by itself. An in-flight
+  artifact missing the required coverage manifest cannot authorize new
+  publication; reconcile any already-attempted writes before obtaining missing
+  review work, preserving its operation/snapshot and all delivery evidence.
 
 ## Acknowledgment and finalization
 
@@ -277,3 +317,6 @@ retire it permanently on merge while retaining its audit history.
 | Unknown request time or review history | No fabricated ordering/absence; block the applicable selection/work. |
 | Closed/draft, then reopened | Retain history, pause writes, resume due current work; merged stays terminal. |
 | Concurrent scheduler ticks | One lock owner and one in-flight transaction; other ticks exit busy. |
+| Discovery budget expires | Preserve partial evidence, stop owned probes safely and report blocked; do not schedule or infer absent history. |
+| User narrows a blocked mixed-provider setup | Preserve inactive configuration/history, preflight the explicit active set and reuse the confirmed cadence. |
+| Missing sub-review or failed API filter | No completed-review publication or acknowledgment, even if the other passes found nothing. |

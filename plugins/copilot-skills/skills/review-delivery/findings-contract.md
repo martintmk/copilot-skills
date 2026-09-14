@@ -67,7 +67,9 @@ coverage line is the whole body after attribution. Area workers do not decide
 the combined verdict or deliver separately.
 
 The coordinator merges findings about the same root cause and consolidates
-coverage without losing skipped/blocked areas or the public surface reviewed.
+coverage without losing not-applicable/blocked areas or the public surface
+reviewed. Review Lens requires its full dispatched roster; a missing pass
+cannot be hidden by a clean summary.
 Lead the final summary with the outcome, then concise coverage and material
 limitations. Evidence stays with its finding rather than being repeated in a
 summary transcript.

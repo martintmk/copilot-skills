@@ -19,12 +19,16 @@ inside shared skills. Supply each stage with the relevant subset of:
 
 1. Run a fresh `review-lens` coordinator with **explicit report-only mode**.
    Return the pinned operation/snapshot, complete findings with anchors,
-   coverage/verdict and coordinator-confirmed `reviewComplete`. Any local
-   formatting stage must remain report-only. No posting or request clearing
+   coverage/verdict, the full `coverageManifest` required by Review Lens, and
+   coordinator-confirmed `reviewComplete`. Every sub-review must run; the queue
+   does not authorize a risk-selected subset. Any local formatting stage must
+   remain report-only. No posting or request clearing
    occurs in this stage.
 2. Validate and atomically save that result in the operation's versioned
-   `reviewArtifact`. Only complete, snapshot-matching work allows the queue to
-   persist `reviewComplete=true` and transition to `delivering`.
+   `reviewArtifact`. Validate every required skill's actual worker record and
+   snapshot against Review Lens's completion gate. Only complete,
+   snapshot-matching work allows the queue to persist `reviewComplete=true` and
+   transition to `delivering`.
 3. Start one fresh `review-delivery` worker with the saved result and the
    intended PR-posting mode. Supply the journal/receipt instructions below.
    The queue waits for this worker, then validates its receipt before entering
@@ -90,8 +94,8 @@ voteStatus: not-requested | verified | missing
 `reviewedHead` is the exact head SHA. Preserve ADO iteration evidence alongside
 the snapshot. Do not flatten a target change into a matching head alone.
 
-`verified` requires completed selected Review Lens work and provider read-back
-of every planned finding, summary and required vote for the exact snapshot.
+`verified` requires the complete Review Lens coverage manifest and provider
+read-back of every planned finding, summary and required vote for the exact snapshot.
 Posted diagnostics, incomplete coverage, drafts and local reports do not
 qualify. Return actual IDs/timestamps when known; do not invent them.
 Missing writes/coverage are `partial`, unknown write outcomes `ambiguous`, and

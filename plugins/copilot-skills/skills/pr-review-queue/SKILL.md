@@ -36,16 +36,22 @@ contracts. Existing review skills stay unchanged; do not reuse radar state.
    list means no monitoring, not permission to discover replacement repositories.
    Missing setup in an unattended tick is a blocker, not invented configuration.
 4. Complete read-only capability/auth preflight across **MCP and provider CLIs**
-   for **every configured provider/repository before scheduling or review
+   for **every active configured provider/repository before scheduling or review
    side effects**. Tool/executable presence is not proof of a working operation.
    Missing combined coverage fails closed; absent MCP support alone does not.
    Never silently drop a provider or eligibility rule.
+   Follow the preflight's bounded discovery procedure; do not leave background
+   capability research running indefinitely. An explicit user request may
+   narrow active scope while retaining inactive configuration/history; refresh
+   only that newly active scope and preserve the confirmed cadence.
 5. Register at most one schedule for this monitor using the confirmed cadence
    and persist its identity. Reuse/reconcile it on restart; never duplicate an
    uncertain registration. Ticks use saved configuration, never create schedules
    or recurse. Do not invent intervals; unavailable scheduling is a blocker.
    Serialize setup/configuration/scheduler edits under the same monitor lock.
    Skip registration for a one-shot invocation.
+   Read back the registered schedule, persist its ID before releasing the lock,
+   and state whether the first scan runs now or on the first scheduled tick.
 
 All hosting operations use preflight's validated `operation_bindings`, selecting
 MCP or official provider CLI per operation. Prefer normal GitHub CLI / configured
@@ -139,7 +145,9 @@ from discussion activity or tool enumeration order.
    queue-specific adaptation; do not modify or require changes to shared skills.
    Save the completed review artifact and phase before posting begins.
 3. Require a full Review Lens pass for this selected current head, not merely
-   a skim of new commits. Reuse revision-matching facts/artifacts, not stale
+   a skim of new commits or a subset of sub-reviews. Require the complete
+   [Review Lens coverage manifest](../review-lens/SKILL.md) on every pass.
+   Reuse revision-matching facts/artifacts, not stale
    conclusions or another review's reasoning. A same-head new request still
    receives a fresh pass. Still-applicable unresolved issues affect the outcome
    even when duplicate inline findings are omitted. Apply shared evidence and
@@ -147,7 +155,7 @@ from discussion activity or tool enumeration order.
    attribution, **Why this matters** and **Suggested fix**; do not fork them.
    On target/requester's or posting actor's own PR, use GitHub `COMMENT` and
    no ADO vote; never self-approve.
-4. Require coordinator confirmation that selected Review Lens work is complete,
+4. Require coordinator confirmation that all required Review Lens work is complete,
    plus bound-provider read-back of **all** findings, summary and required votes.
    A posted diagnostic cannot make blocked/incomplete review coverage complete.
    Accept only an internal `verified` receipt for this exact `operationId`,

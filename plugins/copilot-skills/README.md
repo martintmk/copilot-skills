@@ -37,7 +37,7 @@ the entry-point guide.
 
 | Skill | Use it for |
 | --- | --- |
-| [`review-lens`](skills/review-lens/SKILL.md) | A complete Rust PR, branch, commit or working-tree review, with public API as the dominant lens. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Every sub-review on every Rust PR, branch, commit or working-tree review, with public API as the dominant lens. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Reproduced behavioral defects across every changed correctness-sensitive path. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
@@ -63,15 +63,18 @@ focused skill to review only that area.
 1. **Establish context once.** The coordinator resolves revisions, rules,
    execution trust, CI and existing discussion using
    [shared review context](skills/review-lens/review-context.md).
-2. **Isolate every selected skill.** Each specialist runs in a fresh agent
-   session, even for small or directly requested reviews. The coordinator sends
+2. **Run and isolate every sub-review.** Review Lens dispatches all ten review
+   and retrieval skills on every invocation, including small, docs-only and
+   manifest-only changes. Each gets a fresh agent session. The coordinator sends
    a minimal factual handoff, not its conversation or other reviewers' reasoning.
    Independent work may run in parallel; dependent work stays sequential but
    never shares a reviewer context.
 3. **Reuse evidence.** Matching excerpts, targeted results and scoped docs
    bundles are shared instead of repeating setup, builds or investigation.
-4. **Deliver once.** The coordinator merges duplicate root causes and retains
-   coverage/limitations, then dispatches one fresh `review-delivery` worker.
+4. **Gate completion, then deliver once.** Every required worker must return
+   snapshot-matching coverage or an evidence-backed not-applicable result;
+   missing/blocked work cannot be called complete. The coordinator merges
+   duplicate root causes and dispatches one fresh `review-delivery` worker.
 
 The [findings contract](skills/review-delivery/findings-contract.md) owns the
 AI attribution, severity and **Why this matters** / **Suggested fix** format.
@@ -82,10 +85,11 @@ not recursively redispatch themselves or reuse contexts across skills/passes.
 The coordinator routes dependency and documentation checks to specialists
 rather than doing inline review work.
 
-`review-public-api` is a separate report-only workflow, not an automatic second
-pass over a normal PR. Its API review, filtering and any needed docs retrieval
-use separate contexts. `review-public-docs` returns a scoped bundle to the docs
-consumer, never raw JSON or findings; matching bundles need not be rebuilt.
+The mandatory `review-public-api` pass stays output-only and report-only: it
+receives no source-based findings, and its docs-based filtering stays isolated.
+`review-public-docs` is also always dispatched and returns a scoped bundle to
+docs consumers, never raw JSON or findings. Matching artifacts need not be
+rebuilt. Directly invoking a focused skill still runs only that workflow.
 
 ## PR tracking and automation
 
@@ -103,9 +107,13 @@ GitHub requests are cleared only after verified delivery; ADO assignments and
 votes are retained, with request-cycle completion tracked locally. It does not
 reply to later discussion or apply fixes. Creating the skill does not start a
 schedule. MCP gaps can be filled by provider CLIs; missing combined capability
-blocks execution rather than falling back to direct HTTP. Its runner, journal
-and receipt adaptations live entirely in the new skill's directory, leaving
-existing review skills unchanged.
+blocks execution rather than falling back to direct HTTP. Preflight has a
+bounded discovery budget and [focused CLI recipes](skills/pr-review-queue/provider-cli-recipes.md)
+for identity, pagination and authoritative history. If one provider blocks
+setup, explicitly requesting a narrower scope (for example GitHub only)
+preserves the inactive configuration and the confirmed cadence; inactive
+providers are not monitored. The queue's runner gates posting on Review Lens's
+complete coverage manifest and keeps delivery/acknowledgment journals separate.
 
 `feedback-autonomy` handles eligible automation and actionable instructions
 posted by the same human who created the PR, using provider identity data without

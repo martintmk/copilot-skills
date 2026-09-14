@@ -15,6 +15,13 @@ Apply the [fresh-worker entry gate](../review-lens/worker-isolation.md) before
 retrieval. This skill has its own worker, never the caller's or API filter's
 context; an already assigned retrieval worker does not dispatch itself again.
 
+Review Lens dispatches this retrieval stage on every run. If the supplied
+factual package inventory establishes no Rust library scope, return a
+`not-applicable` coverage record with that provenance; do not fabricate an empty
+bundle or build an unrelated crate. For Rust library changes, determining that
+no public items changed still requires the matching comparison below. Missing
+packages/artifacts or failed generation are blockers, not empty coverage.
+
 Retrieve authoritative **public** API documentation from cargo-generated
 rustdoc JSON. This is a reusable retrieval primitive, not a reviewer: return
 data and limitations, never findings, severity, verdicts or posts. It is exempt

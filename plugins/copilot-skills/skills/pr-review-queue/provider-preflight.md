@@ -1,9 +1,40 @@
 # Provider Prerequisites and Operation Bindings
 
 Before scheduling a monitor or processing a batch, establish a complete
-operation plan for every configured provider/repository. Check available MCP
+operation plan for every active configured provider/repository. Check available MCP
 capabilities **and** provider command-line tools together; neither must cover
 the whole workflow alone.
+
+## Keep preflight bounded
+
+Preflight proves the required operation plan; it is not an open-ended provider
+API investigation. Use a **two-minute discovery budget per active provider**,
+excluding user-input waits and an explicitly approved installation. Honor an
+explicit user-supplied budget instead. Give every delegated probe the same
+deadline and remaining gaps; do not restart the clock in a worker.
+
+- Reuse already loaded schemas, command help and matching factual artifacts.
+  Refresh live identity/access and required reads, not every unchanged tool
+  description. Use the [CLI recipes](provider-cli-recipes.md) before rediscovering
+  known operations.
+- Default to foreground/synchronous probes. Delegate only independent work
+  that needs separate context while the caller makes real parallel progress.
+  Do not leave a background worker doing unbounded discovery.
+- After a failed operation, try at most one evidence-backed, permitted alternate
+  route within the remaining budget. Never guess endpoint names repeatedly,
+  bypass a denial or launch organization-wide service enumeration.
+- Bound owned read-only commands by the remaining time. At the deadline, stop
+  further probes, stop or await those commands/workers safely, and return the
+  missing capability with the evidence collected. Keep the lock until they have
+  stopped; a timeout is not permission to steal it or declare a read complete.
+- A proven required gap ends preflight early. Distinguish missing tools/auth
+  from **unproven history semantics**: installing another client cannot make a
+  current-state field into an authoritative event history.
+
+Exhaustion means `blocked`, never a partial success or truncated-history
+absence. Report the concrete remaining gap and whether any owned work is still
+running; do not say only "preflight is in progress." Preserve the findings so
+an explicit later attempt can target the gap rather than repeat discovery.
 
 ## Build a usable plan
 
@@ -15,6 +46,10 @@ the whole workflow alone.
    `az extension show --name azure-devops`. Missing MCP operations may be
    supplied by supported `gh` or Azure DevOps CLI operations. Do not silently
    install software, rewrite credentials or change global CLI defaults.
+   Disable Azure CLI dynamic extension installation for the probe process;
+   check the extension before invoking its commands, including `--help`.
+   In interactive setup, ask once before installing a required missing
+   extension. An unattended tick reports it missing and pauses.
 3. Bind each required operation to a usable MCP tool or provider CLI command.
    Prefer the existing conventions: GitHub CLI and configured ADO MCP where
    they support the operation. Fill gaps with the other available interface;
@@ -59,7 +94,7 @@ notification-only permissions and state are different.
 
 | Capability | Required meaning |
 | --- | --- |
-| Identity and repositories | Resolve target/posting actor IDs and access to every configured repository. |
+| Identity and repositories | Resolve target/posting actor IDs and access to every active configured repository. |
 | PR collection and metadata | Paginated open PRs, stable repository/PR identity, author, draft/lifecycle state, creation time, target/base and current head. |
 | Review requests and history | Current individual target requests and authoritative generation/time/reset history, including a same-head re-request. Membership or current vote alone is insufficient. |
 | Prior reviews | Submitted review/vote and review-thread history; distinguish no review from unknown/incomplete history. |
@@ -115,3 +150,17 @@ receipts without changing shared review skills. Only its `verified` receipt
 for the exact operation and snapshot permits acknowledgment. A limited,
 ambiguous or blocked review, local report or pending draft cannot consume work.
 Retain journals and payload artifacts until acknowledgment is durable.
+
+## Scope changes after a provider blocker
+
+A gap in one **active** provider blocks the combined monitor; never silently
+drop it. During interactive setup, a user may explicitly authorize a narrower
+repository set, such as GitHub only. Apply that change under the monitor lock,
+preserve the old configuration/evidence and any inactive repository history,
+then rerun preflight only for the newly active scope. An already confirmed
+cadence does not need to be asked again.
+
+Inactive repositories are not queried, included in eligibility, or treated as
+current-provider blockers. They also cannot be removed from active scope while
+an in-flight transaction for them remains unresolved. Unattended ticks never
+make this configuration decision themselves.
