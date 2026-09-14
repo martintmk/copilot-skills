@@ -1,214 +1,103 @@
 ---
 name: review-delivery
 description: >
-  Post an AI-attributed code review to a GitHub pull request, Azure DevOps pull
-  request, or a local report, with correct anchoring, severity labels, comment
-  shape, and verdict. Shared delivery mechanics for the review-* skills, which
-  produce findings but do not own posting. Use whenever a review is finished and
-  needs to be delivered, including a clean approval, or when a posted review
-  failed to anchor. Not for producing findings, and not for non-review PR
-  comments.
+  Deliver finished, merged review findings once to GitHub, Azure DevOps or a
+  local report, with precise anchors and the shared AI-attributed comment
+  format. Use when a review is ready to deliver, including a clean review,
+  or to recover failed posting. Not for generating findings, formatting an
+  area's intermediate output, or non-review PR comments.
 ---
 
 # Review Delivery
 
-Turn finished findings into one posted review. Every message is explicitly
-attributed to an AI agent, anchored to the code it is about, and honest about
-what was verified.
+Run in the coordinator's single fresh delivery worker under the
+[isolation protocol](../review-lens/worker-isolation.md), also for direct
+delivery requests; an already assigned worker does not dispatch itself again.
+For finding format alone, read the [findings contract](findings-contract.md);
+area workers never post.
+Accept the completed findings, coverage, reviewed revisions and delivery mode.
+Do not repeat the investigation or override an explicit report-only request.
 
-## Findings contract
+## Prepare the review
 
-Every `review-*` skill emits findings in this shape, so a single review reads the
-same way no matter which areas ran. Each skill adds its own area-specific field
-and evidence rule within the two sections below; none of them redefine this shape.
+1. Apply the shared contract to the merged findings. Omit newly duplicated
+   discussion points if a stale snapshot needs refreshing; do not rerun the
+   area passes. Summarize outcome, coverage (including public surface), material
+   limitations and the supported verdict.
+2. Confirm the head/diff state still matches the evidence. For a moved head or
+   changed local file, return affected claims to the coordinator before
+   posting; re-anchoring alone does not validate old evidence.
+3. Check every body against the contract: exact bold attribution on its own
+   first line, a blank line, then the required finding sections in order.
+   Reject legacy, quoted, backticked, indented or run-in prefixes. Prose and
+   fences start at column zero. Summaries and no-change notes use the contract's
+   exceptions. Inspect serialized bodies, not only the source template.
+4. On the requester's own PR, use GitHub `COMMENT` / no ADO vote and omit
+   `Verdict:` framing. GitHub also rejects `APPROVE` and `REQUEST_CHANGES` when
+   the authenticated poster is the author; use `COMMENT` in that case.
 
-1. **Order by impact**, most consequential first. Return only actionable
-   findings — never pad a review to look thorough.
-2. **Anchor each finding as `path:line`** and name the symbol it is about.
-3. **Use the shared comment shape below.** Put the claim and concrete consumer-,
-   operator- or runtime-visible consequence under **Why this matters**. Put the
-   specific correction under **Suggested fix**, with a `suggestion` block only
-   when it is the exact replacement for the anchored range.
-4. **Label severity from impact, not category**, in the attribution line rather
-   than as a prose prefix, using only this vocabulary:
-   - no severity qualifier — blocking;
-   - `Non-blocking` — a real issue that should not gate the change;
-   - `Nit` — cosmetic;
-   - `Design note, no change requested` — an observation being recorded.
-5. **Keep evidence honest and compact.** Distinguish reproduced results from
-   reasoned claims under **Why this matters**, quoting the decisive result when
-   it establishes the issue. Do not add a routine `Verified:` paragraph or
-   narrate the investigation. State material uncertainty rather than guessing,
-   and raise an unprovable behavioral suspicion as a question, not a finding.
-6. **End the area's output with one coverage line** naming what it actually
-   reviewed and what it could not assess — even when nothing was wrong. Do not
-   repeat coverage in every comment.
-7. **Say so plainly when there are no findings.** The coverage line is then the
-   whole body after the AI attribution. Never manufacture findings.
+## GitHub
 
-**Verdict vocabulary**, used by the summary and by report-only skills:
-`approve`, `approve with non-blocking comments`, `changes requested`, or
-`blocked` when the review could not run at all (state the decisive diagnostic).
+Post one review, not a series of independent inline reviews:
 
-## Voice and severity
-
-- **Attribute every message to the AI.** Start the summary, every GitHub inline
-  comment, every Azure DevOps thread, and each local report with
-  `**Posted by an AI agent**` on its own line, followed by a blank line. For a
-  finding that needs a severity qualifier, put it inside the same bold line:
-  `**Posted by an AI agent · Non-blocking**`, `**Posted by an AI agent · Nit**`,
-  or `**Posted by an AI agent · Design note, no change requested**`. Use this
-  attribution on each finding in a report too. Do not prepend another marker,
-  wrap the line in backticks, quote or indent it, or imply the requester wrote
-  the review.
-- **One claim per comment, two short sections.** Normally one or two sentences
-  under each heading. Lead with consumer or runtime impact, not compiler
-  internals. Include concrete evidence when it establishes the issue, but omit
-  investigation narration, redundant detail, and speculative API-evolution
-  arguments. Brevity must not weaken the underlying investigation or hide a
-  material limitation.
-
-### Comment shape
-
-```markdown
-**Posted by an AI agent · Non-blocking**
-
-**Why this matters**
-<Concrete problem and consumer/runtime impact, with decisive evidence when useful.>
-
-**Suggested fix**
-<Specific correction and, only when useful, why it fits.>
-```
-
-Choose the severity qualifier from impact; the example is not a default.
-Use these exact headings for every actionable finding, including standalone
-reports. Fold area-specific evidence into **Why this matters** and recommendations
-into **Suggested fix** rather than adding per-field sections. A design note with
-no change requested uses only **Why this matters**; do not invent a fix. Clean
-summaries and coverage-only reports need attribution, not empty finding sections.
-
-Put an exact-range `suggestion` fence under **Suggested fix**. When a failing test
-is useful permanent coverage, include its complete focused `rust` fence there,
-optionally inside `<details>`, and name the module/file where it belongs. Keep
-longer proof material only when needed, optionally collapsed under **Why this
-matters**. Do not indent prose or fences.
-
-### Judgment and anchoring
-
-- **Anchor precisely.** Attach to the right line and name the symbol; quote the
-  exact value. Use in-body line references (`L56-59`) only to point at a
-  *different* line than the anchor.
-- **Keep severity in the attribution line.** Use the qualifiers in the findings
-  contract, with no qualifier for a blocking finding. State the verdict in the
-  summary, not on each finding.
-- **Set severity from impact, not category.** A public-contract or semver issue
-  is usually blocking, but weigh novelty, real consumer impact, precedent,
-  mitigation and scope: a new public conversion that merely inherits a
-  pre-existing quirk is `Non-blocking` with a doc-note ask, not a block.
-- **Acknowledge intent when it affects the recommendation.** Explain a relevant
-  constraint or trade-off briefly, then commit to a correction; do not add a
-  rationale paragraph by default.
-- **Retract plainly** when a re-run shows you were wrong.
-- **On the requester's own PR**, act as an investigative assistant, not a
-  gatekeeper: use `event:"COMMENT"` / no ADO vote, and drop `Verdict:` framing.
-
-## Avoid low-signal comments
-
-Formatting and import order (tooling owns it); speculation presented as fact;
-repeated lint/CI output that reveals no design or correctness problem; generic
-Rust advice not tied to a changed line; restating the code; and large proof
-listings that are mostly harness setup.
-
-## Output and verdict
-
-A structured summary plus findings in impact order. Build the summary from
-components, not a fixed template; it may be one sentence. After the standalone
-`**Posted by an AI agent**` line and a blank line, lead with the overall outcome,
-then concise coverage and material limitations. State the verdict when
-applicable. Keep decisive evidence with its finding rather than repeating the
-investigation in the summary. Findings placed in the summary because they cannot
-be anchored still use the shared two-section comment shape.
-
-If a review area's gate produced no finding, say so explicitly rather than
-silently omitting it. Reach a verdict from the findings alone, using the verdict
-vocabulary in the findings contract above. If nothing meaningful is wrong, say
-so; never manufacture findings.
-
-## GitHub PR
-
-Post one **review**:
-
-```
+```text
 gh api repos/<owner>/<repo>/pulls/<n>/reviews --method POST --input review.json
 ```
 
-`review.json` is `{ body, event, commit_id, comments[] }`; `event` is
-`REQUEST_CHANGES`, `COMMENT` or `APPROVE`; `commit_id` is the final verified head
-SHA; each comment is `{ path, line, side, body }` (+ `start_line` / `start_side`
-for a range). `side` is `RIGHT` for added/changed lines, `LEFT` only for a
-removed line. Mechanics that bite:
+The payload is `{ body, event, commit_id, comments[] }`. `event` is
+`REQUEST_CHANGES`, `COMMENT` or `APPROVE`; `commit_id` pins the reviewed head.
+Each comment is `{ path, line, side, body }`, plus `start_line` / `start_side`
+only for ranges.
 
-- **Generate the JSON with a script written to disk**, then run it — a `.py`
-  file that builds the payload and `json.dump`s it, posted with `--input`. Avoid
-  inline `python -c` (shell quoting mangles bodies carrying backticks, newlines
-  and ` ```suggestion ` blocks), and **never pass a body with `-f body=@file` /
-  `--raw-field`** — that posts the literal path `@file`, not its contents. Build
-  multiline bodies with `textwrap.dedent(...).strip()` so Markdown begins at
-  column zero.
-- **Line numbers are post-change lines on the head** — read them from the
-  checked-out head or `gh pr view <n> --json headRefOid`, pin the review with
-  `"commit_id": "<headRefOid>"`, and re-check the head has not moved immediately
-  before posting. This also works for fork PRs.
-- **The anchor must fall inside a diff hunk** (context lines count). If a
-  finding's ideal line is outside the diff, put it in the summary rather than
-  mis-anchoring.
-- **Single line vs range.** For a single-line comment provide `line` and omit
-  `start_line`; for a range, `start_line` must be strictly less than `line`. A
-  ` ```suggestion ` block replaces exactly the anchored range.
-- **Validate before posting.** Assert the summary and every inline comment start
-  with one of the exact bold attribution lines above, followed by a blank line;
-  reject old, substituted, backticked, quoted, indented or run-in prefixes.
-  Assert every actionable finding has **Why this matters** then **Suggested
-  fix**, each on its own line. Summary-only bodies and no-change design notes
-  follow the exceptions above. Assert no body has leading whitespace and fences
-  open at column zero. Inspect the generated `comments[].body` values, then
-  fetch `headRefOid` once more and assert it equals `review.json.commit_id`;
-  regenerate anchors or stop if it moved.
-- **`APPROVE`/`REQUEST_CHANGES` are rejected on your own PR** → use
-  `event:"COMMENT"` and state the verdict in the body.
-- **Verify after posting.** Read the comments back. A `422` is usually a bad
-  anchor or validation error (fix and repost); `403`/`429` mean permissions or
-  rate limiting (back off), not a bad anchor. Confirm the returned bodies render
-  with the intended structure, then clean up the payload script and probes.
+- **Serialize, do not shell-quote bodies.** Generate the payload with a
+  file-based script and a JSON serializer, then post with `--input`. Inline
+  `python -c` quoting mangles backticks, newlines and suggestion fences.
+  Never use `-f body=@file` / `--raw-field`: it posts the literal path.
+  Normalize multiline indentation (for Python, `textwrap.dedent(...).strip()`).
+- **Anchor to the reviewed diff.** `line` is a head-side line for `RIGHT`
+  (added/changed code); use `LEFT` only for removed code. The anchor must be
+  inside a hunk, including context lines. Put out-of-hunk findings in the
+  summary with the same finding shape, never at an unrelated anchor.
+- **Ranges must be exact.** A single-line comment omits `start_line`; a range
+  requires `start_line < line`. A `suggestion` replaces exactly that range.
+- **Recheck immediately before posting.** Fetch `headRefOid` and compare it
+  with `review.json.commit_id`. Stop on movement and reassess affected claims.
+- **Read back the review and comments.** Confirm anchors and body structure.
+  A `422` usually means bad anchors/validation; correct the rejected payload.
+  A `403`/`429` means permissions/rate limiting, not a reason to change anchors.
+  After an ambiguous timeout, look for the posted review before retrying so
+  recovery does not duplicate it.
 
-## Azure DevOps PR
+## Azure DevOps
 
-- Get the diff with `ado-repo_pull_request` `action:get_changes` (paginate;
-  fetch PR metadata for author/head and the latest iteration). Every ADO call
-  needs `orgName` plus `project` and `repositoryId`.
-- Post each inline finding with `ado-repo_pull_request_thread_write`
-  `action:create` — `orgName`, `repositoryId`, `pullRequestId`, `project`,
-  `content`, `filePath`, and `rightFileStartLine`/`rightFileEndLine` (the tool
-  anchors on the head side). ADO offsets are 1-based: for a whole line pass `1`
-  for `rightFileStartOffset` and the exact character count + 1 for
-  `rightFileEndOffset`; `0` and arbitrary large offsets are rejected. Put the
-  summary in one more `create` with no file path.
-- Start each `content` with the same standalone bold attribution line and blank
-  line, then use the shared comment shape for findings. Apply the same body
-  validation as GitHub before posting; ADO threads stand alone, so attribution
-  and sections must be present in each finding thread.
-- Threads are posted one at a time and are not atomic: read them back
-  (`ado-repo_pull_request_thread` `action:list`) to confirm each anchored, and
-  recover any that failed rather than leaving a half-posted review.
-- Cast the verdict with `ado-repo_pull_request_write` `action:vote`: `Approved`
-  / `ApprovedWithSuggestions` (approve with nits) / `WaitingForAuthor` (changes
-  requested). Do not vote on your own PR.
+Discover the configured metadata, diff, thread-create/list and voting tool
+schemas; use their actual operation names and organization fields. A tool from
+another ADO deployment is not evidence that the same tool exists here.
 
-## Local diff (no PR)
+- Reuse the reviewed diff/iteration and head from context. Confirm the current
+  head still matches before writing; if it moved, return to the coordinator.
+- Create one thread per inline finding and one unanchored summary thread.
+  Supply the target organization, project, repository and PR plus the content
+  and head-side file/line range required by the discovered schema.
+- For tools exposing `rightFileStartOffset` / `rightFileEndOffset`, offsets are
+  1-based: whole-line start is `1`, end is the exact character count + 1.
+  Do not use `0` or arbitrary large offsets.
+- Threads are not atomic. Record successful thread IDs and read them back with
+  the list/read tool; recover only missing or failed writes, including after an
+  ambiguous response, rather than reposting the whole review.
+- Vote only after intended threads are confirmed and only when permitted.
+  Map the verdict to the tool's supported equivalents of approved,
+  approved-with-suggestions or waiting-for-author. Never vote on the requester's
+  or authenticated poster's own PR. If voting is unavailable, report that
+  limitation; do not invent a tool or claim the vote succeeded.
 
-Return the review as a report in chat with the standalone AI attribution,
-findings in the shared two-section shape, a coverage line and verdict; post
-nothing. Do not replace the finding sections with a table.
+## Report-only and completion
 
-For posted reviews, report the review URL and a one-line-per-finding table in
-chat rather than pasting the whole review back.
+For local or report-only work, return attributed findings in the shared
+two-section shape, coverage and verdict; post nothing. Do not replace full
+findings with a table.
+
+After external delivery, report the review URL and a compact one-line-per-finding
+table in chat rather than pasting the whole review back. Report partial delivery
+plainly. Remove owned payload scripts and return resource ownership to the
+coordinator for shared cleanup.

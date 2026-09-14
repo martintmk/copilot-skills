@@ -2,7 +2,7 @@
 name: review-tests
 description: >
   Review Rust changes for deleted or weakened tests and observable behavior
-  changes that lack explicit justification. Protects existing behavioral
+  deltas, even when test files are untouched. Protects existing behavioral
   contracts from being rewritten to match an implementation, especially in
   AI-authored changes, and checks that changed tests are idiomatic and reuse
   supported test utility features such as test-util. Use when asked to review
@@ -16,14 +16,20 @@ description: >
 Treat baseline tests as contract evidence, not obstacles to make green. Review
 only; do not change production code or expectations to make the head pass.
 
+Follow [shared context](../review-lens/review-context.md) and the
+[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+
+Own test changes, behavior-preservation coverage and authorization of behavioral
+deltas. Share contract deltas with `review-api-design` and production defects
+with `review-correctness`; missing coverage for the same root cause belongs in
+that finding's fix, not a duplicate. Test utility use belongs here; injectable
+clocks and randomness in runtime code belong to `review-perf`.
+Documentation disagreements alone belong to `review-consistency`; still use
+docs as behavior-preservation evidence.
+
 ## Procedure
 
-1. **Resolve base and head.** For a PR or branch, use the target merge base; for
-   a commit, its parent; for a working tree, include staged, unstaged, and
-   untracked files. Read repository rules before judging test placement or
-   features.
-
-2. **Inventory test changes before implementation changes.** Diff test files,
+1. **Inventory test changes before implementation changes.** Diff test files,
    inline `mod tests`, doctests, examples used as tests, snapshots, fixtures,
    property-test cases, and test-only manifest/configuration. Detect deleted
    files and functions, but also weakened coverage:
@@ -35,7 +41,10 @@ only; do not change production code or expectations to make the head pass.
      failure; and
    - reduced property-test ranges or feature/target coverage.
 
-3. **Preserve every distinct baseline behavior.**
+   An empty test diff does not end this pass; audit production behavior in
+   step 3.
+
+2. **Preserve every distinct baseline behavior.**
    - A rename, move, or equivalent replacement is not deletion; point to the
      surviving assertion. Moving a public integration test to a private unit
      path is not equivalent, nor is widening visibility just to move a test.
@@ -48,7 +57,7 @@ only; do not change production code or expectations to make the head pass.
    Never accept “the implementation changed,” a passing head suite, or an
    updated snapshot as justification by itself.
 
-4. **Audit observable behavior.** Derive the old contract from baseline tests,
+3. **Audit observable behavior.** Derive the old contract from baseline tests,
    public docs/API, and callers. Trace production changes affecting outputs,
    errors, panics, defaults, ordering, serialization, side effects,
    cancellation/timing, or feature/target behavior. For each delta require:
@@ -60,7 +69,7 @@ only; do not change production code or expectations to make the head pass.
    the change is intentionally breaking, require any migration, versioning, and
    release-note treatment mandated by the repository.
 
-5. **Use existing test utilities.** Before accepting custom clocks, sleeps,
+4. **Use existing test utilities.** Before accepting custom clocks, sleeps,
    random sources, mock I/O, fake servers, or safety bypasses:
    - inspect manifests and docs for test utility features on the crate and its
      dependencies; use the actual supported name (`test-util`, `test-utils`, or
@@ -73,7 +82,7 @@ only; do not change production code or expectations to make the head pass.
    - do not demand a feature when no applicable crate provides one or the helper
      does not model the scenario.
 
-6. **Check test quality.** Tests should be behavior-shaped, deterministic, and
+5. **Check test quality.** Tests should be behavior-shaped, deterministic, and
    concise. Each test or parameterized/property case should distinguish a named
    outcome with precise assertions. Prefer integration tests for public-only
    behavior and unit tests for private invariants. Reuse existing fixtures and
@@ -83,18 +92,14 @@ only; do not change production code or expectations to make the head pass.
    external services, brittle formatted-error matching, and tests of
    compiler-derived behavior that distinguish no contract.
 
-## Verification and findings
+## Evidence and findings
 
 Static diff, API, or documentation evidence is sufficient for deleted or
 weakened assertions and explicit contract deltas. When a behavioral claim
-depends on runtime behavior, run the smallest relevant test or temporary probe
-on both revisions and compare the exact outcome. Modify only a temporary
-worktree, use a trusted checkout or isolated environment, quote the command and
-decisive result, and remove probes afterward.
+depends on runtime behavior, report the focused command and exact base/head
+outcomes required by the shared verification rules.
 
-Load `review-delivery` and use its shared **findings contract** and two-section
-**comment shape**, including for standalone reports. Each finding also names the
-baseline contract, the head delta, and the missing justification or coverage,
+Name the baseline contract, head delta and missing justification or coverage,
 with the exact restoration or replacement.
 
 Severity in this area is strongly category-linked, though impact still decides a
@@ -107,9 +112,3 @@ genuine edge case:
 
 Coverage line: the deleted and changed tests, behavior deltas, and test utility
 features reviewed.
-
-When invoked directly rather than through `review-lens`, first read the
-repository's own rules from the base revision and treat green CI as the
-baseline; `review-lens` carries the workspace-specific adaptation.
-
-Post through the `review-delivery` skill when the review targets a PR.

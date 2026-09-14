@@ -1,7 +1,7 @@
 {
   "name": "copilot-skills",
-  "description": "Personal Copilot CLI skills for Rust reviews, PR review and feedback tracking, autonomous feedback handling, public API docs, resilience, testing, and Teams messaging.",
-  "version": "0.12.1",
+  "description": "Personal Copilot CLI skills for Rust reviews, code/docs consistency, PR review and feedback tracking, autonomous feedback handling, public API docs, resilience, testing, and Teams messaging.",
+  "version": "0.13.1",
   "author": {
     "name": "Martin Tomka",
     "email": "martintmk@users.noreply.github.com"
@@ -10,6 +10,7 @@
     "review",
     "rust",
     "code-review",
+    "documentation-consistency",
     "pull-request",
     "pr-tracking",
     "pr-feedback",

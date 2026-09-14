@@ -1,18 +1,18 @@
 ---
 name: review-public-api
 description: >
-  Review a Rust library crate's exported API first using only cargo-public-api
-  output, without reading Rust source, manifests, docs, tests, or diffs. Then use
-  a separate agent and cargo-generated rustdoc JSON to remove or narrow claims
-  refuted by the real API docs. Use when asked to review, audit, or critique a
-  crate's public API for a clean, idiomatic, consumer-friendly, and evolvable
-  design, applying common Rust API best practices with API-visible Pragmatic Rust
-  Guidelines on top. For small PRs, focuses findings on the changed public items
-  shown by an API diff. Not for implementation, correctness, safety,
-  documentation quality, performance, or general code review.
+  Audit a Rust library's exported contract using cargo-public-api output only,
+  then isolated rustdoc-based filtering of provisional claims. Use for a
+  whole-crate or explicit output-only API audit; small PRs cover changed public
+  items and their immediate family. Applies idiomatic Rust API practices and
+  API-visible Pragmatic Rust Guidelines. Not for source-based PR review,
+  implementation correctness, docs quality/consistency, performance or posting.
 ---
 
 # Review Public API
+
+Before auditing, apply the [fresh-worker entry gate](../review-lens/worker-isolation.md).
+An already assigned output-only worker runs here without dispatching itself again.
 
 Review the public contract of a Rust library from the consumer's perspective.
 `cargo public-api` output is the sole source for generating candidate findings.
@@ -23,188 +23,152 @@ to remove or narrow candidate statements that the API docs refute or answer.
 
 ## Hard boundary: output-only review, docs-only filtering
 
-- During the initial review, do not open or search Rust source, `Cargo.toml`,
-  `Cargo.lock`, build scripts, docs, tests, examples, diffs, generated rustdoc
-  JSON, or repository history.
-- During the initial review, do not use `cargo metadata`, rust-analyzer, rustdoc
-  pages, code search, or inferred implementation details to supplement the
-  review.
-- You may use the user's stated scope and intended use cases to understand the
-  request, but every candidate finding must be proven by exact
-  `cargo public-api` output.
-- The only documentation exception is the mandatory post-processing pass. It
-  runs in a separate agent after the provisional report exists and obtains docs
-  through the `review-public-docs` skill, which owns rustdoc JSON generation and
-  traversal. That skill may resolve revisions and build a baseline in a
-  throwaway worktree; the post-processor itself reasons only from the returned
-  docs bundle, never from source, manifests, tests, examples, diff text, or
-  rendered rustdoc pages.
-- Documentation may remove a finding, answer a design question, or narrow
-  overbroad wording. It must never create, strengthen, or raise the severity of a
-  finding.
-- Tool version/help text and build diagnostics may guide tool operation, but are
-  not evidence about API quality.
-- Do not modify the reviewed repository. Store any captured output outside it
-  and remove temporary artifacts after reporting.
+- Generate candidates only from exact `cargo public-api` output. Do not open or
+  search Rust source, manifests/lockfiles, build scripts, docs, tests, examples,
+  source diffs, generated rustdoc JSON, or repository history. Do not supplement
+  evidence with `cargo metadata`, rust-analyzer, code search, or rendered docs.
+- User-supplied scope and use cases can orient the review. Tool help, versions,
+  diagnostics, revision identifiers and artifact metadata can guide execution
+  and matching, but cannot prove an API-quality claim.
+- The mandatory, isolated [post-processor](rustdoc-post-processing.md) is the
+  only documentation exception. It uses `review-public-docs` to retrieve docs
+  and may only remove or narrow claims, never add/strengthen them, increase
+  severity, or establish runtime proof. Keep JSON and full docs bundles out of
+  this agent. Returned filtering provenance is not evidence for new claims.
+- This is **REPORT-ONLY**: never edit, post, vote, or invoke `review-delivery`
+  for delivery. Do not change the reviewed worktree; keep captures and build
+  targets outside it, and clean up only owned artifacts after consumers finish.
 
-This boundary means the review cannot establish implementation correctness,
-runtime behavior, validation, panic behavior, soundness, allocation or
-performance characteristics, overall documentation quality, or whether
-sensitive data is redacted. The post-processor treats docs as evidence of
-documented API intent and usage, not proof of implementation behavior. Do not
-turn those unknowns into findings.
+Read the compact [findings contract](../review-delivery/findings-contract.md)
+for presentation. Reuse the applicable execution-trust, handoff/reuse,
+configuration and cleanup rules in
+[shared context](../review-lens/review-context.md); do not invoke `review-lens`
+or repeat coordinator setup. Its source/diff, CI, repository-rule inspection
+and executable-reproduction prerequisites do **not** apply here. Exact public
+paths replace source anchors, and this skill's evidence boundary wins.
+
+Output cannot establish implementation correctness, validation, panics,
+soundness, allocation/performance, sensitive-data redaction, or documentation
+quality. Docs establish documented intent, not implemented behavior. Name these
+limits once in coverage rather than turning unknowns into findings.
+
+Code-vs-doc and docs-vs-doc factual/contract disagreements belong to
+[`review-consistency`](../review-consistency/SKILL.md), routed by the caller or
+coordinator with scope and existing artifact references. That review does not
+replace this skill's mandatory, removal/narrowing-only candidate filtering.
 
 ## Procedure
 
-1. **Fix the scope without inspecting the crate.**
-   - Use a package, manifest path, feature set, target, or baseline named by the
-     user.
-   - Otherwise review the package selected by `cargo public-api` with
-     `--all-features` and the host target. This is the default configuration so
-     feature-gated public APIs such as builders are included.
-   - If the command reports an ambiguous workspace, ask for the package name.
-     Do not read the workspace manifest to choose one.
-   - State the selected configuration. An all-features review covers feature
-     combinations together, not every individual feature combination or other
-     targets.
+1. **Fix scope and reuse matching evidence.** Accept the caller's package,
+   manifest, revisions, features, target, toolchain and existing artifact paths.
+   Otherwise use the package selected by the tool, `--all-features`, and the
+   host target. If package selection is ambiguous, request the package name or
+   report the blocker; never inspect the manifest to choose one.
 
-2. **Check trust before execution.** `cargo public-api` builds rustdoc JSON and
-   can execute build scripts or procedural macros. Run it only for trusted code,
-   or in an isolated, credential-free environment. Do not inspect source to
-   decide whether it is safe.
+   In the commands below, `<feature-args>` is `--all-features` unless the user
+   explicitly selected another configuration, in which case use exactly their
+   `--features`/`--no-default-features` choices instead. `<scope-args>` contains
+   only the established package/manifest/target options. Preserve the selected
+   toolchain using the installed tool's documented option. Record the effective
+   configuration, including inherited build flags that affect the surface.
+   Reuse captures only when revision/dirty state, package, configuration,
+   toolchain and output options match; a nearby configuration is not equivalent.
 
-3. **Ensure the tool is available.**
+2. **Establish execution trust and tools once.** `cargo public-api` builds
+   rustdoc JSON and may execute build scripts or procedural macros. Use trusted
+   provenance or an isolated, credential-free environment, not source
+   inspection, to decide whether execution is allowed. Reuse an established
+   trust decision and tool-version record rather than probing them per view.
 
    ```text
    cargo public-api --version
    ```
 
-   If the command is missing, install the official tool with a stable toolchain:
+   Only if missing, install the official tool with a stable toolchain:
 
    ```text
    cargo +stable install cargo-public-api --locked
    ```
 
-   If it reports that a compatible nightly toolchain is missing, install one:
+   If a compatible nightly is missing, install the required toolchain (use a
+   caller-specified compatible version rather than silently replacing it):
 
    ```text
    rustup toolchain install nightly --profile minimal
    ```
 
-   If installation or API extraction fails, stop and report the exact command
-   and decisive diagnostic. Do not troubleshoot by reading the crate.
+   If execution is unsafe, installation fails, or extraction fails, stop with
+   `blocked`, the exact command when attempted, and the decisive reason. Do not
+   troubleshoot by reading the crate.
 
-4. **Collect the complete all-features surface.** Unless the user explicitly
-   selected another feature configuration, include `--all-features`. Add only
-   other scope arguments established in step 1, such as `-p`,
-   `--manifest-path`, `--features`, `--no-default-features`, or `--target`.
-
-   ```text
-   cargo public-api --color=never --include function-parameter-names --all-features <scope-args>
-   ```
-
-   This full output is authoritative for trait, auto-trait, and derived-trait
-   checks. Capture it verbatim if needed; do not rely on a truncated display.
-
-5. **Collect a readable inventory.**
+3. **Capture the complete current surface once.** Use an external build target
+   directory (for example via `CARGO_TARGET_DIR`) and the installed tool's
+   documented lock-preserving option when supported. Stop if extraction would
+   rewrite reviewed inputs; an external target alone does not protect lockfiles.
+   Capture output verbatim:
 
    ```text
-   cargo public-api --color=never --include function-parameter-names --all-features -sss <scope-args>
+   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> > <full-api-output>
    ```
 
-   The simplified output omits blanket implementations, auto traits, and
-   auto-derived implementations. Use it to inspect structure and signatures,
-   but return to the full output before claiming that a type lacks `Debug`,
-   `Clone`, `Send`, or another omitted implementation.
-
-6. **Optionally collect a change view.** Only when the user requests a semver or
-   change review, run the matching tool-supported baseline in addition to the
-   full current-surface commands:
+   Retain the complete capture even if its display is truncated. Build a compact
+   public-path/family inventory from it; do not dump the full inventory or schema
+   into handoffs. If a simplified view is needed, use:
 
    ```text
-   cargo public-api --color=never --include function-parameter-names --all-features <scope-args> diff latest
-   cargo public-api --color=never --include function-parameter-names --all-features <scope-args> diff <version>
-   cargo public-api --color=never --include function-parameter-names --all-features <scope-args> diff <ref1>..<ref2>
+   cargo public-api --color=never --include function-parameter-names <feature-args> -sss <scope-args> > <simplified-api-output>
    ```
 
-   Never use `--force`: commit diffing performs in-place checkouts, and forcing
-   it can discard worktree changes. A diff is evidence about changes, not a
-   substitute for reviewing the complete current surface.
+   This is a readability aid, not a mandatory second build: reuse matching tool
+   artifacts/cache where supported by installed help. Never parse JSON here to
+   create a view. `-sss` omits blanket, auto-trait and auto-derived impls; any
+   absence claim about `Debug`, `Clone`, `Send`, etc. requires the full output.
+   Retain available JSON artifact paths and provenance for retrieval downstream,
+   without opening the JSON.
 
-7. **Inventory before judging.** Group every emitted item by public path and
-   family: modules/re-exports, types and fields, traits and implementations,
-   functions and methods, constants/statics, macros, and error/builder/iterator
-   families. Finish the inventory even after finding an issue.
+4. **For every PR/change/semver review, obtain the matching API diff.** Reuse a
+   matching capture or choose the appropriate supported form, capturing its
+   output outside the reviewed repository:
 
-8. **Choose the review set.**
-   - For a standalone crate audit, review the complete current output.
-   - For a PR or change request, use the API diff to identify additions,
-     removals, and changed signatures. If the diff is small (a few public items),
-     make those changed items the review set and use the unchanged output only to
-     understand their immediate surrounding family. Do not generate findings
-     about unrelated pre-existing APIs.
-   - If the PR changes a broad or unclear portion of the surface, review the
-     complete current output and say so in the coverage section.
-   - Apply the review lenses below to the selected review set, starting with
-     common idiomatic Rust API practices and then adding the Pragmatic Rust
-     Guidelines. Honor guideline intent and stated exceptions; do not flag a
-     pattern merely because it resembles a discouraged example.
+   ```text
+   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff latest
+   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff <version>
+   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff <ref1>..<ref2>
+   ```
 
-9. **Draft only proof-carrying candidate findings.** Quote the decisive emitted
-   line or lines exactly. Separate definite findings from context-dependent
-   design questions. If the tool cannot expose the evidence, omit the claim and
-   name the limitation once in the coverage section. Do not return this
-   provisional report yet.
+   These are alternatives, not three required runs. Record the exact resolved
+   baseline version/revision, not just a moving label such as `latest`.
+   Commit diffing checks out revisions in place: use a disposable worktree
+   outside the reviewed repository, never the caller's worktree or `--force`.
+   It is not a sandbox and does not contain uncommitted changes. For a dirty
+   head, require a tool-supported comparison of the actual captured head with
+   baseline; do not substitute `HEAD`. If the required comparison is unavailable,
+   return `blocked` for the requested change review, not a silent full-crate audit.
 
-10. **Post-process the complete draft in a separate agent.** Follow the
-    [rustdoc JSON post-processing procedure](rustdoc-post-processing.md). Give a
-    fresh agent the provisional report, reviewed crate and working directory,
-    exact package/features/target/baseline scope, and toolchain context. That
-    agent obtains the matching documentation through the `review-public-docs`
-    skill rather than parsing rustdoc JSON itself, associates each claim with
-    the relevant item docs, and returns a filtered report with refuted
-    statements removed or narrowed. Keep doc inspection out of this agent's
-    context and publish only the filtered report. If the post-processor or doc
-    retrieval fails, do not present the provisional claims as verified; return
-    `blocked` with the decisive diagnostic.
+5. **Inventory, then select the review set.** Inventory all emitted families
+   (modules/re-exports, types/fields, traits/impls, functions/methods,
+   constants/statics, macros, errors/builders/iterators) before judging.
+   Standalone audits cover the full current surface. Small API diffs cover
+   changed public items and directly affected signatures; unchanged output is
+   context for their immediate family, not a source of unrelated findings.
+   A broad change can require full-surface coverage; say so and distinguish
+   pre-existing concerns from regressions. An unavailable diff is not evidence
+   that a PR is broad or that nothing changed.
+
+6. **Draft and filter.** Apply the lenses below only to the selected set. Quote
+   the decisive emitted lines, separate context-dependent design questions,
+   and omit claims the output cannot prove. Do not publish the draft. Follow
+   [post-processing](rustdoc-post-processing.md) once, with its complete handoff
+   and return contract, even when there are no candidate findings. Return only
+   the filtered report; an unavailable/failed isolated pass is `blocked`, never
+   permission to release the provisional report.
 
 ## Review lenses
 
-### 0. Common idiomatic Rust API baseline
-
-Apply this baseline to every selected item before the Pragmatic Rust overlay.
-Use the emitted API shape, not assumptions about implementation:
-
-- Prefer conventional Rust names and signatures: `snake_case` functions and
-  modules, `UpperCamelCase` types and traits, `SCREAMING_SNAKE_CASE` constants,
-  `new`/`default` constructors, receiver methods for instance behavior, and
-  `Result`/`Option` where the signature communicates fallibility or absence.
-- Prefer standard-library vocabulary and traits over bespoke equivalents:
-  `From`/`TryFrom`, `AsRef`/`AsMut`, `Borrow`, `Iterator`, `IntoIterator`,
-  `FromIterator`, `Extend`, `Error`, and formatting traits where their semantics
-  fit. Use `as_`, `to_`, and `into_` consistently.
-- Make ownership and borrowing legible. Prefer borrowing for read-only access,
-  consuming `self` for conversions/builders, and avoid needless `clone`,
-  `String`, `Vec`, or smart-pointer requirements at caller-facing boundaries.
-- Prefer the least surprising receiver, generic bounds, lifetime surface, and
-  return type. Avoid needless `dyn Trait`, opaque nesting, boolean/tuple
-  parameter ambiguity, and public implementation-detail types.
-- Make public types composable: provide appropriate `Debug`, `Display`,
-  equality/hash/order, `Clone`/`Copy`/`Default`, iterator, conversion, and
-  `Send`/`Sync` support when the type's meaning and role warrant them.
-- Preserve forward compatibility: avoid exposing fields or concrete details
-  unnecessarily, use `#[non_exhaustive]` where a growing enum/struct requires
-  it, keep public traits implementable or deliberately sealed, and avoid
-  redundant export paths.
-- Keep APIs discoverable and consistent with their sibling items. Constructors
-  should be easy to find, fallible construction should be explicit, errors
-  should implement `std::error::Error`, and public behavior should not be split
-  across surprising extension-only entry points.
-
-These are review heuristics, not automatic defects. Report only a concrete
-consumer or evolution cost demonstrated by the output. The Pragmatic Rust
-Guidelines below add stricter, repository-independent preferences where they
-provide additional safety, maintainability, or UX value.
+Apply common idiomatic Rust practices first, with the API-visible Pragmatic Rust
+Guidelines as an overlay. The consolidated lenses below are heuristics, not
+automatic defects: honor guideline intent and exceptions, and require a
+concrete consumer or compatibility cost demonstrated by output.
 
 ### 1. Surface and navigation
 
@@ -225,9 +189,10 @@ provide additional safety, maintainability, or UX value.
 
 ### 2. Names and idiomatic call shape
 
-- Check Rust casing and established vocabulary. Prefer short, precise names over
-  fillers such as `Manager`, `Helper`, `Util`, `Common`, or `Data` when those
-  words add no distinction (`M-WEASEL-WORDS`, `M-SHORT-NAMES`).
+- Check Rust casing (`snake_case` functions/modules, `UpperCamelCase` types/
+  traits, `SCREAMING_SNAKE_CASE` constants) and established vocabulary. Prefer
+  short, precise names over `Manager`, `Helper`, `Util`, `Common`, or `Data`
+  when those words add no distinction (`M-WEASEL-WORDS`, `M-SHORT-NAMES`).
 - Check conversion names: `as_` borrows, `to_` performs a conversion that may
   allocate or copy, and `into_` consumes. Prefer standard `From`, `TryFrom`,
   `AsRef`, and `AsMut` implementations over ad-hoc equivalents.
@@ -261,6 +226,9 @@ provide additional safety, maintainability, or UX value.
   `impl AsRef<str/Path/[u8]>`, `impl RangeBounds<_>`, and generic `Read`/`Write`
   inputs. Avoid infecting stored public types with those bounds
   (`M-IMPL-ASREF`, `M-IMPL-RANGEBOUNDS`, `M-IMPL-IO`).
+- Make ownership and lifetimes legible: borrow for read-only access, consume
+  `self` for owning conversions/builders, and avoid needless caller-side
+  `clone`, `String`, `Vec`, smart-pointer or lifetime requirements.
 - Prefer `async fn` over a directly returned `impl Future` when both are viable;
   traits and performance-sensitive APIs can justify the explicit future
   (`M-ASYNC-FN`).
@@ -285,8 +253,9 @@ provide additional safety, maintainability, or UX value.
 
 ### 5. Construction, errors, and evolution
 
-- Simple types should have a clear constructor/default path. When a type exposes
-  many independent configuration permutations, prefer `Type::builder()` and
+- Simple types should have a discoverable constructor/default path; signatures
+  should communicate fallibility/absence with `Result`/`Option`. For many
+  independent configuration permutations, prefer `Type::builder()` and
   `TypeBuilder`, chainable setters named for their fields, and final `build()`;
   do not add public `TypeBuilder::new()` (`M-INIT-BUILDER`).
 - Builder setters should not return `Result`; put cross-field validation in a
@@ -314,66 +283,31 @@ provide additional safety, maintainability, or UX value.
   run says nothing about optional feature surfaces, which is why this skill uses
   `--all-features` by default. An all-features run says nothing about whether
   every individual feature combination is additive.
-- For a requested diff, classify additions, removals, and changed signatures,
-  then assess consumer impact. For a small PR, findings must be limited to those
-  changed public items and directly affected signatures; do not use the baseline
-  to opportunistically review unrelated APIs. Do not infer semver impact from a
-  current-surface listing alone.
+- Assess additions, removals and changed signatures within the review set chosen
+  in the procedure. Never infer semver impact from a current-surface listing alone.
 - Macro names and signatures visible in the output may be inventoried, but macro
   syntax, expansion hygiene, generated bounds, and behavior are out of scope.
 
 ## Evidence and severity
 
-Load `review-delivery` for its shared attribution, severity and two-section
-**comment shape** for both the provisional and filtered reports. Exact public
-paths replace source `path:line` anchors here; never inspect source to invent
-line numbers. This does not relax the output-only evidence boundary or authorize
-posting.
+Within the shared finding shape, **Why this matters** must carry the exact public
+path, smallest decisive `cargo public-api` excerpt, and concrete usability,
+interoperability, type-identity or compatibility cost. Include related emitted
+lines when an absence would otherwise be ambiguous. **Suggested fix** names a
+specific better public shape, not an implementation patch; cite the applicable
+`M-*` ID or Rust convention briefly where useful.
 
-A finding must contain:
-
-1. **Severity and item** — the shared AI attribution line (no severity qualifier
-   for blocking, `Non-blocking`, or `Nit`), plus the exact public path under
-   **Why this matters**.
-2. **Evidence** — the smallest exact `cargo public-api` excerpt proving the
-   shape, under **Why this matters**. Include related lines when absence would
-   otherwise be ambiguous.
-3. **Consumer impact** — the concrete usability, interoperability, type-identity,
-   or compatibility cost, in the same section.
-4. **Recommendation** — a specific better public shape, not an implementation
-   patch, under **Suggested fix**.
-5. **Guideline** — the applicable Pragmatic Rust ID or idiomatic Rust convention,
-   cited briefly where it supports the concern or correction.
-
-Do not turn these evidence requirements into separate per-field headings. Keep
-each prose section to one or two sentences where possible, with only the
-smallest necessary API excerpt. Omit speculative future API-evolution arguments.
-
-Leave a finding without a severity qualifier only for a concrete, substantial
-consumer or compatibility problem; most API cleanliness findings are
-`Non-blocking` or `Nit`. Present a context-dependent alternative under **Design
-questions**, not as a defect. Never manufacture certainty from a missing line in
-simplified output.
-
-## Post-processing
-
-Treat the complete report from the output-only review as provisional. Before
-returning it, launch a fresh agent with the handoff defined in the
-[rustdoc JSON post-processing procedure](rustdoc-post-processing.md). That
-post-processor, not the parent review agent, obtains the matching documentation
-via the `review-public-docs` skill, associates docs with each claim, and filters
-the report at statement level.
-
-This pass is mandatory even when the API evidence appears decisive: docs can
-establish an intended constraint, explain that a documented guideline exception
-applies, or answer a design question. The post-processor may remove or narrow
-such statements, but it may not add findings or use docs as proof of runtime
-behavior. Publish its filtered report without loading the docs into the parent
-agent's context.
+Most cleanliness concerns are `Non-blocking` or `Nit`; only a demonstrated,
+substantial consumer or compatibility problem merits blocking severity. Put
+context-dependent alternatives under **Design questions**, not disguised
+findings. Do not infer certainty from a missing line in simplified output.
 
 ## Output
 
-Return only the report produced by the rustdoc JSON post-processor:
+Choose the report role before drafting: delegated area results use the shared
+findings-and-coverage contract; standalone reports use the outline below. Omit
+`Verdict:` on the requester's own PR. Pass that role through post-processing and
+return only its filtered result.
 
 ```text
 **Posted by an AI agent**
@@ -384,14 +318,7 @@ Scope: <tool version, package, features, target, and optional baseline>
 Verdict: <approve | approve with non-blocking comments | changes requested | blocked>
 
 ## Findings
-**Posted by an AI agent · Non-blocking**
-
-**Why this matters**
-<Exact public path, concrete consumer impact, and relevant convention.>
-<Smallest exact cargo public-api excerpt proving the claim.>
-
-**Suggested fix**
-<Specific better public shape.>
+<Shared two-section finding blocks, with exact public paths and API excerpts.>
 
 ## Design questions
 <context-dependent choices, each with exact API evidence>
@@ -404,16 +331,15 @@ Verdict: <approve | approve with non-blocking comments | changes requested | blo
 what this review cannot assess>
 ```
 
-Repeat the shared finding block in impact order, choosing its attribution-line
-severity from the evidence rather than copying `Non-blocking` mechanically.
+Return finding blocks in impact order, with evidence-based severity.
 Keep excerpts distinct from prose with inline code or a fenced block.
 
 If there are no findings, say so explicitly and still report the configurations
 and API families covered. If extraction fails, use `blocked`, include the
 decisive diagnostic, and do not issue an API verdict.
 
-Attribution, finding sections, severity labels and verdict values come from
-`review-delivery`, so a finding from this report can be merged into a combined
-review without reformatting. This skill returns the report rather than posting it.
+The coordinator owns combined presentation and delivery under the shared
+contract. This skill returns mergeable filtered findings or a standalone
+REPORT-ONLY result; it never posts.
 
 [pragmatic-rust]: https://microsoft.github.io/rust-guidelines/

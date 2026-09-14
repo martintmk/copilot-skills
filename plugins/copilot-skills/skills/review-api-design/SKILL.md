@@ -3,23 +3,30 @@ name: review-api-design
 description: >
   Review a Rust change's public contract from the diff and source: visibility and
   layering, semver cascade, constructors, builders and defaults, strong types and
-  enums, trait implementability and sealing, macros as public API, and error type
-  and panic conventions. Inventories every changed export before judging it. Use
-  when reviewing what a change commits downstream consumers to, or when
-  review-lens routes changed public surface here. Complements review-public-api,
-  which audits an existing surface from cargo public-api output without reading
-  source. Not for correctness defects or naming style.
+  enums, trait implementability and sealing, macros as public API, and error
+  type, message and panic conventions, including internal errors. Also owns
+  dependency and feature checks. Use for downstream contracts, manifest or
+  error-policy changes, or review-lens's public-surface pass.
+  Complements review-public-api, which audits an existing surface from cargo
+  public-api output without reading source. Not for runtime defects or naming
+  style.
 ---
 
 # Review API Design
 
-For a library change, most design attention belongs on what downstream consumers
-can construct, implement, match, store and depend on across releases. Public
-surface is cheap now and breaking once the crate ships it.
+Review what downstream consumers can construct, implement, match, store and
+depend on. Unlike `review-public-api`'s output-only audit of an existing surface,
+this pass reads the diff, source, manifests, callers and docs.
 
-This skill reads the diff, source, manifests, callers and docs. Its sibling
-`review-public-api` deliberately reads only `cargo public-api` output; use that
-one to audit an existing surface, this one to review a change.
+Follow [shared context](../review-lens/review-context.md) and the
+[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+
+Own public contracts, dependencies/features and error type, message and panic
+conventions, even for internal errors. Runtime defects belong to `review-correctness`,
+recovery classification to `review-resilience`, family-only naming to
+`review-naming`, and emitted signal contracts to `review-telemetry`.
+Hand standalone code/docs or docs/docs disagreements to `review-consistency`;
+use its evidence without replacing this pass's public-contract inventory.
 
 ## The gate: inventory before judging
 
@@ -60,10 +67,11 @@ defect that happens to touch a public method does **not** satisfy this pass.
   matched, expose a convenience method and keep it internal. Prefer
   `#[non_exhaustive]` on public enums that may grow, where repo policy allows.
 - **Builders and constructors.** Setter methods and consuming `mut self -> Self`
-  over a raw options bag; typed inputs; follow the surrounding constructor family
-  for names. A builder is the right answer when required parameters vary by
-  generic shape and enumerating constructors would multiply them. A headline
-  single-entry generic constructor can still be the deliberate design, so weigh
+  over a raw options bag; typed inputs; use the constructor family as design
+  evidence and leave naming-only mismatches to `review-naming`. A builder is the
+  right answer when required parameters vary by generic shape and enumerating
+  constructors would multiply them. A headline single-entry generic constructor
+  can still be the deliberate design, so weigh
   ergonomics against the niche coercion case before splitting it.
 - **Safe, coherent defaults.** A convenient, safe default; question defaults that
   diverge between `new` and `Default`, or between siblings, for no reason.
@@ -86,44 +94,49 @@ defect that happens to touch a public method does **not** satisfy this pass.
   derive or attribute macro, decide whether manual downstream implementations are
   an intended extension point. Seal the trait when they are not; when they are,
   minimize required methods and provide defaults so the trait can evolve.
-- **Derives are additive.** Adding a derive later is not breaking, so question
-  derives added without a demonstrated need; removing one is breaking.
+- **Derives need a consumer use.** Question derives without a demonstrated need.
+  Removing a public trait implementation can break consumers; check coherence
+  and inference effects before declaring an added implementation non-breaking.
 
-## Errors
+## Errors, including internal errors
 
 - **Canonical error at a public or foundational boundary** — one error struct
   with `is_*` accessors over a zoo of error types buys semver room to add cases
-  later (cf. jiff issue #8); relax this for internal-only crates. Prefer
+  later; relax this for internal-only crates. Prefer
   returning a crate-native error.
 - Classify error kinds with a typed enum rather than matching formatted text.
 - Error and `expect(..)` messages are lowercase with no leading capital; say
   "error", not "exception".
-- Make errors recoverable-aware where the repo has a recovery convention.
+- Identify affected error boundaries for `review-resilience` when a change may
+  lose or alter the repository's recovery information.
 
-## Semver
+## Dependencies, features and semver
+
+- Question new dependencies, especially proc-macro-heavy ones in leaf crates.
+  Prefer std, a suitable existing ecosystem crate or an existing repository
+  dependency; a trivial implementation can beat a heavy derive dependency.
+- Keep features minimal and off by default, with an empty/minimal `default`;
+  gate test-only surfaces and fakes behind the repository's test feature.
+  Establish the actual enabled features and compile relevant gated modules in
+  the configuration that ships.
+- Require the minimum dependency version that works; avoid unrelated mass
+  bumps and release cascades.
 
 If crate A's types appear in crate B's public API, a breaking A is breaking for
 B — trace it and name the crates. Dev-dependency bumps are usually invisible to
 consumers. Verify the actual break where you can, and require the repository's
 versioning and release treatment for an intentional break.
 
-## Findings
+## Evidence and findings
 
-Load `review-delivery` and use its shared **findings contract** and two-section
-**comment shape**, including for standalone reports. Each finding also names the
-exported item and the disposition it failed, and states the concrete
-consumer-visible consequence. Discuss compatibility only when it establishes
-that consequence or is needed to choose the fix, not as speculative future
-API-evolution rationale.
+Name the exported item and failed inventory disposition, dependency/feature
+decision, or internal error boundary. State the concrete consumer or maintainer
+consequence. Discuss compatibility only when it establishes that consequence or
+changes the fix.
 
 Design findings may be argued precisely from the code, manifests and repository
 rules without executing anything; verify a claimed break where that is cheap.
 
 Coverage line: the public surface reviewed — crates, modules or API families —
-stated even when the gate produced no finding.
-
-When invoked directly rather than through `review-lens`, first read the
-repository's own rules from the base revision and treat green CI as the
-baseline; `review-lens` carries the workspace-specific adaptation.
-
-Post through the `review-delivery` skill when the review targets a PR.
+stated even when the gate produced no finding, plus dependency/feature decisions
+and internal error conventions reviewed.

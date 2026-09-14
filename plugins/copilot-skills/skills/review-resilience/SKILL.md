@@ -1,13 +1,12 @@
 ---
 name: review-resilience
 description: >
-  Review Rust changes for missing or incorrect recoverable::Recovery
-  classification and for retry, timeout, circuit-breaker, hedging, fallback,
-  or chaos behavior implemented from scratch instead of with seatbelt. Uses
-  the exact recoverable version's _documentation::recipes module as the
-  classification source of truth. Use for a PR, branch, commit, working-tree
-  diff, or focused crate audit when asked to audit recoverability or seatbelt
-  adoption. Not for a general code review or ordinary error changes with no
+  Review Rust changes for recovery classification and retry, timeout,
+  circuit-breaker, hedging, fallback or chaos behavior that should use approved
+  middleware. In recoverable/seatbelt repositories, checks Recovery against the
+  exact recoverable version's _documentation::recipes and audits seatbelt
+  adoption. Use for a PR, branch, commit, working-tree diff, or focused crate
+  audit. Not for a general code review or ordinary error changes with no
   recovery concern.
 ---
 
@@ -15,17 +14,23 @@ description: >
 
 Review changed code by default. Expand to the whole crate only when requested.
 Read the diff, manifests, relevant error definitions and conversions, resilience
-call sites, configuration, and focused tests.
+call sites (including unchanged callers), configuration, and focused tests.
+
+Follow [shared context](../review-lens/review-context.md) and the
+[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+
+Own recovery classification and propagation, plus resilience middleware
+selection and composition. Error type/message and panic conventions belong to
+`review-api-design`, other runtime defects to `review-correctness`, and
+emitted signal contracts to `review-telemetry`.
+
+Apply the crate-specific checks below where the shared repository adaptation
+selects `recoverable`/`seatbelt`. Elsewhere use the repository's recovery and
+middleware equivalents, not a recommendation to add Oxidizer crates.
 
 ## Procedure
 
-1. **Resolve the review scope.** For a PR or branch, diff from the target's
-   merge base; for a commit, inspect its parent diff; for a working tree,
-   include staged, unstaged, and untracked files. Read unchanged callers for
-   context, but report only change-scoped findings unless a crate audit was
-   requested.
-
-2. **Load the version-matched guidance.**
+1. **Load the version-matched guidance.**
    - Use `cargo metadata` and the lockfile, when present, to resolve each
      in-scope package's `recoverable` dependency edge, including aliases and
      multiple versions. Read that resolved version's
@@ -35,16 +40,16 @@ call sites, configuration, and focused tests.
      permanent errors, or heuristic recovery. Do not classify from memory when
      the resolved recipe is available.
    - Before recommending `seatbelt`, resolve the package's dependency or the
-     workspace-approved version, enabled features, and relevant module docs. If
-     none exists, recommend the crate and feature without inventing a
-     version-specific call.
+     workspace-approved version, enabled features, and relevant module docs.
+     Where `seatbelt` is repository-approved but no version is established,
+     recommend the crate and feature without inventing a version-specific call.
 
-3. **Inventory potentially recoverable failures.** Trace transient failures,
+2. **Inventory potentially recoverable failures.** Trace transient failures,
    service unavailability, timeouts, throttling, connection loss, temporary
    resource pressure, and wrapped versions of those failures from origin to the
    error returned to the caller. Include conversions that erase an inner error.
 
-4. **Check `Recovery` at every boundary.**
+3. **Check `Recovery` at every boundary.**
    - Implement `Recovery` when at least one state may recover or the
      classification is expected to evolve. An error whose states are all
      permanently non-recoverable does not need the trait.
@@ -62,7 +67,7 @@ call sites, configuration, and focused tests.
    - Verify representative recoverable, unavailable, permanent, wrapped, and
      heuristic paths with focused tests.
 
-5. **Find hand-written resilience.** Search for attempt loops, retry counters,
+4. **Find hand-written resilience.** Search for attempt loops, retry counters,
    sleeps/backoff/jitter, deadline races, timeout cancellation, breaker state,
    parallel hedges, fallback routing, and fault injection. When behavior
    overlaps `seatbelt`, recommend the matching feature and API:
@@ -87,33 +92,21 @@ call sites, configuration, and focused tests.
    `seatbelt` already supplies. Keep production fault injection behind the
    repository's test-only feature convention.
 
-6. **Avoid false positives.** Do not call a business workflow loop, a
+5. **Avoid false positives.** Do not call a business workflow loop, a
    protocol-mandated retransmission, or a simple value fallback resilience
    merely because it repeats or uses `unwrap_or`. Recommend `seatbelt` only
    after tracing equivalent failure-handling semantics.
 
-## Findings
+## Evidence and findings
 
-Load `review-delivery` and use its shared **findings contract** and two-section
-**comment shape**, including for standalone reports. Each finding also names:
-
-- the triggering failure path;
-- the incorrect or lost classification, or the duplicated resilience mechanism;
-  and
-- a specific recipe-based `Recovery` fix or version-correct `seatbelt`
-  replacement.
+Name the triggering failure path, incorrect or lost classification or duplicated
+mechanism, and a recipe-based `Recovery` fix or version-correct `seatbelt`
+replacement (or the repository equivalent).
 
 Static API and dependency findings may be argued from code and resolved docs.
-Prove executable claims with the smallest existing test or a temporary focused
-probe, quote the command and result, then remove the probe. If execution is
-unavailable, state the concern as a question or coverage limitation, not a
-finding.
+Executable recovery or middleware claims require a reproduced outcome under
+the shared verification rules; cite the focused command and result. Unconfirmed
+behavior is a question or coverage limitation, not a finding.
 
 Coverage line: the errors and resilience mechanisms reviewed, and the resolved
-`recoverable` and `seatbelt` versions the review was based on.
-
-When invoked directly rather than through `review-lens`, first read the
-repository's own rules from the base revision and treat green CI as the
-baseline; `review-lens` carries the workspace-specific adaptation.
-
-Post through the `review-delivery` skill when the review targets a PR.
+`recoverable` and `seatbelt` versions (or repository equivalents) used.

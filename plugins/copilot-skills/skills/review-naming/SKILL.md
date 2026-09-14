@@ -12,8 +12,16 @@ description: >
 
 # Review Naming
 
-A divergence from what already exists is itself a finding. Names are the API
-consumers read first, and an unnecessary abstraction is a permanent tax.
+An unexplained divergence from an established family is a finding; personal
+preference is not. An unnecessary abstraction is a permanent tax.
+
+Follow [shared context](../review-lens/review-context.md) and the
+[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+
+Own family conventions and unnecessary abstractions. `review-api-design` owns
+public contract decisions, including behavioral defaults; `review-telemetry`
+owns emitted signal names; `review-perf` owns measured cost. Supply family
+evidence to those findings rather than also raising a naming-only duplicate.
 
 ## Alignment with what exists
 
@@ -36,8 +44,8 @@ consumers read first, and an unnecessary abstraction is a permanent tax.
 - **Terminology precision.** Reject a term that names a different thing than the
   concept ("circuit" for a circuit breaker), and prefer the everyday term the
   domain actually uses.
-- **A rename is a change to more than the symbol.** Update user-facing
-  references, docs, examples, feature names and the PR title with it.
+- **A rename affects more than the symbol.** Include affected user-facing
+  references, docs, examples, feature names and the PR title in the recommendation.
 
 ## Unnecessary abstraction
 
@@ -47,41 +55,26 @@ consumers read first, and an unnecessary abstraction is a permanent tax.
 - **An internal helper that never touches `self` should be a free function.**
 - **Prefer one internal type plus a small public API** over per-variant
   boilerplate; expose a method such as `should_promote(..)` rather than leaking
-  an enum consumers never match on.
+  an enum consumers never match on. Route the public exposure decision to
+  `review-api-design`; keep internal simplifications here.
 - **Do not wrap a foundational type** just to add a layer; at some point core
   types should be used directly to avoid needless conversion and breaking
   changes.
 - **Two constructors that differ only by boxing** can usually collapse into one
   that boxes internally, when the call is not on the hot path.
 
-## Judgement
+## Evidence and findings
 
 Naming and abstraction findings are argued from the code and the surrounding
 family, not executed. Quote the sibling that establishes the convention — that
 citation is the evidence. Where the existing code is deliberately inconsistent,
-say so and recommend the smaller change.
+say so and recommend the smaller change. Give the exact replacement name or
+simplification; prefer a `suggestion` block for a self-contained rename on the
+anchored line.
 
 These are usually `Nit` or `Non-blocking` unless the name ships in a public API
 that is about to be released, in which case it is a contract decision and belongs
 with the API design review.
 
-## Findings
-
-Load `review-delivery` and use its shared **findings contract** and two-section
-**comment shape**, including for standalone reports. Each finding also quotes the
-sibling or convention it diverges from — that citation is the evidence — and
-gives the exact replacement name or simplification.
-
-Prefer a `suggestion` block when the fix is a self-contained rename on the
-anchored line. Do not flag a name that is merely different from your own
-preference. These are usually `Nit` or `Non-blocking` unless the name ships in
-a public API that is about to be released.
-
 Coverage line: the names and abstractions reviewed, and any convention you could
 not establish from the surrounding code.
-
-When invoked directly rather than through `review-lens`, first read the
-repository's own rules from the base revision and treat green CI as the
-baseline; `review-lens` carries the workspace-specific adaptation.
-
-Post through the `review-delivery` skill when the review targets a PR.

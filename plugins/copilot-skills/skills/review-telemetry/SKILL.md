@@ -11,8 +11,16 @@ description: >
 
 # Review Telemetry
 
-Telemetry is a consumer contract: dashboards, alerts and queries depend on the
-names and dimensions you ship, and changing them later breaks them silently.
+Follow [shared context](../review-lens/review-context.md) and the
+[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+
+Own emitted signal names, dimensions, units, cardinality, redaction and
+instrumentation duplication: dashboards, alerts and queries depend on them.
+General symbol names belong to `review-naming`; cost-only findings belong to
+`review-perf`. Hand stale or contradictory signal documentation to
+`review-consistency`, but keep emitted-contract changes here. When a signal
+defect also wastes work, retain its signal and measured-cost evidence in one
+finding.
 
 ## Naming and conventions
 
@@ -69,21 +77,15 @@ names and dimensions you ship, and changing them later breaks them silently.
   must go through the repository's classification or redaction path before it is
   emitted.
 
-## Evidence
+## Evidence and findings
 
-Assert names and attributes from the emitted instrument definitions and any
-snapshot or metrics test, not from the surrounding prose. Where the repository
-has telemetry tests or exported-signal snapshots, cite the exact emitted name and
-attribute set. Documented telemetry tables and dashboards are consumer evidence
-that a rename is breaking.
-
-## Findings
-
-Load `review-delivery` and use its shared **findings contract** and two-section
-**comment shape**, including for standalone reports. Each finding also names the
-exact signal name and attributes, the convention or sibling it diverges from,
-and the operator-visible consequence — broken query, cardinality blow-up,
-per-emission allocation.
+Ground findings in emitted instrument definitions and existing telemetry tests
+or exported-signal snapshots, not surrounding prose. Name the exact signal and
+attribute set, the convention or sibling it diverges from, and the
+operator-visible consequence — broken query, cardinality blow-up, duplicated
+signal. Documented telemetry tables and dashboards are consumer evidence that a
+rename is breaking. Keep per-emission cost claims subject to `review-perf`'s
+measurement requirements.
 
 If the change adds no telemetry where a comparable component instruments its
 behavior, say so once rather than demanding instrumentation the change does not
@@ -91,9 +93,3 @@ need.
 
 Coverage line: the signals reviewed and any emitted name or attribute set you
 could not confirm from the instrument definitions or telemetry tests.
-
-When invoked directly rather than through `review-lens`, first read the
-repository's own rules from the base revision and treat green CI as the
-baseline; `review-lens` carries the workspace-specific adaptation.
-
-Post through the `review-delivery` skill when the review targets a PR.
