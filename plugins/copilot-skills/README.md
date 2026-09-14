@@ -49,6 +49,7 @@ the entry-point guide.
 | [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit with isolated docs-based filtering. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A scoped, authoritative public-docs bundle from rustdoc JSON; no review verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
+| [`pr-review-queue`](skills/pr-review-queue/SKILL.md) | Sequential reviews of requested, self-authored and overlooked PRs, then reviews of new commits until merge. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
@@ -92,6 +93,19 @@ The radars discover and notify; they do not review PRs or act on feedback.
 Their Teams digests keep workflow-specific `Why review` / `Why respond` fields,
 not the code-review finding format. `teams-self-message` owns message delivery;
 each radar owns its eligibility and notification state.
+
+`pr-review-queue` performs the reviews. It asks for monitored GitHub/ADO
+repositories and a cadence, preflights MCP and provider-CLI capabilities, and
+handles explicit requests oldest first. It also covers all published PRs by the target
+author and otherwise-unreviewed PRs older than 24 hours but no older than seven
+days. After a successful review, new commits stay eligible regardless of age.
+GitHub requests are cleared only after verified delivery; ADO assignments and
+votes are retained, with request-cycle completion tracked locally. It does not
+reply to later discussion or apply fixes. Creating the skill does not start a
+schedule. MCP gaps can be filled by provider CLIs; missing combined capability
+blocks execution rather than falling back to direct HTTP. Its runner, journal
+and receipt adaptations live entirely in the new skill's directory, leaving
+existing review skills unchanged.
 
 `feedback-autonomy` handles eligible automation and actionable instructions
 posted by the same human who created the PR, using provider identity data without
