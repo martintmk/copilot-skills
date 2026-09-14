@@ -69,7 +69,10 @@ for the correctness, perf and telemetry lenses.
 
 Findings are posted as a single structured review through `review-delivery`,
 explicitly attributed to an AI agent so none read as if a human maintainer wrote
-them, with each one anchored to the code it is about.
+them, with each one anchored to the code it is about. Each finding opens with a
+standalone **Posted by an AI agent** line (severity included when needed), then
+**Why this matters** and **Suggested fix**, normally one or two sentences each.
+Standalone review skills and local reports use the same finding format.
 
 Trigger it with "review this PR", "review my changes", or "review like me".
 
@@ -189,10 +192,13 @@ Trigger it with "review the metrics" or "check this telemetry".
 
 ### `review-delivery`
 
-The shared posting layer. It owns the `[AI AGENT]: ` attribution rule, the
-concern/verification/fix comment shape, precise anchoring, severity labels
-(`nit:`, `non-blocking:`, design notes), the verdict, the anti-low-signal list,
-and the mechanics that actually bite: generating the review JSON from a script on
+The shared posting layer. It owns the standalone **Posted by an AI agent**
+attribution line, with severity inside the same bold line when needed (for
+example, **Posted by an AI agent · Non-blocking**), and the **Why this matters** /
+**Suggested fix** sections. Evidence stays concise and attached to the concern;
+investigation narration and speculative API-evolution arguments are omitted.
+It also owns precise anchoring, severity, verdicts, the anti-low-signal list, and
+the mechanics that actually bite: generating the review JSON from a script on
 disk rather than inline, never using `-f body=@file`, pinning `commit_id` to a
 re-checked `headRefOid`, keeping anchors inside diff hunks, and the ADO
 1-based-offset thread API.

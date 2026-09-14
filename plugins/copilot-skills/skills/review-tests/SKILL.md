@@ -92,16 +92,17 @@ on both revisions and compare the exact outcome. Modify only a temporary
 worktree, use a trusted checkout or isolated environment, quote the command and
 decisive result, and remove probes afterward.
 
-Follow the shared **findings contract** in `review-delivery`. Each finding also
-names the baseline contract, the head delta, and the missing justification or
-coverage, with the exact restoration or replacement.
+Load `review-delivery` and use its shared **findings contract** and two-section
+**comment shape**, including for standalone reports. Each finding also names the
+baseline contract, the head delta, and the missing justification or coverage,
+with the exact restoration or replacement.
 
 Severity in this area is strongly category-linked, though impact still decides a
 genuine edge case:
 
 - **Blocking** (unlabelled): unjustified observable behavior change, lost
   distinct test coverage, or a test-only bypass reachable in production.
-- **`non-blocking:`**: materially brittle, non-idiomatic, or duplicated test
+- **Non-blocking**: materially brittle, non-idiomatic, or duplicated test
   infrastructure.
 
 Coverage line: the deleted and changed tests, behavior deltas, and test utility

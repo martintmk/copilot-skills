@@ -94,8 +94,8 @@ call sites, configuration, and focused tests.
 
 ## Findings
 
-Follow the shared **findings contract** in `review-delivery`. Each finding also
-names:
+Load `review-delivery` and use its shared **findings contract** and two-section
+**comment shape**, including for standalone reports. Each finding also names:
 
 - the triggering failure path;
 - the incorrect or lost classification, or the duplicated resilience mechanism;

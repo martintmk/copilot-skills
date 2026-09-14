@@ -324,24 +324,36 @@ provide additional safety, maintainability, or UX value.
 
 ## Evidence and severity
 
+Load `review-delivery` for its shared attribution, severity and two-section
+**comment shape** for both the provisional and filtered reports. Exact public
+paths replace source `path:line` anchors here; never inspect source to invent
+line numbers. This does not relax the output-only evidence boundary or authorize
+posting.
+
 A finding must contain:
 
-1. **Severity and item** — a label from the shared **findings contract** in
-   `review-delivery` (unlabelled for blocking, `non-blocking:`, or `nit:`), plus
-   the exact public path.
+1. **Severity and item** — the shared AI attribution line (no severity qualifier
+   for blocking, `Non-blocking`, or `Nit`), plus the exact public path under
+   **Why this matters**.
 2. **Evidence** — the smallest exact `cargo public-api` excerpt proving the
-   shape. Include related lines when absence would otherwise be ambiguous.
+   shape, under **Why this matters**. Include related lines when absence would
+   otherwise be ambiguous.
 3. **Consumer impact** — the concrete usability, interoperability, type-identity,
-   or evolution cost.
+   or compatibility cost, in the same section.
 4. **Recommendation** — a specific better public shape, not an implementation
-   patch.
-5. **Guideline** — the applicable Pragmatic Rust ID or idiomatic Rust convention.
+   patch, under **Suggested fix**.
+5. **Guideline** — the applicable Pragmatic Rust ID or idiomatic Rust convention,
+   cited briefly where it supports the concern or correction.
 
-Leave a finding unlabelled only for a concrete, substantial consumer or
-compatibility problem; most API cleanliness findings are `non-blocking:` or
-`nit:`. Present a context-dependent alternative under **Design questions**, not
-as a defect. Never manufacture certainty from a missing line in simplified
-output.
+Do not turn these evidence requirements into separate per-field headings. Keep
+each prose section to one or two sentences where possible, with only the
+smallest necessary API excerpt. Omit speculative future API-evolution arguments.
+
+Leave a finding without a severity qualifier only for a concrete, substantial
+consumer or compatibility problem; most API cleanliness findings are
+`Non-blocking` or `Nit`. Present a context-dependent alternative under **Design
+questions**, not as a defect. Never manufacture certainty from a missing line in
+simplified output.
 
 ## Post-processing
 
@@ -364,18 +376,23 @@ agent's context.
 Return only the report produced by the rustdoc JSON post-processor:
 
 ```text
+**Posted by an AI agent**
+
 # Public API review: <package>
 
 Scope: <tool version, package, features, target, and optional baseline>
 Verdict: <approve | approve with non-blocking comments | changes requested | blocked>
 
 ## Findings
-### [severity] <public path>: <consumer-facing headline>
-Evidence:
-<exact cargo public-api line(s)>
-Impact: <specific consequence>
-Recommendation: <specific API shape>
-Guideline: <ID or convention>
+**Posted by an AI agent · Non-blocking**
+
+**Why this matters**
+<Exact public path, concrete consumer impact, and relevant convention.>
+<Smallest exact cargo public-api excerpt proving the claim.>
+
+**Suggested fix**
+<Specific better public shape.>
+
 ## Design questions
 <context-dependent choices, each with exact API evidence>
 
@@ -387,13 +404,16 @@ Guideline: <ID or convention>
 what this review cannot assess>
 ```
 
+Repeat the shared finding block in impact order, choosing its attribution-line
+severity from the evidence rather than copying `Non-blocking` mechanically.
+Keep excerpts distinct from prose with inline code or a fenced block.
+
 If there are no findings, say so explicitly and still report the configurations
 and API families covered. If extraction fails, use `blocked`, include the
 decisive diagnostic, and do not issue an API verdict.
 
-Severity labels and verdict values come from the shared **findings contract** in
+Attribution, finding sections, severity labels and verdict values come from
 `review-delivery`, so a finding from this report can be merged into a combined
-review without re-labelling. This skill returns the report rather than posting
-it.
+review without reformatting. This skill returns the report rather than posting it.
 
 [pragmatic-rust]: https://microsoft.github.io/rust-guidelines/

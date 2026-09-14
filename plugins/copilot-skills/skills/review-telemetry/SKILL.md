@@ -79,9 +79,10 @@ that a rename is breaking.
 
 ## Findings
 
-Follow the shared **findings contract** in `review-delivery`. Each finding also
-names the exact signal name and attributes, the convention or sibling it diverges
-from, and the operator-visible consequence — broken query, cardinality blow-up,
+Load `review-delivery` and use its shared **findings contract** and two-section
+**comment shape**, including for standalone reports. Each finding also names the
+exact signal name and attributes, the convention or sibling it diverges from,
+and the operator-visible consequence — broken query, cardinality blow-up,
 per-emission allocation.
 
 If the change adds no telemetry where a comparable component instruments its

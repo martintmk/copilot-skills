@@ -81,8 +81,9 @@ skills reuse these rules.
   `#[cfg(not(feature = "…"))]` build that `--all-features` never compiles.
 - **Quantify sweeping claims.** If you assert something about a whole change,
   count it.
-- **Quote exact values, not paraphrases.** Prefix a reproduced finding with
-  `Verified:`; argue non-behavioral findings tightly; never dress a guess as a
+- **Quote exact values, not paraphrases.** Put the triggering input and decisive
+  reproduced result under **Why this matters**, not in a separate `Verified:`
+  paragraph. Argue non-behavioral findings tightly; never dress a guess as a
   verification. **State what you could not check** rather than guessing.
 - **Do not re-run CI.** The PR's own CI owns lint, format and the full suite;
   read its status and build or run only the narrowest thing a specific finding
@@ -98,13 +99,15 @@ as questions.
 
 ## Findings
 
-Follow the shared **findings contract** in `review-delivery`. Each finding also
-names the triggering input or sequence and the decisive verification, prefixed
-`Verified:`.
+Load `review-delivery` and use its shared **findings contract** and two-section
+**comment shape**, including for standalone reports. Each finding also names the
+triggering input or sequence and quotes the decisive reproduced result under
+**Why this matters**.
 
 Include a complete focused failing test when it directly demonstrates the defect
-and should become permanent regression coverage; otherwise cite the result. A
-defect you could not reproduce is a question, not a finding.
+and should become permanent regression coverage, under **Suggested fix**;
+otherwise cite the result without the harness. A defect you could not reproduce
+is a question, not a finding.
 
 Coverage line: the paths traced and what remained unverified.
 

@@ -138,3 +138,8 @@ Return:
 Do not return the JSON, full docs, or unchanged per-claim decisions. The parent
 agent publishes the filtered report unchanged and removes the temporary target
 directory.
+
+Preserve the report's AI attribution lines and the **Why this matters** /
+**Suggested fix** sections for every surviving finding. Narrow evidence or
+recommendations within those sections; do not revert to per-field headings or
+add an investigation transcript.

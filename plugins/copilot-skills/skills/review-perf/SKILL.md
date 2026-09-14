@@ -57,11 +57,12 @@ Performance claims need numbers, not adjectives.
 
 ## Findings
 
-Follow the shared **findings contract** in `review-delivery`. Each finding also
-names the path classification and the cost — allocation per call, extra dispatch,
+Load `review-delivery` and use its shared **findings contract** and two-section
+**comment shape**, including for standalone reports. Each finding also names the
+path classification and the cost — allocation per call, extra dispatch,
 contention — plus the measurement if you took one.
 
-Mark a finding `non-blocking:` when it is off the hot path or unmeasured. If the
+Mark a finding `Non-blocking` when it is off the hot path or unmeasured. If the
 change is performance-neutral, say so rather than inventing micro-optimizations.
 
 Coverage line: the paths classified, what you measured, and what remained

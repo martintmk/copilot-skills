@@ -20,28 +20,31 @@ what was verified.
 
 Every `review-*` skill emits findings in this shape, so a single review reads the
 same way no matter which areas ran. Each skill adds its own area-specific field
-and evidence rule on top; none of them redefine this shape.
+and evidence rule within the two sections below; none of them redefine this shape.
 
 1. **Order by impact**, most consequential first. Return only actionable
    findings — never pad a review to look thorough.
 2. **Anchor each finding as `path:line`** and name the symbol it is about.
-3. **State the claim, the consequence, and the fix**: what contract, convention
-   or behavior the change breaks; the consumer-, operator- or runtime-visible
-   effect; and a specific correction, as a `suggestion` block when it is the
-   exact replacement for the anchored range.
-4. **Label severity from impact, not category**, using only this vocabulary:
-   - unlabelled — blocking;
-   - `non-blocking:` — a real issue that should not gate the change;
-   - `nit:` — cosmetic;
-   - `**Design note, no change requested:**` — an observation being recorded.
-5. **Separate verified from reasoned.** Prefix a reproduced finding with
-   `Verified:` and quote the decisive result. State anything you could not check
-   rather than guessing, and raise an unprovable behavioral suspicion as a
-   question rather than a finding.
-6. **End with one coverage line** naming what the area actually reviewed and what
-   it could not assess — even when nothing was wrong.
+3. **Use the shared comment shape below.** Put the claim and concrete consumer-,
+   operator- or runtime-visible consequence under **Why this matters**. Put the
+   specific correction under **Suggested fix**, with a `suggestion` block only
+   when it is the exact replacement for the anchored range.
+4. **Label severity from impact, not category**, in the attribution line rather
+   than as a prose prefix, using only this vocabulary:
+   - no severity qualifier — blocking;
+   - `Non-blocking` — a real issue that should not gate the change;
+   - `Nit` — cosmetic;
+   - `Design note, no change requested` — an observation being recorded.
+5. **Keep evidence honest and compact.** Distinguish reproduced results from
+   reasoned claims under **Why this matters**, quoting the decisive result when
+   it establishes the issue. Do not add a routine `Verified:` paragraph or
+   narrate the investigation. State material uncertainty rather than guessing,
+   and raise an unprovable behavioral suspicion as a question, not a finding.
+6. **End the area's output with one coverage line** naming what it actually
+   reviewed and what it could not assess — even when nothing was wrong. Do not
+   repeat coverage in every comment.
 7. **Say so plainly when there are no findings.** The coverage line is then the
-   whole output. Never manufacture findings.
+   whole body after the AI attribution. Never manufacture findings.
 
 **Verdict vocabulary**, used by the summary and by report-only skills:
 `approve`, `approve with non-blocking comments`, `changes requested`, or
@@ -50,39 +53,61 @@ and evidence rule on top; none of them redefine this shape.
 ## Voice and severity
 
 - **Attribute every message to the AI.** Start the summary, every GitHub inline
-  comment, and every Azure DevOps thread with the exact inline prefix
-  `[AI AGENT]: `. Never substitute another marker, change the casing, wrap it in
-  backticks, put it on its own line, or indent it. Never write in the
-  requester's first person or imply they wrote the review.
-- **One claim per comment, normally compact.** State the defect, the
-  verification (`Verified: …`) when you ran one, and the fix. Lead with consumer
-  or runtime impact, not compiler internals. Normally two short paragraphs before
-  any proof block: a short finding gets a sentence, and you spend extra length
-  only where a contract proof or trade-off earns it.
-- **Comment shape:**
+  comment, every Azure DevOps thread, and each local report with
+  `**Posted by an AI agent**` on its own line, followed by a blank line. For a
+  finding that needs a severity qualifier, put it inside the same bold line:
+  `**Posted by an AI agent · Non-blocking**`, `**Posted by an AI agent · Nit**`,
+  or `**Posted by an AI agent · Design note, no change requested**`. Use this
+  attribution on each finding in a report too. Do not prepend another marker,
+  wrap the line in backticks, quote or indent it, or imply the requester wrote
+  the review.
+- **One claim per comment, two short sections.** Normally one or two sentences
+  under each heading. Lead with consumer or runtime impact, not compiler
+  internals. Include concrete evidence when it establishes the issue, but omit
+  investigation narration, redundant detail, and speculative API-evolution
+  arguments. Brevity must not weaken the underlying investigation or hide a
+  material limitation.
 
-  `[AI AGENT]: Concern and consumer/runtime impact.`
+### Comment shape
 
-  `Verified: <probe or test> -> <decisive result>. Suggested fix: <specific change>.`
+```markdown
+**Posted by an AI agent · Non-blocking**
 
-  Omit the verification sentence for reasoned API/design findings. Add a
-  `suggestion` fence only when it is the exact replacement for the anchored
-  range. When a failing test is useful permanent coverage, add its complete
-  `rust` fence after these paragraphs, optionally inside `<details>`, then say
-  `Please add this test to <module/file>.` Do not indent prose or fences.
+**Why this matters**
+<Concrete problem and consumer/runtime impact, with decisive evidence when useful.>
+
+**Suggested fix**
+<Specific correction and, only when useful, why it fits.>
+```
+
+Choose the severity qualifier from impact; the example is not a default.
+Use these exact headings for every actionable finding, including standalone
+reports. Fold area-specific evidence into **Why this matters** and recommendations
+into **Suggested fix** rather than adding per-field sections. A design note with
+no change requested uses only **Why this matters**; do not invent a fix. Clean
+summaries and coverage-only reports need attribution, not empty finding sections.
+
+Put an exact-range `suggestion` fence under **Suggested fix**. When a failing test
+is useful permanent coverage, include its complete focused `rust` fence there,
+optionally inside `<details>`, and name the module/file where it belongs. Keep
+longer proof material only when needed, optionally collapsed under **Why this
+matters**. Do not indent prose or fences.
+
+### Judgment and anchoring
+
 - **Anchor precisely.** Attach to the right line and name the symbol; quote the
   exact value. Use in-body line references (`L56-59`) only to point at a
   *different* line than the anchor.
-- **Label severity only when it is not obvious:** `nit:` for cosmetics,
-  `non-blocking:` for a real but non-gating issue, `**Design note, no change
-  requested:**` for an observation, and no label for a blocking finding. State
-  the verdict in the summary, not on each finding.
+- **Keep severity in the attribution line.** Use the qualifiers in the findings
+  contract, with no qualifier for a blocking finding. State the verdict in the
+  summary, not on each finding.
 - **Set severity from impact, not category.** A public-contract or semver issue
   is usually blocking, but weigh novelty, real consumer impact, precedent,
   mitigation and scope: a new public conversion that merely inherits a
-  pre-existing quirk is `non-blocking:` with a doc-note ask, not a block.
-- **Acknowledge intent, then decide.** Name why the code is the way it is before
-  correcting it, lay out the trade, and commit to a recommendation.
+  pre-existing quirk is `Non-blocking` with a doc-note ask, not a block.
+- **Acknowledge intent when it affects the recommendation.** Explain a relevant
+  constraint or trade-off briefly, then commit to a correction; do not add a
+  rationale paragraph by default.
 - **Retract plainly** when a re-run shows you were wrong.
 - **On the requester's own PR**, act as an investigative assistant, not a
   gatekeeper: use `event:"COMMENT"` / no ADO vote, and drop `Verdict:` framing.
@@ -97,12 +122,12 @@ listings that are mostly harness setup.
 ## Output and verdict
 
 A structured summary plus findings in impact order. Build the summary from
-components, not a fixed template; it may be one sentence. After the
-`[AI AGENT]: ` prefix, compose in this order when the components apply: what you
-verified (the targeted tests/probes you ran and the CI status you relied on, not
-a re-run of the full suite); a coverage line naming what was reviewed; the
-design findings; the remaining correctness, dependency, performance, test and
-doc findings; the verdict; and any `Design note, no change requested`.
+components, not a fixed template; it may be one sentence. After the standalone
+`**Posted by an AI agent**` line and a blank line, lead with the overall outcome,
+then concise coverage and material limitations. State the verdict when
+applicable. Keep decisive evidence with its finding rather than repeating the
+investigation in the summary. Findings placed in the summary because they cannot
+be anchored still use the shared two-section comment shape.
 
 If a review area's gate produced no finding, say so explicitly rather than
 silently omitting it. Reach a verdict from the findings alone, using the verdict
@@ -141,11 +166,14 @@ removed line. Mechanics that bite:
   `start_line`; for a range, `start_line` must be strictly less than `line`. A
   ` ```suggestion ` block replaces exactly the anchored range.
 - **Validate before posting.** Assert the summary and every inline comment start
-  with the exact `[AI AGENT]: ` prefix; reject backticked, differently cased,
-  line-separated, indented or substituted markers. Assert no body has leading
-  whitespace and fences open at column zero. Inspect the generated
-  `comments[].body` values, then fetch `headRefOid` once more and assert it
-  equals `review.json.commit_id`; regenerate anchors or stop if it moved.
+  with one of the exact bold attribution lines above, followed by a blank line;
+  reject old, substituted, backticked, quoted, indented or run-in prefixes.
+  Assert every actionable finding has **Why this matters** then **Suggested
+  fix**, each on its own line. Summary-only bodies and no-change design notes
+  follow the exceptions above. Assert no body has leading whitespace and fences
+  open at column zero. Inspect the generated `comments[].body` values, then
+  fetch `headRefOid` once more and assert it equals `review.json.commit_id`;
+  regenerate anchors or stop if it moved.
 - **`APPROVE`/`REQUEST_CHANGES` are rejected on your own PR** → use
   `event:"COMMENT"` and state the verdict in the body.
 - **Verify after posting.** Read the comments back. A `422` is usually a bad
@@ -165,8 +193,10 @@ removed line. Mechanics that bite:
   for `rightFileStartOffset` and the exact character count + 1 for
   `rightFileEndOffset`; `0` and arbitrary large offsets are rejected. Put the
   summary in one more `create` with no file path.
-- Start each `content` with `[AI AGENT]: ` followed immediately by the first
-  paragraph; ADO threads stand alone, so this is where attribution lives.
+- Start each `content` with the same standalone bold attribution line and blank
+  line, then use the shared comment shape for findings. Apply the same body
+  validation as GitHub before posting; ADO threads stand alone, so attribution
+  and sections must be present in each finding thread.
 - Threads are posted one at a time and are not atomic: read them back
   (`ado-repo_pull_request_thread` `action:list`) to confirm each anchored, and
   recover any that failed rather than leaving a half-posted review.
@@ -176,8 +206,9 @@ removed line. Mechanics that bite:
 
 ## Local diff (no PR)
 
-Return the review as a report in chat — the local-validation line, findings
-table and verdict — and post nothing.
+Return the review as a report in chat with the standalone AI attribution,
+findings in the shared two-section shape, a coverage line and verdict; post
+nothing. Do not replace the finding sections with a table.
 
-For any mode, report the review URL (when posted) and a one-line-per-finding
-table; summarise in chat rather than pasting the whole review back.
+For posted reviews, report the review URL and a one-line-per-finding table in
+chat rather than pasting the whole review back.

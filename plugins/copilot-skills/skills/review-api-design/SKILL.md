@@ -109,9 +109,12 @@ versioning and release treatment for an intentional break.
 
 ## Findings
 
-Follow the shared **findings contract** in `review-delivery`. Each finding also
-names the exported item and the disposition it failed, and states the
-consumer-visible consequence across releases.
+Load `review-delivery` and use its shared **findings contract** and two-section
+**comment shape**, including for standalone reports. Each finding also names the
+exported item and the disposition it failed, and states the concrete
+consumer-visible consequence. Discuss compatibility only when it establishes
+that consequence or is needed to choose the fix, not as speculative future
+API-evolution rationale.
 
 Design findings may be argued precisely from the code, manifests and repository
 rules without executing anything; verify a claimed break where that is cheap.
