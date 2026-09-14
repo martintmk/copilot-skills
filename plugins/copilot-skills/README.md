@@ -101,6 +101,13 @@ receives no source-based findings, and its docs-based filtering stays isolated.
 docs consumers, never raw JSON or findings. Matching artifacts need not be
 rebuilt. Directly invoking a focused skill still runs only that workflow.
 
+For genuinely added or removed crates, a revision-bound
+[package-presence record](skills/review-lens/package-comparison.md) supplies a
+logical empty comparison side. Reviewers build only the side that exists and
+still review its complete API/docs, including root-only scaffolds. Missing or
+failed artifacts for an existing crate remain blockers; they are never treated
+as an empty baseline.
+
 ## PR tracking and automation
 
 The radars discover and notify; they do not review PRs or act on feedback.

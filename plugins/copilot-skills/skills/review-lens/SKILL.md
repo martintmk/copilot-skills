@@ -30,8 +30,9 @@ This skill owns coordination, not specialist investigation. Read
    procedure. Reuse matching context already supplied by a caller.
 2. **Plan complete coverage.** Use every entry in the required coverage table
    below, including for small, docs-only, naming-only and manifest-only changes.
-   Inventory affected packages/configurations and scan changed public surface
-   first. Do not replace the full roster with a risk-selected subset.
+   Inventory affected packages/configurations, establish their
+   [baseline/head presence](package-comparison.md), and scan changed public
+   surface first. Do not replace the full roster with a risk-selected subset.
 3. **Dispatch every sub-review to a fresh worker.** Follow
    [worker isolation](worker-isolation.md), including for small changes.
    Never load multiple specialist passes into this coordinator or one worker.
@@ -84,6 +85,8 @@ permission and matching artifact paths, **not** source, manifests, source diffs,
 docs text or other reviewers' findings. Its own isolated filtering stage remains
 mandatory, even for a clean applicable API audit. Return its filtered area
 result to the coordinator; only the final delivery worker posts.
+Include the factual `packageComparison` record: a genuinely new crate uses a
+logical empty baseline and real head artifacts, not a doomed baseline build.
 
 Run `review-public-docs` in its own context. Share its matching bundle with the
 API-design/consistency consumers or the isolated API filter, never as candidate
@@ -104,7 +107,8 @@ invent worker IDs or fill missing records with a coordinator-written pass.
 
 - `completed`: the worker finished its scoped procedure, including required
   extraction/comparison/filtering, and returned findings/data or an explicit
-  no-findings result.
+  no-findings result. A proven added/removed package's supported one-sided
+  comparison can complete; no artifact is required for its absent side.
 - `not-applicable`: the worker ran and established that its lens has no
   applicable surface, stating the inspected, permitted evidence. This is not a
   pre-dispatch skip. A confirmed absence of Rust library packages can yield this
