@@ -24,6 +24,8 @@ The parent passes one compact handoff:
   tool versions and relevant inherited build flags;
 - the exact baseline version/revision and head used by any API diff, including
   available baseline artifacts, not just a moving label such as `latest`;
+- the matching `packageComparison` record and comparison mode, including
+  proven absent sides; forward it unchanged to any docs retrieval worker;
 - paths to already captured API output, generated JSON or scoped docs bundles,
   their configuration/provenance, and tools/commands already obtained; and
 - report role (area result or standalone), own-PR/no-verdict context and final
@@ -35,6 +37,12 @@ matching artifacts under the applicable
 [shared context rules](../review-lens/review-context.md); do not inspect source
 or repeat setup, CI reads or checkouts. Keep the main review's narrower
 evidence boundary.
+
+The [package comparison](../review-lens/package-comparison.md) is scope
+provenance, not claim evidence. For `added-package`, filter against real head
+docs without requesting a nonexistent baseline build; for `removed-package`,
+use real baseline docs. Neither mode waives this fresh filtering stage, even
+for an empty claim set, and neither permits invented docs or JSON.
 
 ## Retrieve once through `review-public-docs`
 

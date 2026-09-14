@@ -21,6 +21,9 @@ worker to return `not-applicable` with that provenance, without running Cargo.
 An unknown package selection or missing extraction is `blocked`. For a Rust
 library scope, retain the full procedure and mandatory filtering even when
 the change is small, docs-only or produces no API findings.
+Proven baseline/head package absence uses the
+[one-sided comparison contract](../review-lens/package-comparison.md); it is not
+missing required extraction or grounds for skipping this pass.
 
 Review the public contract of a Rust library from the consumer's perspective.
 `cargo public-api` output is the sole source for generating candidate findings.
@@ -38,6 +41,9 @@ to remove or narrow candidate statements that the API docs refute or answer.
 - User-supplied scope and use cases can orient the review. Tool help, versions,
   diagnostics, revision identifiers and artifact metadata can guide execution
   and matching, but cannot prove an API-quality claim.
+  A context-owner-supplied `packageComparison` record may establish package
+  presence and comparison mode only. Do not inspect its source evidence or
+  infer package absence from a failed Cargo command.
 - The mandatory, isolated [post-processor](rustdoc-post-processing.md) is the
   only documentation exception. It uses `review-public-docs` to retrieve docs
   and may only remove or narrow claims, never add/strengthen them, increase
@@ -72,6 +78,10 @@ replace this skill's mandatory, removal/narrowing-only candidate filtering.
    Otherwise use the package selected by the tool, `--all-features`, and the
    host target. If package selection is ambiguous, request the package name or
    report the blocker; never inspect the manifest to choose one.
+   For a change review, consume the exact `packageComparison` record before
+   attempting extraction. Resolve an unknown side through the context owner,
+   not source inspection or an invented empty capture. Head-only standalone
+   audits do not need a baseline-presence record.
 
    In the commands below, `<feature-args>` is `--all-features` unless the user
    explicitly selected another configuration, in which case use exactly their
@@ -109,8 +119,11 @@ replace this skill's mandatory, removal/narrowing-only candidate filtering.
    `blocked`, the exact command when attempted, and the decisive reason. Do not
    troubleshoot by reading the crate.
 
-3. **Capture the complete current surface once.** Use an external build target
-   directory (for example via `CARGO_TARGET_DIR`) and the installed tool's
+3. **Capture the complete present-side surface once.** Normally this is the
+   current head. For a proven `removed-package`, capture the exact baseline in
+   an owned disposable worktree instead; do not build its absent head.
+   Use an external build target directory (for example via `CARGO_TARGET_DIR`)
+   and the installed tool's
    documented lock-preserving option when supported. Stop if extraction would
    rewrite reviewed inputs; an external target alone does not protect lockfiles.
    Capture output verbatim:
@@ -134,9 +147,22 @@ replace this skill's mandatory, removal/narrowing-only candidate filtering.
    Retain available JSON artifact paths and provenance for retrieval downstream,
    without opening the JSON.
 
-4. **For every PR/change/semver review, obtain the matching API diff.** Reuse a
-   matching capture or choose the appropriate supported form, capturing its
-   output outside the reviewed repository:
+4. **For every PR/change/semver review, complete the matching comparison.**
+   Select the mode from the proven package-presence record:
+
+   - `added-package`: compare a logical empty baseline with the complete real
+     head output from step 3. All emitted head items, including the crate module,
+     are the added review set. Do not invoke baseline extraction or commit diff
+     commands that must build the absent package.
+   - `removed-package`: use the complete real baseline output from step 3
+     against a logical empty head; those emitted items are the removed set.
+   - `paired`: both counterparts exist, so obtain the normal matching API diff
+     below. A failed capture or renamed package cannot use an empty-side shortcut.
+
+   Record the mode, exact revisions, presence provenance and real capture paths.
+   A logical empty side is comparison metadata, never fabricated tool output.
+   For `paired`, reuse a matching capture or choose the appropriate supported
+   form, capturing its output outside the reviewed repository:
 
    ```text
    cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff latest
@@ -148,10 +174,12 @@ replace this skill's mandatory, removal/narrowing-only candidate filtering.
    baseline version/revision, not just a moving label such as `latest`.
    Commit diffing checks out revisions in place: use a disposable worktree
    outside the reviewed repository, never the caller's worktree or `--force`.
-   It is not a sandbox and does not contain uncommitted changes. For a dirty
-   head, require a tool-supported comparison of the actual captured head with
+   It is not a sandbox and does not contain uncommitted changes. For a paired
+   dirty head, require a tool-supported comparison of the actual captured head with
    baseline; do not substitute `HEAD`. If the required comparison is unavailable,
    return `blocked` for the requested change review, not a silent full-crate audit.
+   A one-sided comparison also requires the actual dirty-state capture when
+   dirty work is in scope; a clean `HEAD` capture cannot stand in for it.
 
 5. **Inventory, then select the review set.** Inventory all emitted families
    (modules/re-exports, types/fields, traits/impls, functions/methods,
@@ -161,7 +189,10 @@ replace this skill's mandatory, removal/narrowing-only candidate filtering.
    context for their immediate family, not a source of unrelated findings.
    A broad change can require full-surface coverage; say so and distinguish
    pre-existing concerns from regressions. An unavailable diff is not evidence
-   that a PR is broad or that nothing changed.
+   that a PR is broad or that nothing changed. The explicit one-sided modes
+   above cover the full real present-side output without requiring a nonexistent
+   counterpart. Output containing only the crate module is valid scaffold
+   evidence, not a failed or not-applicable API review.
 
 6. **Draft and filter.** Apply the lenses below only to the selected set. Quote
    the decisive emitted lines, separate context-dependent design questions,

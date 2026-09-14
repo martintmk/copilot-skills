@@ -40,6 +40,9 @@ area's draft findings, or full logs into a new reviewer. Reuse matching factual
 artifacts with provenance, not other reviewers' conclusions. Each skill's
 evidence restrictions still apply: an output-only API worker gets no source,
 diff or documentation evidence from a source-review coordinator.
+For change reviews, the compact [package-presence record](package-comparison.md)
+is permitted scope metadata. Retain its provenance without exposing source,
+manifest content or raw documentation to an output-only worker.
 
 Stage-specific inputs are deliberate exceptions, not shared conversation:
 

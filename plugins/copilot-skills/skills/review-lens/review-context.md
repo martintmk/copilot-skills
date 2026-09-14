@@ -43,6 +43,12 @@ requested specialist. Do not repeat matching setup in each fresh worker.
    job rather than re-deriving its failure. Paginate existing reviews and
    threads, and record points already raised or resolved. Do not repeat them.
    Without CI, report that limitation and run only relevant targeted commands.
+5. **Resolve package presence before API/docs extraction.** For a change review,
+   establish the per-package [comparison record](package-comparison.md) at the
+   exact comparison base and head. Distinguish genuinely added/removed packages
+   from renamed, excluded, gated or unbuildable ones. Supply compact presence
+   facts and provenance, not source evidence, to the API/docs workers. Proven
+   absence uses the supported one-sided comparison; unknown absence still blocks.
 
 ## Reuse and resource ownership
 
