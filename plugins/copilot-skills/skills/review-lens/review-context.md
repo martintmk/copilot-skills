@@ -78,6 +78,13 @@ artifact paths rather than whole logs. Refresh metadata when it may have changed
 especially the head and discussion before posting; do not rerun unchanged
 investigations merely because another area needs the same evidence.
 
+After the complete Review Lens roster returns, a descendant head movement may
+use the coordinator's best-effort finding refresh from `SKILL.md`. That
+exception re-evaluates only existing merged findings against the exact
+intervening diff and current source. It does not make prior commands or
+artifacts current, validate unrelated new code, or extend specialist coverage
+to the added commits.
+
 ## Verification discipline
 
 - **Attribute regressions against the baseline.** Run the same focused probe on

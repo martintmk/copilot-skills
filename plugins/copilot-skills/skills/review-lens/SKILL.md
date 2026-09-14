@@ -50,10 +50,45 @@ This skill owns coordination, not specialist investigation. Read
    Consolidate coverage, including public surface and blocked areas. Require a
    returned coverage record from every dispatched skill before calling the
    review complete; a clean partial roster is not a complete review.
-5. **Deliver once in a fresh worker.** After all required work completes, give
+5. **Reconcile head movement.** Immediately before delivery, refresh the target
+   and head. If only the head advanced and the reviewed head is its ancestor,
+   follow the best-effort finding refresh below instead of discarding the
+   completed review or rerunning every specialist. Otherwise the completed
+   review remains pinned to its original snapshot.
+6. **Deliver once in a fresh worker.** After all required work completes, give
    one `review-delivery` worker the merged result, coverage manifest and
    authorized mode. The coordinator owns the combined verdict; local/report-only
    requests stay in chat. Finish with the shared cleanup procedure.
+
+## Best-effort finding refresh
+
+When a PR head advances after all required workers completed, the coordinator
+may inspect the exact `reviewedHead..currentHead` diff solely to preserve,
+remove or update existing findings. This is a narrow exception to specialist
+isolation, not another review pass: do not search the new commits for new
+findings or claim that they received the required roster.
+
+The shortcut applies only when the target/base is unchanged, the reviewed head
+is an ancestor of the current head, and the complete intervening diff and
+current source are available. A changed target, rewritten/non-descendant
+history or incomplete diff requires a fresh review or a blocked result.
+
+Classify every merged finding:
+
+- `still-applies`: the delta does not affect its evidence, or current source
+  clearly retains the root cause.
+- `resolved`: the delta clearly fixes the root cause; omit it from delivery.
+- `updated`: the root cause remains but its evidence, wording or anchor changed;
+  update and re-anchor it against the current head.
+- `uncertain`: the delta affects material evidence and the coordinator cannot
+  confidently decide; omit it and disclose the limitation.
+
+Keep a `findingRefresh` record with reviewed/current heads, target/base,
+classification for every finding and the inspected delta reference. Delivery
+is `COMMENT`-only after a refresh, even when the original verdict supported
+approval or changes requested. The summary must state that full Review Lens
+coverage ended at the reviewed head and only existing findings were
+best-effort re-evaluated through the current head.
 
 ## Required coverage
 
@@ -117,9 +152,12 @@ invent worker IDs or fill missing records with a coordinator-written pass.
   dependent stage is unavailable. Missing output and failed workers also block;
   they are never `not-applicable` or successful coverage.
 
-All ten records must match the current review snapshot and be `completed` or
-evidence-backed `not-applicable` before `reviewComplete=true` or completed-review
-publication. Do not manufacture findings or run unrelated probes to fill a row.
-If blocked, return the manifest and decisive limitation without claiming a
-complete review or posting an approval. Public summaries retain meaningful
-coverage/limitations, not worker IDs or internal bookkeeping.
+All ten records must match one reviewed snapshot and be `completed` or
+evidence-backed `not-applicable` before `reviewComplete=true`. Normal completed
+review publication requires that snapshot to remain current. If the head later
+advances, publication may instead use the best-effort finding refresh above:
+the original manifest remains pinned, every existing finding gets a refresh
+classification, and delivery is `COMMENT`-only with the partial-delta
+limitation. Do not manufacture findings or run unrelated probes to fill a row.
+If either the original roster or required refresh evidence is blocked, return
+the decisive limitation without claiming complete current-head coverage.

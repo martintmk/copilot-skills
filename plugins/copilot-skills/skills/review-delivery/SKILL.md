@@ -20,10 +20,11 @@ Do not repeat the investigation or override an explicit report-only request.
 
 For a Review Lens result, require its snapshot-matching `coverageManifest`
 covering every entry in the [required roster](../review-lens/SKILL.md).
-Missing workers, skipped passes or `blocked` records prevent completed-review
-publication, even when the supplied findings are empty. Return the limitation
-without posting an approval or treating a diagnostic as a completed review.
-This gate does not broaden a directly requested single-area review.
+Missing workers, skipped passes or `blocked` records prevent publication, even
+when the supplied findings are empty. A moved descendant head may additionally
+provide the coordinator's complete `findingRefresh` record. This permits only a
+best-effort `COMMENT`, not completed current-head coverage, approval or changes
+requested. This gate does not broaden a directly requested single-area review.
 
 ## Prepare the review
 
@@ -31,9 +32,14 @@ This gate does not broaden a directly requested single-area review.
    discussion points if a stale snapshot needs refreshing; do not rerun the
    area passes. Summarize outcome, coverage (including public surface), material
    limitations and the supported verdict.
-2. Confirm the head/diff state still matches the evidence. For a moved head or
-   changed local file, return affected claims to the coordinator before
-   posting; re-anchoring alone does not validate old evidence.
+2. Confirm the head/diff state still matches the evidence. Normally, a moved
+   head or changed local file returns affected claims to the coordinator before
+   posting; re-anchoring alone does not validate old evidence. For a descendant
+   head, accept a complete coordinator-produced `findingRefresh` only when it
+   identifies the exact reviewed/current heads and target, classifies every
+   original finding, omits `resolved` and `uncertain` findings, and updates
+   `updated` evidence and anchors against current source. The summary must say
+   that the added commits did not receive full specialist coverage.
 3. Check every body against the contract: exact bold attribution on its own
    first line, followed by a blank line. Every finding, including a design note,
    requires a concise bold title, **Problem** and **Why this matters**, in order.
@@ -44,7 +50,9 @@ This gate does not broaden a directly requested single-area review.
    Reject legacy, quoted, backticked, indented or run-in prefixes. Prose and
    fences start at column zero. Inspect serialized bodies, not only the source
    template.
-4. On the requester's own PR, use GitHub `COMMENT` / no ADO vote and omit
+4. After any best-effort finding refresh, always use GitHub `COMMENT` / no ADO
+   vote, regardless of the original verdict. On the requester's own PR, also
+   use GitHub `COMMENT` / no ADO vote and omit
    `Verdict:` framing. GitHub also rejects `APPROVE` and `REQUEST_CHANGES` when
    the authenticated poster is the author; use `COMMENT` in that case.
 
@@ -73,7 +81,9 @@ only for ranges.
 - **Ranges must be exact.** A single-line comment omits `start_line`; a range
   requires `start_line < line`. A `suggestion` replaces exactly that range.
 - **Recheck immediately before posting.** Fetch `headRefOid` and compare it
-  with `review.json.commit_id`. Stop on movement and reassess affected claims.
+  with `review.json.commit_id`. On further movement, return to the coordinator
+  for another exact-delta finding refresh; never silently post against the
+  superseded commit.
 - **Read back the review and comments.** Confirm anchors and body structure.
   A `422` usually means bad anchors/validation; correct the rejected payload.
   A `403`/`429` means permissions/rate limiting, not a reason to change anchors.

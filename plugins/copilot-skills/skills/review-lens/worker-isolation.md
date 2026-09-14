@@ -44,13 +44,22 @@ For change reviews, the compact [package-presence record](package-comparison.md)
 is permitted scope metadata. Retain its provenance without exposing source,
 manifest content or raw documentation to an output-only worker.
 
+The coordinator has one narrow post-review exception: after the complete roster
+returns, it may inspect an exact descendant-head delta and current source to
+classify already-merged findings as still applying, resolved, updated or
+uncertain. This does not authorize a new specialist pass, discovery of new
+findings or a claim of complete coverage for the added commits. Do not send the
+refresh back through area workers unless a fresh full review is being run.
+
 Stage-specific inputs are deliberate exceptions, not shared conversation:
 
 - The API filter receives the provisional report it must narrow or remove.
 - Docs retrieval receives item paths/configuration, not candidate rationales;
   it returns a scoped bundle to the docs consumer, never raw JSON.
 - Delivery receives the final merged findings, coverage, verdict, anchors and
-  permitted mode, not the investigation history.
+  permitted mode, not the investigation history. For a best-effort head refresh,
+  it also receives the original reviewed snapshot, current head and complete
+  `findingRefresh` classifications.
 
 ## Return, then deliver once
 

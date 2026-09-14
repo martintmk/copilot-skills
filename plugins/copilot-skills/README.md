@@ -71,10 +71,13 @@ focused skill to review only that area.
    never shares a reviewer context.
 3. **Reuse evidence.** Matching excerpts, targeted results and scoped docs
    bundles are shared instead of repeating setup, builds or investigation.
-4. **Gate completion, then deliver once.** Every required worker must return
-   snapshot-matching coverage or an evidence-backed not-applicable result;
-   missing/blocked work cannot be called complete. The coordinator merges
-   duplicate root causes and dispatches one fresh `review-delivery` worker.
+4. **Gate completion, refresh findings, then deliver once.** Every required
+   worker must return snapshot-matching coverage or an evidence-backed
+   not-applicable result; missing/blocked work cannot be called complete. If the
+   PR head advances afterward, the coordinator best-effort re-evaluates only
+   existing findings against the exact descendant delta. It does not claim full
+   coverage of the added commits, and refreshed delivery is comment-only. The
+   coordinator then dispatches one fresh `review-delivery` worker.
 
 The [findings contract](skills/review-delivery/findings-contract.md) owns the
 shared format. Every finding starts with AI attribution and a bold title,
