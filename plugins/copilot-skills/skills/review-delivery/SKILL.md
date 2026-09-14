@@ -18,6 +18,13 @@ area workers never post.
 Accept the completed findings, coverage, reviewed revisions and delivery mode.
 Do not repeat the investigation or override an explicit report-only request.
 
+For a Review Lens result, require its snapshot-matching `coverageManifest`
+covering every entry in the [required roster](../review-lens/SKILL.md).
+Missing workers, skipped passes or `blocked` records prevent completed-review
+publication, even when the supplied findings are empty. Return the limitation
+without posting an approval or treating a diagnostic as a completed review.
+This gate does not broaden a directly requested single-area review.
+
 ## Prepare the review
 
 1. Apply the shared contract to the merged findings. Omit newly duplicated

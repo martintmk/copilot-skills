@@ -3,9 +3,10 @@ name: review-public-api
 description: >
   Audit a Rust library's exported contract using cargo-public-api output only,
   then isolated rustdoc-based filtering of provisional claims. Use for a
-  whole-crate or explicit output-only API audit; small PRs cover changed public
-  items and their immediate family. Applies idiomatic Rust API practices and
-  API-visible Pragmatic Rust Guidelines. Not for source-based PR review,
+  whole-crate or explicit output-only API audit, or review-lens's mandatory
+  output-only pass; small PRs cover changed public items and their immediate
+  family. Applies idiomatic Rust API practices and
+  API-visible Pragmatic Rust Guidelines. Not for source-based findings,
   implementation correctness, docs quality/consistency, performance or posting.
 ---
 
@@ -13,6 +14,13 @@ description: >
 
 Before auditing, apply the [fresh-worker entry gate](../review-lens/worker-isolation.md).
 An already assigned output-only worker runs here without dispatching itself again.
+
+Review Lens dispatches this skill on every run. A coordinator-supplied factual
+package inventory establishing **no Rust library scope** permits the assigned
+worker to return `not-applicable` with that provenance, without running Cargo.
+An unknown package selection or missing extraction is `blocked`. For a Rust
+library scope, retain the full procedure and mandatory filtering even when
+the change is small, docs-only or produces no API findings.
 
 Review the public contract of a Rust library from the consumer's perspective.
 `cargo public-api` output is the sole source for generating candidate findings.

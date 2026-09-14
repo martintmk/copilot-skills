@@ -56,6 +56,12 @@ switching a shared checkout independently. Read the
 [findings contract](../review-delivery/findings-contract.md), not the full
 posting skill, to format results.
 
+For a Review Lens assignment, also return its requested coverage record for
+the pinned snapshot. Every sub-review is dispatched; a worker may establish
+`not-applicable` from its permitted evidence, but missing evidence or inability
+to execute a required stage is `blocked`, not a clean or skipped pass. Focused
+standalone assignments do not acquire the full Review Lens roster.
+
 Reuse completed commands, excerpts and artifacts only when revision/file state,
 inputs, configuration and toolchain match the claim. Share compact results or
 artifact paths rather than whole logs. Refresh metadata when it may have changed,
