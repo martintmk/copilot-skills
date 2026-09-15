@@ -11,66 +11,53 @@ description: >
 
 # Review Consistency
 
-Check that implementation, public docs, examples and guides describe the same
-contract. Review changed claims and their immediate counterparts, not the whole
-repository unless asked.
+Compare changed code/docs claims with their immediate counterparts, including
+unchanged ones made stale. Do not audit the whole repository unless asked.
 
 Follow [shared context](../review-lens/review-context.md) and the
-[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+[findings contract](../review-delivery/findings-contract.md).
 
 ## Procedure
 
-1. **Map the affected claims.** Pair changed behavior with its existing docs,
-   and changed docs with the relevant implementation and related documents.
-   Include unchanged counterparts that the change could make stale.
-2. **Compare like with like.** Match revision, version, features, target and
-   audience. Do not flag a historical changelog or an explicitly scoped
-   exception as a current contradiction. Reuse available public-docs bundles;
-   request a fresh `review-public-docs` worker only when authoritative
-   reachable-public-item documentation is needed.
-3. **Check concrete agreement.** Compare signatures and examples, defaults and
-   allowed values, units and limits, feature gates, lifecycle/ordering, and
-   error or panic guarantees. Follow re-exports, wrappers and configuration
-   sources far enough to establish the actual reachable contract. Compare
-   related docs for incompatible instructions or descriptions of that contract.
-4. **Resolve intent before choosing the fix.** Neither code nor prose is
-   automatically correct. Use trusted requirements and baseline evidence to
-   decide which is stale. If intent cannot be established, ask a focused
-   question rather than silently changing the documented contract to fit code.
-5. **Prove and scope the mismatch.** Quote the two conflicting claims or a
-   documented claim and its decisive code/probe evidence. Use the common
-   reproduction rules for runtime assertions. Recommend the smallest coherent
-   correction across the affected surfaces, not just the first stale sentence.
+1. **Map claims:** pair changed behavior with docs, and changed docs with
+   implementation and related documents.
+2. **Match scope:** revision, version, features, target and audience must agree.
+   Historical changelogs and explicitly scoped exceptions are not current
+   contradictions. Reuse matching public-docs bundles; request fresh
+   `review-public-docs` retrieval when authoritative reachable-public-item docs
+   are needed.
+3. **Compare contracts:** signatures/examples, defaults/allowed values,
+   units/limits, feature gates, lifecycle/ordering and error/panic guarantees.
+   Follow re-exports, wrappers and configuration sources to the reachable
+   contract; compare related documents' instructions too.
+4. **Resolve intent:** neither code nor prose wins automatically. Use trusted
+   requirements and baseline evidence. Unknown intent warrants a focused
+   question, never weakening docs to fit implementation.
+5. **Prove and correct:** quote both conflicting claims, or the documented claim
+   and decisive code/probe evidence. Apply shared reproduction rules to runtime
+   assertions. Recommend the smallest coherent correction across all affected
+   surfaces.
 
-## Boundaries
+## Specialist checks and boundaries
 
-- Own semantic agreement, not general API redesign (`review-api-design`),
-  runtime defects (`review-correctness`), test adequacy (`review-tests`) or
-  naming preferences (`review-naming`). Pass a shared root cause to its owner
-  with the evidence; do not emit a second finding for the same fix.
-- Docs retrieval supplies evidence, not a judgment. Do not feed source findings
-  into `review-public-api` or bypass its output-only boundary.
-- For generated docs, identify the authoritative source or generation step;
-  do not request hand-edits to derived files or flag generated README
-  wording/casing. Describe current behavior, not speculative future APIs.
+- New public items need minimal reachable docs. New features need readable
+  examples (roughly 100 lines); exhaustive scenarios belong in integration tests.
+  Keep crate-doc example/extension lists current, and design docs focused on
+  tenets, constraints and an API sketch, not prose styling.
+- Identify generated docs' authoritative source/generation step. Never request
+  derived-file hand-edits or flag generated README wording/casing. Assess current
+  behavior, not speculative APIs.
+- Route API redesign, runtime defects, test adequacy and naming preferences to
+  `review-api-design`, `review-correctness`, `review-tests` and `review-naming`.
+  Supply shared-root-cause evidence without duplicating findings.
+- Retrieval provides evidence, not judgment. Never feed source findings into
+  `review-public-api` or bypass its output-only boundary.
 
-## Documentation coverage
+## Proof and coverage
 
-- New public items need minimal docs on their reachable public surface.
-- A new feature deserves a short, readable example (roughly 100 lines); use
-  integration tests for exhaustive scenarios and keep crate-doc example or
-  extension lists aligned with what exists.
-- Keep design docs focused on tenets, constraints and an API sketch, without
-  turning this into a prose-styling pass.
+Give both locations/excerpts, concrete consumer impact and the correction's
+affected surfaces. Static contradictions need no gratuitous execution; retain
+uncertainty about behavior or intent.
 
-## Findings
-
-For actionable findings, use the shared attribution and a concise bold diagnosis
-title naming the contradiction and affected surface. Put both locations and
-precise excerpts under **Problem**, the concrete consumer consequence under
-**Why this matters**, and the correction and affected surfaces under
-**Suggested fix**. Static contradictions do not need a test run for its own sake.
-Do not invent certainty when the behavior or intended contract is unknown.
-
-Coverage: claims/documents compared, public-doc/example gaps, applicable
-configuration, and unresolved intent or unverified behavior.
+Coverage: claims/documents compared, public-doc/example gaps, configuration,
+unresolved intent and unverified behavior.

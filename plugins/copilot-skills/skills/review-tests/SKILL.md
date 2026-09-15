@@ -13,106 +13,74 @@ description: >
 
 # Review Tests
 
-Treat baseline tests as contract evidence, not obstacles to make green. Review
-only; do not change production code or expectations to make the head pass.
+Baseline tests are contract evidence, not obstacles to green. Review only;
+never change production code or expectations to make head pass.
 
 Follow [shared context](../review-lens/review-context.md) and the
-[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
-
-Own test changes, behavior-preservation coverage and authorization of behavioral
-deltas. Share contract deltas with `review-api-design` and production defects
-with `review-correctness`; missing coverage for the same root cause belongs in
-that finding's fix, not a duplicate. Test utility use belongs here; injectable
-clocks and randomness in runtime code belong to `review-perf`.
-Documentation disagreements alone belong to `review-consistency`; still use
-docs as behavior-preservation evidence.
+[findings contract](../review-delivery/findings-contract.md). Own test changes,
+preservation coverage and behavioral-delta authorization. Share contract deltas
+with `review-api-design`, production defects with `review-correctness`; missing
+coverage belongs in that root cause's fix. Own test utilities, not runtime
+clock/randomness injection (`review-perf`). Use docs as preservation evidence;
+docs-only disagreements belong to `review-consistency`.
 
 ## Procedure
 
-1. **Inventory test changes before implementation changes.** Diff test files,
-   inline `mod tests`, doctests, examples used as tests, snapshots, fixtures,
-   property-test cases, and test-only manifest/configuration. Detect deleted
-   files and functions, but also weakened coverage:
-   - removed cases or assertions;
-   - broader assertions (`specific error` to `is_err()`, exact value to
-     `contains`);
-   - updated snapshots/expected values;
-   - new `ignore`, `cfg`, early return, retry, or larger timeout that avoids a
-     failure; and
-   - reduced property-test ranges or feature/target coverage.
+1. **Inventory tests before implementation.** Diff test files/functions, inline
+   `mod tests`, doctests, test examples, snapshots, fixtures, property cases and
+   test-only manifests/configuration. Detect deletions and weakening: removed
+   cases/assertions; `specific error -> is_err()` or exact value -> `contains`;
+   changed expectations/snapshots; failure-avoiding `ignore`, `cfg`, early return,
+   retry or larger timeout; narrower property ranges or feature/target coverage.
+   **Even an empty test diff must continue to step 3.**
+2. **Preserve each distinct baseline behavior.** Renames/moves/replacements need
+   a surviving equivalent assertion through the same reachable surface. Public
+   integration -> private unit coverage, or widening visibility to move tests,
+   is not equivalent. Otherwise require restoration. Remove duplicate or
+   auto-derived smoke tests only with explicit rationale and no distinct
+   behavior lost. Replace obsolete tests only for explicitly authorized behavior
+   with focused new coverage. Implementation changes, green head suites and
+   updated snapshots alone never justify loss.
+3. **Audit observable deltas.** Derive baseline contracts from tests, public
+   docs/API and callers. Trace outputs, errors, panics, defaults, ordering,
+   serialization, side effects, cancellation/timing and feature/target behavior.
+   Each delta needs both:
+   - explicit current user instruction or pre-existing maintainer-approved
+     requirement, issue, design or release decision; and
+   - tests naming and distinguishing the new behavior.
 
-   An empty test diff does not end this pass; audit production behavior in
-   step 3.
+   New author/agent rationale, same-diff comments, implementation and changed
+   tests are not independent authorization. Intentional breaks require
+   repository-mandated migration, versioning and release notes.
+4. **Reuse supported test utilities.** Before accepting custom clocks, sleeps,
+   randomness, mock I/O, fake servers or safety bypasses, inspect crate/dependency
+   manifests and docs for the actual feature (`test-util`, `test-utils` or
+   equivalent). Enable only for development/test consumers; reuse helpers.
+   Gate user-facing test APIs behind the test feature; use existing
+   `private-test-util`/fixture-crate patterns for cycle-sensitive internal
+   fixtures instead of expanding public API. Do not demand nonexistent features
+   or helpers unsuited to the scenario.
+5. **Check quality.** Require concise deterministic behavior-shaped tests and
+   precise named outcomes per test/parameter/property case. Prefer integration
+   tests for public-only behavior, unit tests for private invariants. Reuse
+   fixtures, parameterization and snapshots to remove boilerplate. Use simplest
+   faithful synchronization; async locks need guards crossing await. Avoid real
+   sleeps/clocks, external services, brittle formatted-error matching and
+   compiler-derived tests distinguishing no contract.
 
-2. **Preserve every distinct baseline behavior.**
-   - A rename, move, or equivalent replacement is not deletion; point to the
-     surviving assertion. Moving a public integration test to a private unit
-     path is not equivalent, nor is widening visibility just to move a test.
-   - Require restoration when no head test proves the same contract through the
-     same reachable surface.
-   - Removing an exact duplicate or auto-derived smoke test is acceptable only
-     when it distinguishes no behavior and the rationale is explicit.
-   - An obsolete test may be replaced only when the behavior change is
-     explicitly authorized and the new contract has focused coverage.
-   Never accept “the implementation changed,” a passing head suite, or an
-   updated snapshot as justification by itself.
+## Proof and coverage
 
-3. **Audit observable behavior.** Derive the old contract from baseline tests,
-   public docs/API, and callers. Trace production changes affecting outputs,
-   errors, panics, defaults, ordering, serialization, side effects,
-   cancellation/timing, or feature/target behavior. For each delta require:
-   - an explicit current user instruction or a pre-existing requirement, issue,
-     design, or release decision approved by project maintainers; and
-   - tests that name and distinguish the new behavior.
-   A PR author or agent's new rationale, code comments in the same diff, the
-   implementation itself, and changed tests are not independent approval. If
-   the change is intentionally breaking, require any migration, versioning, and
-   release-note treatment mandated by the repository.
+Static diff/API/docs evidence suffices for lost/weakened assertions and explicit
+contract deltas. Runtime claims require focused commands and exact base/head
+outcomes under shared verification rules.
 
-4. **Use existing test utilities.** Before accepting custom clocks, sleeps,
-   random sources, mock I/O, fake servers, or safety bypasses:
-   - inspect manifests and docs for test utility features on the crate and its
-     dependencies; use the actual supported name (`test-util`, `test-utils`, or
-     repository equivalent);
-   - enable the feature only for development/test consumers and reuse its
-     helpers instead of rebuilding them;
-   - keep user-facing test APIs behind the test feature; for internal
-     cycle-sensitive fixtures, follow an existing `private-test-util` or fixture
-     crate pattern rather than expanding public API; and
-   - do not demand a feature when no applicable crate provides one or the helper
-     does not model the scenario.
+Identify baseline contract, head delta, missing authorization/coverage, decisive
+evidence and consumer/regression impact; specify restoration, replacement or
+coverage of authorized behavior.
 
-5. **Check test quality.** Tests should be behavior-shaped, deterministic, and
-   concise. Each test or parameterized/property case should distinguish a named
-   outcome with precise assertions. Prefer integration tests for public-only
-   behavior and unit tests for private invariants. Reuse existing fixtures and
-   parameterization/snapshot facilities when they remove boilerplate. Use the
-   simplest synchronization that models the test; an async lock is warranted
-   only when its guard must cross an await. Avoid real sleeps, wall clocks,
-   external services, brittle formatted-error matching, and tests of
-   compiler-derived behavior that distinguish no contract.
+Normally blocking (unlabelled): unjustified observable changes, lost distinct
+coverage, or production-reachable test bypasses. Materially brittle,
+non-idiomatic or duplicate test infrastructure is `Non-blocking`; concrete
+impact decides edge cases.
 
-## Evidence and findings
-
-Static diff, API, or documentation evidence is sufficient for deleted or
-weakened assertions and explicit contract deltas. When a behavioral claim
-depends on runtime behavior, report the focused command and exact base/head
-outcomes required by the shared verification rules.
-
-For actionable findings, use the shared attribution and a concise bold diagnosis
-title naming the affected test or behavioral contract. **Problem** identifies
-the baseline contract, head delta and missing justification or coverage, with
-decisive evidence. **Why this matters** explains the behavior that changes for
-consumers or could regress unnoticed. **Suggested fix** gives the exact
-restoration, replacement or coverage for the authorized behavior.
-
-Severity in this area is strongly category-linked, though impact still decides a
-genuine edge case:
-
-- **Blocking** (unlabelled): unjustified observable behavior change, lost
-  distinct test coverage, or a test-only bypass reachable in production.
-- **Non-blocking**: materially brittle, non-idiomatic, or duplicated test
-  infrastructure.
-
-Coverage line: the deleted and changed tests, behavior deltas, and test utility
-features reviewed.
+Coverage: deleted/changed tests, behavior deltas and test utility features.

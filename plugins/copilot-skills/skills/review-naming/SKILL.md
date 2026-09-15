@@ -12,72 +12,59 @@ description: >
 
 # Review Naming
 
-An unexplained divergence from an established family is a finding; personal
-preference is not. An unnecessary abstraction is a permanent tax.
+Find unexplained family divergence and abstractions that earn nothing, not
+personal preferences. Follow [shared context](../review-lens/review-context.md)
+and the [findings contract](../review-delivery/findings-contract.md).
 
-Follow [shared context](../review-lens/review-context.md) and the
-[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+`review-api-design` owns public contracts/defaults, `review-telemetry` signal
+names, and `review-perf` measured cost. Supply family evidence to those owners
+without a naming-only duplicate.
 
-Own family conventions and unnecessary abstractions. `review-api-design` owns
-public contract decisions, including behavioral defaults; `review-telemetry`
-owns emitted signal names; `review-perf` owns measured cost. Supply family
-evidence to those findings rather than also raising a naming-only duplicate.
+## Procedure
 
-## Alignment with what exists
+1. Establish sibling and workspace conventions around changed names/shapes.
+2. Apply the questions below; choose concrete renames or smaller abstractions.
+3. Prove divergence from code/family evidence, not execution or preference.
+   State deliberate existing inconsistency and recommend the smaller change.
 
-- **Match the family.** Names, defaults, feature-flag names, constants and API
-  shapes should match their siblings. State the convention when raising it:
-  "family convention: `Iso8601` gets `display_iso_8601`, so `EcmaScript` should
-  get `display_ecma_script`."
-- **Align across crates.** When another crate in the workspace already names a
-  concept, reuse that name rather than inventing a synonym — there is no reason
-  for two names for one concept. Mirror the upstream method names when wrapping
-  another crate's configuration.
-- **Concise names.** Drop padding words that add no meaning (`…Metadata`,
-  `…Aware`, `…Helper`, `…Manager`) when a shorter name is exact. Prefer the noun
-  the domain already uses.
-- **No unit in the name when the type carries it.** `initial_backoff: Duration`,
-  not `initial_backoff_ms`. Likewise, do not prefix a field with the subsystem
-  its siblings omit.
-- **Name for capability versus action.** A trait that only reports a property
-  should read as the property, and its method should match the type it returns.
-- **Terminology precision.** Reject a term that names a different thing than the
-  concept ("circuit" for a circuit breaker), and prefer the everyday term the
-  domain actually uses.
-- **A rename affects more than the symbol.** Include affected user-facing
-  references, docs, examples, feature names and the PR title in the recommendation.
+## Naming questions
 
-## Unnecessary abstraction
+- Do names, defaults, feature flags, constants and API shapes match siblings?
+  State the convention: `Iso8601` has `display_iso_8601`, so `EcmaScript` should
+  have `display_ecma_script`.
+- Reuse workspace names for the same concept. When wrapping configuration,
+  mirror upstream method names rather than inventing synonyms.
+- Remove meaningless padding (`Metadata`, `Aware`, `Helper`, `Manager`) when a
+  shorter domain noun is exact. Use everyday, precise terminology: "circuit"
+  names something different from a circuit breaker.
+- Does the type already carry units? Use `initial_backoff: Duration`, not
+  `initial_backoff_ms`; omit subsystem prefixes that siblings omit.
+- Property-reporting traits should name the property, not an action; methods
+  should match their return types.
+- Include affected user-facing references, docs, examples, feature names and
+  the PR title in rename recommendations.
 
-- **Would a change to an existing type remove the need?** Adding `Clone` or a
-  method to an existing type usually beats a new trait, wrapper or layer.
-- **Is it hand-rolling std or a derive?** Prefer the derive or std method.
-- **An internal helper that never touches `self` should be a free function.**
-- **Prefer one internal type plus a small public API** over per-variant
-  boilerplate; expose a method such as `should_promote(..)` rather than leaking
-  an enum consumers never match on. Route the public exposure decision to
-  `review-api-design`; keep internal simplifications here.
-- **Do not wrap a foundational type** just to add a layer; at some point core
-  types should be used directly to avoid needless conversion and breaking
-  changes.
-- **Two constructors that differ only by boxing** can usually collapse into one
-  that boxes internally, when the call is not on the hot path.
+## Abstraction questions
 
-## Evidence and findings
+- Would `Clone` or a method on an existing type eliminate a trait/wrapper/layer?
+  Prefer that small change; replace hand-rolled std/derive behavior.
+- Make an internal helper that never touches `self` a free function.
+- Can one internal type and a small public API replace per-variant boilerplate?
+  Prefer `should_promote(..)` to exposing an unmatched enum; route the exposure
+  decision to `review-api-design`.
+- Use foundational types directly instead of wrappers causing needless
+  conversions and breaking changes.
+- Off the hot path, constructors differing only by boxing can usually collapse
+  into one that boxes internally.
 
-Naming and abstraction findings are argued from the code and the surrounding
-family, not executed. For actionable findings, use the shared attribution and a
-concise bold diagnosis title naming the divergence or unnecessary abstraction.
-**Problem** quotes the sibling that establishes the convention and identifies
-the conflicting name or shape. **Why this matters** explains the concrete
-confusion or maintenance burden. **Suggested fix** gives the exact replacement
-name or simplification; put a `suggestion` block there for a self-contained
-rename on the anchored line. Where the existing code is deliberately
-inconsistent, say so and recommend the smaller change.
+## Proof and coverage
 
-These are usually `Nit` or `Non-blocking` unless the name ships in a public API
-that is about to be released, in which case it is a contract decision and belongs
-with the API design review.
+Quote the sibling establishing a convention and identify the conflict; for
+abstractions, show the unnecessary layer and concrete removal. Explain confusion
+or maintenance cost and specify the exact replacement. Use a `suggestion` under
+the shared fix section for self-contained renames on the anchored line.
 
-Coverage line: the names and abstractions reviewed, and any convention you could
-not establish from the surrounding code.
+Usually `Nit` or `Non-blocking`. Names about to ship publicly are contract
+decisions for API design review.
+
+Coverage: names/abstractions reviewed and conventions not established.

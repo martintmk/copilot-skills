@@ -12,104 +12,77 @@ description: >
 
 # Review Resilience
 
-Review changed code by default. Expand to the whole crate only when requested.
-Read the diff, manifests, relevant error definitions and conversions, resilience
-call sites (including unchanged callers), configuration, and focused tests.
+Review changed code; expand crate-wide only on request. Read diff, manifests,
+errors/conversions, resilience call sites including unchanged callers,
+configuration and focused tests.
 
 Follow [shared context](../review-lens/review-context.md) and the
-[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+[findings contract](../review-delivery/findings-contract.md). Own recovery
+propagation/classification and middleware selection/composition. Route
+error/panic conventions to `review-api-design`, other runtime defects to
+`review-correctness`, and emitted contracts to `review-telemetry`.
 
-Own recovery classification and propagation, plus resilience middleware
-selection and composition. Error type/message and panic conventions belong to
-`review-api-design`, other runtime defects to `review-correctness`, and
-emitted signal contracts to `review-telemetry`.
-
-Apply the crate-specific checks below where the shared repository adaptation
-selects `recoverable`/`seatbelt`. Elsewhere use the repository's recovery and
-middleware equivalents, not a recommendation to add Oxidizer crates.
+Use `recoverable`/`seatbelt` only where shared repository adaptation selects them;
+else use repository equivalents, not new Oxidizer dependencies.
 
 ## Procedure
 
-1. **Load the version-matched guidance.**
-   - Use `cargo metadata` and the lockfile, when present, to resolve each
-     in-scope package's `recoverable` dependency edge, including aliases and
-     multiple versions. Read that resolved version's
-     `recoverable::_documentation::recipes` docs or
-     `src/_documentation/recipes.rs`.
-   - Extract the applicable recipe for flowing inner recovery information,
-     permanent errors, or heuristic recovery. Do not classify from memory when
-     the resolved recipe is available.
-   - Before recommending `seatbelt`, resolve the package's dependency or the
-     workspace-approved version, enabled features, and relevant module docs.
-     Where `seatbelt` is repository-approved but no version is established,
-     recommend the crate and feature without inventing a version-specific call.
+1. **Resolve exact recipes.** Use `cargo metadata` and any lockfile to resolve
+   each package's `recoverable` edge, including aliases/multiple versions. Read
+   that version's `recoverable::_documentation::recipes` or
+   `src/_documentation/recipes.rs`; extract applicable inner-propagation,
+   permanent-error or heuristic recipes, not remembered classifications. Before
+   recommending `seatbelt`, resolve dependency/workspace-approved version,
+   enabled features and module docs. If approved without an established version,
+   recommend only crate/feature, never an invented version-specific call.
+2. **Inventory failure flows.** Trace transient failures, unavailability,
+   timeouts, throttling, connection loss, temporary resource pressure and
+   wrappers from origin to caller, including conversions erasing inner errors.
+3. **Check every recovery boundary.**
+   - Require `Recovery` when some state may recover or classification may evolve;
+     permanently non-recoverable-only errors need no trait.
+   - Apply recipe `RecoveryInfo`; preserve inner recovery through conversions,
+     e.g. `recovery: error.recovery()` in `ohno` `#[from]`. Override only for
+     outer context that changes recoverability.
+   - Use supported heuristics for foreign errors without `Recovery`; for
+     `std::io::Error`, prefer built-in `ErrorKind` conversion and traverse
+     `Error::source()` when buried. Use typed variants/kinds/causes, not text.
+   - `Recovery` informs, not performs, recovery. Preserve `Retry-After` and
+     other useful delay hints. Test recoverable, unavailable, permanent,
+     wrapped and heuristic paths.
+4. **Find equivalent middleware.** Inspect attempt loops/counters, sleeps,
+   backoff/jitter, deadline races, timeout cancellation, breaker state, parallel
+   hedges, fallback routing and fault injection:
 
-2. **Inventory potentially recoverable failures.** Trace transient failures,
-   service unavailability, timeouts, throttling, connection loss, temporary
-   resource pressure, and wrapped versions of those failures from origin to the
-   error returned to the caller. Include conversions that erase an inner error.
-
-3. **Check `Recovery` at every boundary.**
-   - Implement `Recovery` when at least one state may recover or the
-     classification is expected to evolve. An error whose states are all
-     permanently non-recoverable does not need the trait.
-   - Apply the recipe's `RecoveryInfo` classification. Preserve an inner
-     `Recovery` value through conversions (for example,
-     `recovery: error.recovery()` in an `ohno` `#[from]` mapping); override it
-     only when outer context changes recoverability.
-   - For foreign errors without `Recovery`, use the recipe's supported
-     heuristic. For `std::io::Error`, prefer the built-in `ErrorKind` conversion
-     and walk `Error::source()` when the IO error is buried.
-   - Do not infer recovery from formatted error text. Use typed variants, kinds,
-     or structured causes.
-   - Remember that `Recovery` reports information; it does not perform recovery.
-     Preserve useful delay hints such as `Retry-After` for middleware to honor.
-   - Verify representative recoverable, unavailable, permanent, wrapped, and
-     heuristic paths with focused tests.
-
-4. **Find hand-written resilience.** Search for attempt loops, retry counters,
-   sleeps/backoff/jitter, deadline races, timeout cancellation, breaker state,
-   parallel hedges, fallback routing, and fault injection. When behavior
-   overlaps `seatbelt`, recommend the matching feature and API:
-
-   | Hand-written behavior | Prefer |
+   | Behavior | Prefer |
    | --- | --- |
-   | retry loop/backoff/jitter | `seatbelt::retry` |
+   | retry/backoff/jitter | `seatbelt::retry` |
    | per-attempt timeout | `seatbelt::timeout` |
-   | open/half-open failure state | `seatbelt::breaker` |
-   | concurrent duplicate attempts | `seatbelt::hedging` |
-   | replacement output or route | `seatbelt::fallback` |
+   | open/half-open state | `seatbelt::breaker` |
+   | duplicate concurrent attempts | `seatbelt::hedging` |
+   | replacement output/route | `seatbelt::fallback` |
    | injected failures | `seatbelt::chaos::injection` (`chaos-injection`) |
    | injected latency | `seatbelt::chaos::latency` (`chaos-latency`) |
 
-   Enable only required features; `seatbelt` has no default features. Reuse its
-   config types and vocabulary instead of mirroring fields under new names.
-   Prefer static layer composition over per-call switches. Keep the usual
-   outside-to-inside order `fallback -> retry -> breaker -> timeout`, so every
-   attempt is timed and observed by the breaker. Account for input cloning or
-   restoration, idempotency, delay hints, cancellation/drop safety, and breaker
-   partitioning. Do not duplicate the telemetry and retry jitter that
-   `seatbelt` already supplies. Keep production fault injection behind the
-   repository's test-only feature convention.
+   Enable only required features; there are no defaults. Reuse config types and
+   vocabulary. Prefer static composition, usually outside-to-inside
+   `fallback -> retry -> breaker -> timeout`, so every attempt is timed and
+   observed by the breaker. Check input cloning/restoration, idempotency, delay
+   hints, cancellation/drop and breaker partitioning. Do not duplicate supplied
+   telemetry/jitter. Gate production fault injection with the repository's
+   test-only feature convention.
+5. **Exclude lookalikes.** Business workflow loops, protocol-mandated
+   retransmission and simple value fallback (`unwrap_or`) are not automatically
+   resilience. Trace equivalent failure-handling semantics before recommending
+   middleware.
 
-5. **Avoid false positives.** Do not call a business workflow loop, a
-   protocol-mandated retransmission, or a simple value fallback resilience
-   merely because it repeats or uses `unwrap_or`. Recommend `seatbelt` only
-   after tracing equivalent failure-handling semantics.
+## Proof and coverage
 
-## Evidence and findings
+Identify triggering flow, lost/incorrect classification or duplicate mechanism,
+decisive evidence, reliability impact and recipe-based/version-correct fix.
+Static API/dependency findings can use code and resolved docs. Executable claims
+need shared-rule reproduction with focused command/result; unconfirmed behavior
+is a question or limitation.
 
-For actionable findings, use the shared attribution and a concise bold diagnosis
-title naming the recovery defect. **Problem** gives the triggering failure path,
-incorrect or lost classification or duplicated mechanism, and decisive evidence.
-**Why this matters** states the resulting recovery or reliability impact.
-**Suggested fix** gives a recipe-based `Recovery` correction or version-correct
-`seatbelt` replacement (or the repository equivalent).
-
-Static API and dependency findings may be argued from code and resolved docs.
-Executable recovery or middleware claims require a reproduced outcome under
-the shared verification rules; cite the focused command and result. Unconfirmed
-behavior is a question or coverage limitation, not a finding.
-
-Coverage line: the errors and resilience mechanisms reviewed, and the resolved
-`recoverable` and `seatbelt` versions (or repository equivalents) used.
+Coverage: errors/mechanisms and resolved `recoverable`/`seatbelt` versions or
+repository equivalents.
