@@ -1,97 +1,80 @@
 # Package presence and one-sided comparisons
 
-A package that did not exist at the pinned baseline has no baseline API or
-rustdoc artifact to build. Proven absence is a valid empty comparison side;
-an unavailable revision, failed extraction or unknown package is not.
-Resolve this distinction before invoking package-selected Cargo commands.
+Read when establishing or consuming API/docs change-comparison scope. Only
+proven absence permits a logical empty side, never failed/missing extraction.
+Resolve presence before package-selected Cargo commands.
 
 ## Establish presence once
 
-The source-capable context owner (Review Lens or the caller of a standalone
-specialist) establishes a versioned `packageComparison` record for each
-affected package. API/docs workers consume this factual scope record without
-opening its underlying source or manifests.
+The source-capable coordinator or standalone caller produces a versioned
+`packageComparison` per affected package. Record:
 
-Record the repository identity, exact comparison base and head (including
-dirty-state identity), effective features/default-feature mode, target and
-toolchain. For each side, retain package/library identity, manifest location,
-`presence: present | absent | unknown`, and evidence provenance: the producing
-context, exact revision, complete inventory/tree artifact and its hash.
-Use `mode: paired | added-package | removed-package | unknown` as derived below.
+- Repository identity, exact comparison base/head including dirty-state identity,
+  effective features/default-feature mode, target and toolchain.
+- Per side: package/library identity, manifest location,
+  `presence: present | absent | unknown`, producing context, exact revision,
+  complete inventory/tree artifact and hash.
+- Derived `mode: paired | added-package | removed-package | unknown`.
 
-The context owner must resolve identity across revisions, not merely look for
-the head's package name or manifest path in the baseline:
+Resolve counterpart identity across revisions, not just head name/path:
 
-- Use complete, successful package/workspace inventories and revision-pinned
-  tree/manifest evidence. A lock-preserving
+- Use complete successful package/workspace inventories and pinned tree/manifest
+  evidence. When execution is permitted,
   `cargo metadata --locked --no-deps --format-version 1 --manifest-path <workspace-manifest>`
-  can inventory a workspace when execution is permitted; match workspace
-  members, declared package names, manifest paths and library targets.
-- Account for renamed/moved packages, changed workspace membership, excluded
-  packages and standalone manifests. A missing match in one selected
-  workspace is not proof that the package had no counterpart.
-- If the revision has no Cargo workspace, a complete pinned tree/manifest
-  inventory can establish that this is the first package. Do not require Cargo
-  to run against a nonexistent workspace just to prove that fact.
-- A missing artifact, package-selector error, feature/target gating, sparse
-  checkout omission, registry/auth failure or unsuccessful inventory is
-  `unknown`, never `absent`. In particular, "cannot specify features for
-  packages outside of workspace" does not by itself prove a new package.
-- A PR description claiming "new crate" is not evidence. If identity or
-  presence remains ambiguous, report the gap rather than invent an empty side.
+  preserves locks; match members, declared names, manifest paths and library targets.
+- Account for renamed/moved packages, membership changes, exclusions and standalone
+  manifests. One workspace's missing match does not prove no counterpart.
+  Without a Cargo workspace, a complete pinned tree/manifest inventory can prove
+  the first package; do not run Cargo against a nonexistent workspace.
+- Unavailable revisions, missing artifacts, selector errors, feature/target gating,
+  sparse omissions, registry/auth failures and unsuccessful inventories mean
+  `unknown`, not `absent`.
+  "cannot specify features for packages outside of workspace" and PR descriptions
+  claiming "new crate" prove nothing.
 
-For an output-only standalone assignment lacking this record, request the
-facts from its context owner or report the blocker. Do not relax the worker's
-source-inspection boundary to resolve presence itself. The compact record
-guides comparison scope only: it supplies no API-quality, doc-text, runtime or
-compatibility finding evidence.
+API/docs workers consume this compact factual record without opening underlying
+source/manifests. An output-only assignment lacking it asks the context owner or
+blocks; never relax isolation to resolve ambiguity. Presence is scope provenance,
+not API-quality, documentation, runtime or compatibility finding evidence.
 
 ## Comparison modes
 
 | Base presence | Head presence | Mode and required evidence |
 | --- | --- | --- |
-| present | present | `paired`: real matching captures and the normal baseline-to-head comparison |
-| absent | present | `added-package`: logical empty base versus the complete real head capture |
-| present | absent | `removed-package`: complete real baseline capture versus a logical empty head |
-| unknown on either side, or absent on both | any | `unknown`: resolve scope or block; never claim a completed comparison |
+| present | present | `paired`: real matching captures and baseline-to-head comparison |
+| absent | present | `added-package`: logical empty base versus complete real head capture |
+| present | absent | `removed-package`: complete real baseline capture versus logical empty head |
+| unknown on either side, or absent on both | any | `unknown`: resolve scope or block |
 
-For `added-package` and `removed-package`:
+One-sided modes remain explicit change comparisons, not head-only fallback:
 
-1. Keep both exact revision identities and the presence proof. These modes are
-   explicit change comparisons, **not** a fallback to a head-only audit.
-2. Generate/reuse artifacts only for the present side. Do not select or build
-   the absent package, run a two-revision package build against it, create a
-   placeholder crate, or substitute a published version or unrelated package.
-3. Represent the absent side as a logical empty set in the comparison record.
-   Never fabricate `cargo public-api` output or rustdoc JSON for it, label it a
-   successful extraction, or parse the presence record as documentation.
-4. Scope additions to all actually emitted head API items, and removals to all
-   actually emitted baseline items. API findings still cite exact tool output;
-   documentation still comes only from the present side's real rustdoc JSON.
-   Package presence alone neither proves a defect nor supplies a semver verdict.
-5. Preserve the normal fresh-worker, artifact-matching, full-coverage and
-   mandatory API-filtering gates. A completed one-sided comparison is
-   `completed`, not `not-applicable` or partially assessed merely because the
-   absent side has no build artifact.
+1. Retain both exact revisions and presence proof. Generate/reuse only present-side
+   artifacts. Never select/build the absent package, run two-revision builds
+   against it, create placeholder crates or substitute published/unrelated packages.
+2. Represent absence as a logical empty set, not fabricated `cargo public-api`
+   output/rustdoc JSON or a successful extraction. Never parse presence as docs.
+3. Cover **all** emitted head additions or baseline removals. Cite exact API
+   output and use only present-side real rustdoc JSON. Presence alone proves
+   neither defect nor semver verdict.
+4. Preserve fresh workers, artifact matching, full coverage and mandatory API
+   filtering. Successful one-sided comparisons are `completed`, not
+   `not-applicable`/partial merely because the absent side has no artifact.
 
-Apply these rules per package in a multi-package review. Proving one new crate
-does not waive paired comparisons for existing crates or erase their blockers.
-Moved/renamed counterparts use explicit per-side selectors and paired evidence,
-not an invented package addition/removal.
+Apply per package; one new crate cannot erase existing-package blockers.
+Moved/renamed counterparts require explicit per-side selectors and paired evidence.
 
 ## Regression cases
 
 | Case | Required outcome |
 | --- | --- |
-| New crate; baseline absence proven; head capture succeeds | Complete `added-package` comparison without attempting baseline extraction |
-| New scaffold emits only `pub mod example_lib` | Review the emitted crate module and real crate-root docs; an empty descendant set is valid, and fresh API filtering still runs |
-| Removed crate; head absence proven; baseline capture succeeds | Complete `removed-package` comparison using baseline API/docs and deleted-item markers |
-| Existing or renamed crate; baseline build fails | Remain blocked; do not treat the failed capture or new name/path as an empty baseline |
-| Only metadata lookup fails or workspace membership changes | Presence remains unknown until the context owner resolves it |
-| Presence proof or capture is for another revision/configuration | Reject reuse and refresh the affected evidence |
-| One new crate plus an existing crate whose comparison fails | Keep the combined review incomplete; do not hide the existing-crate blocker |
+| Proven new crate; head capture succeeds | Complete added comparison; no baseline extraction |
+| Scaffold emits only `pub mod example_lib` | Review module and real crate-root docs; empty descendants are valid; fresh API filtering runs |
+| Proven removed crate; baseline capture succeeds | Complete removed comparison using baseline API/docs and deleted-item markers |
+| Existing/renamed crate; baseline build fails | Block, never invent empty baseline |
+| Metadata failure or membership change only | Unknown until context owner resolves presence |
+| Revision/configuration mismatch | Reject reuse; refresh affected evidence |
+| New crate plus failed existing-crate comparison | Combined review remains incomplete |
 
-When recovering a previous absent-package build failure, retain its diagnostic
-and reuse matching successful present-side captures. The affected workers must
-finish under the proven comparison mode; a coordinator must not just rewrite
-old `blocked` results or a queue's `reviewComplete` flag.
+Recovery retains the original diagnostic and matching successful present-side
+captures. Affected workers must finish under the proven mode; coordinators cannot
+merely rewrite old `blocked` results or a queue's `reviewComplete`.
