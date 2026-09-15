@@ -59,8 +59,9 @@ Only one PR is in flight. The queue owns selection, progress and acknowledgment;
    Defer changed inputs and arrivals to another tick; do not replenish the list.
 6. Release the lock only after workers stop and state is durable. Report reviewed
    links/heads, request outcomes, deferred/quarantined work and blockers. Pause
-   recurrence for unsafe global/provider/persistence failures, not a safely
-   quarantined PR-local failure. Claim no due work only after a complete scan.
+   recurrence for unsafe global/provider capability, ambiguous-write or
+   persistence failures, not a safely quarantined PR-local failure. Claim no
+   due work only after a complete scan.
 
 ## Eligibility
 

@@ -48,7 +48,7 @@ az repos pr list --organization <org-url> --project <project-id> --repository <r
 
 Extension 1.0.8 resolves `me` through `ConnectionData.authenticated_user.id` and
 non-GUID UPNs through the identity service. Verify installed behavior and retain
-each result's `createdBy.id`; an empty result proves no identity. Use another
+each result's `createdBy.id`; an empty result does not resolve an identity. Use another
 proven route or report the gap, never search unconfigured repositories.
 
 A documented MCP `createdByMe` filter plus a full PR read can independently

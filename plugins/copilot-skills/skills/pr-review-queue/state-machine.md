@@ -132,6 +132,7 @@ absence and history anchors, and refresh those facts with validated bindings.
 | `delivering` | Journal every planned/attempted write; verify all findings, summary and required votes before `acknowledging`. |
 | `acknowledging` | Reconcile only the processed request; never repost the review. |
 | `commit-ready` | Archive verified receipt/acknowledgment; merge completion by operation ID, enroll watching, clear active operation last. |
+| `quarantined` | Apply [PR-local quarantine](#pr-local-quarantine); persist its record/evidence before clearing active state, then continue later candidates. |
 | `blocked` / `paused` | Retain reason, `resumePhase` and evidence; no next PR while provider effects or persistence are unsettled. |
 
 A posted review, verified whole delivery and acknowledged request are separate
@@ -188,9 +189,11 @@ succeeded but persistence failed, finish that commit without redelivery.
 ## PR-local quarantine
 
 A review/evidence failure may release the queue only when it is confined to this
-exact PR work item, every owned worker has stopped, and the journal proves **no
-provider mutation was attempted** with `remoteWritesPerformed: 0`. Auth, scanning,
-request-history semantics, global capability and persistence failures do not qualify.
+exact PR work item, its snapshot and complete deduplication key are known, every
+owned worker has stopped, and the journal proves **no provider mutation was
+attempted** with `remoteWritesPerformed: 0`. Unknown snapshot/key blocks quarantine.
+Auth, scanning, request-history semantics, global capability and persistence
+failures do not qualify.
 
 Archive its complete work key, snapshot/cycle, reason, evidence and UTC time in
 `quarantinedWork` before clearing active state. Do not mark it completed, advance
