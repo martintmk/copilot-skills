@@ -1,48 +1,41 @@
 # Schema-aware Rustdoc Traversal
 
-Reference for the JSON parsing stage of `review-public-docs`, not an independent
-review. Generation, configuration matching, baseline semantics and the bundle
-contract remain in [the retrieval procedure](SKILL.md).
+JSON parsing reference for `review-public-docs`, not a review. Generation,
+matching, baselines and bundles belong to [retrieval](SKILL.md).
 
 ## Inspect schema without dumping it
 
-Check `.format_version` before traversal. The facts and field routes below were
-established for format 61; adapt to the actual schema, and return `blocked` with
-a decisive format diagnostic if required fields cannot be interpreted. Do not
-silently turn a parser failure into "undocumented".
+Check `.format_version` first. Routes below describe format 61; adapt to actual
+schema or return `blocked` with decisive diagnostics for uninterpretable required
+fields. Parser failure never means undocumented.
 
 ```text
 jq '{format_version, root, crate_version, local_path_count: ([.paths[] | select(.crate_id == 0)] | length)}' <rustdoc-json>
 ```
 
-- `.index` holds local item records keyed by ID: `name`, `docs`, `links`,
-  `attrs`, `deprecation` and `inner` keyed by item kind.
-- `.paths` maps IDs to `{path, kind, crate_id}` for local **and foreign** items.
-  `crate_id == 0` identifies the inspected crate. Foreign IDs can have paths
-  without any `.index` record; this is not an extraction failure.
-- `.root` is numeric in this schema: use `.index[.root|tostring]` for crate docs,
-  and convert every ID to a string when indexing. IDs are build-local, not
-  cross-revision identity.
-- Fields, methods and trait items are **absent from `.paths`**; traverse their
-  owner. Enum variants **do** have path entries as well as owner links.
-- `#[deprecated]` populates `deprecation`, not `attrs`; retain its since/note
-  fields, not just a boolean. `attrs` mixes strings such as `"non_exhaustive"`
-  with structured objects such as `{"repr":{"kind":"c",...}}`; do not join
-  entries blindly as text.
-- `.inner.struct.kind` can be `{"plain":{...}}`, `{"tuple":[ids]}`, or the bare
-  string `"unit"`. Tuple lists contain `null` holes for private fields; skip
-  null IDs without renumbering positional field names. Variant tuple fields
-  need the same handling.
-- Public output omits `#[doc(hidden)]` items. An absent record alone does not
-  identify why it is absent; use the retrieval contract's resolution rules.
+- `.index`: local records keyed by ID, with `name`, `docs`, `links`, `attrs`,
+  `deprecation`, and kind-keyed `inner`.
+- `.paths`: `{path, kind, crate_id}` for local **and foreign** IDs; local
+  `crate_id == 0`. Foreign paths without `.index` records are valid.
+- Numeric `.root` needs `.index[.root|tostring]`; stringify **every** indexed ID.
+  IDs are build-local, never cross-revision identity.
+- Fields/methods/trait items lack `.paths`; traverse owners. Enum variants have
+  paths and owner links.
+- `#[deprecated]` uses `deprecation` with since/note, not `attrs` or a boolean.
+  Attributes mix strings (`"non_exhaustive"`) and objects
+  (`{"repr":{"kind":"c",...}}`); never blindly join as text.
+- `.inner.struct.kind`: `{"plain":{...}}`, `{"tuple":[ids]}` or bare `"unit"`.
+  Skip private tuple-field `null` holes **without renumbering** positions,
+  including variant tuples.
+- Public output omits `#[doc(hidden)]`; absence alone proves no cause. Apply
+  retrieval's resolution statuses.
 
 ## Resolve exact public associations
 
-For fully qualified requests, match the complete public path, not a suffix or
-same-named foreign item. Resolve member requests from a confirmed local owner,
-then verify member kind/name and any governing trait. A bare `new` must not
-silently resolve to a foreign `LazyLock::new`; multiple local owner/trait
-matches are `ambiguous`.
+Match fully qualified paths exactly, never suffixes or foreign namesakes. Resolve
+members from confirmed local owners; check kind/name and governing trait.
+Bare `new` cannot silently become foreign `LazyLock::new`; multiple local
+owner/trait matches are `ambiguous`.
 
 | Target | Format-61 route |
 | --- | --- |
@@ -58,41 +51,33 @@ matches are `ambiguous`.
 | Doc link | `.links`: link text to ID; resolve via `.paths` or confirmed local member ownership |
 | Crate docs | `.index[.root|tostring].docs` |
 
-Read each member's own kind, docs, attributes, deprecation and links; associated
-constants/types are not methods. If impl/member ownership for another item kind
-is unsupported by these routes, adapt using the detected schema or report the
-gap rather than asserting there are no members.
+Read member kind/docs/attrs/deprecation/links; associated constants/types are not
+methods. Adapt unsupported owner routes to detected schema or report gaps,
+never "no members".
 
-**Re-export caveat:** `.paths` alone does not enumerate every alias path. Resolve
-module use/re-export records in the detected schema to confirm the requested
-alias and target, retaining alias/re-export docs as well as relevant target
-docs. The seed extractor below emits canonical paths, not alias associations.
-If an alias cannot be confirmed, report the known original path and the
-unresolved alias; never silently substitute it or claim a complete change
-inventory. Foreign re-exports may resolve to a foreign path without local target
-docs; retain any local re-export docs and name the external-doc limitation.
+**Re-exports:** `.paths` omits some aliases. Resolve module use/re-export records
+to confirm alias/target, retaining local re-export and relevant target docs.
+The seed below resolves canonical owners, not aliases. Unconfirmed aliases need
+known original paths and explicit gaps, not silent substitution or complete
+inventory claims. Foreign targets may lack local docs; keep local re-export docs
+and external-doc limitations.
 
-For changes, compare canonical and confirmed alias/member associations within
-each build, then compare normalized public identities across builds. Resolve
-link IDs to those identities before comparison; raw IDs and source spans can
-change without any API/docs change. If a signature or alias cannot be compared,
-retain it as an uncertain candidate rather than excluding it by changed-file
-location.
+Normalize canonical and confirmed alias/member associations within builds, then
+compare public identities across builds, resolving link IDs first. Raw IDs/spans
+are not changes. Incomparable signatures/aliases remain uncertain candidates,
+never excluded by changed-file location.
 
 ## Scoped extraction reference
 
-Build an exact list of canonical **owner paths** before expanding records. The
-following `jq` seed filter uses `--argjson owners '["my_crate::Thing"]'` and
-`--argjson foreign_traits '[]'`; apply it with `-f <filter-file>` to the matching
-JSON. Keep the filter and intermediate records outside the reviewed repository.
-Do not run an all-items extraction and dump it into the caller's context.
+List exact canonical **owner paths**. Apply this `jq` seed with
+`--argjson owners '["my_crate::Thing"]'`, `--argjson foreign_traits '[]'` and
+`-f <filter-file>` to matching JSON. Keep filters/intermediates outside the
+reviewed repository; never dump all items into caller context.
 
-This extracts owner/member records for subsequent selection, not a finished
-bundle or a re-export resolver. Resolve requested members, aliases and closure
-using the rules above; render only requested/governing records, not every
-sibling emitted by the seed. Include foreign trait paths explicitly in
-`foreign_traits` when needed (for example `core::fmt::Display`); otherwise
-blanket and derived standard-library impls can swamp the bundle.
+The seed expands owner/member records, not final bundles or re-export
+associations. Resolve requested members/aliases/closure above; render only
+requested/governing records, not all sibling results. Explicitly select needed
+foreign traits (e.g. `core::fmt::Display`) to avoid blanket/derived-impl noise.
 
 ```jq
 def idx($c; $id): $c.index[$id|tostring];
@@ -159,14 +144,11 @@ def impls($item):
   ]
 ```
 
-Account for every request after extraction: a missing seed record or unresolved
-link target is a resolution gap, not proof of absence. Member doc links often
-need owner traversal because their targets lack `.paths` entries. A foreign
-link such as `Send` can resolve to `core::marker::Send` with no local doc text;
-return that path and an external-doc limitation, not `undocumented`, and do not
-fetch online docs.
+Account for every request: missing seed/link records are gaps, not absence
+proof. Member links may require owner traversal without `.paths`. Foreign
+`Send` may resolve to `core::marker::Send` without local docs: return path and
+external-doc limitation, not `undocumented`; never fetch online docs.
 
-The retrieval procedure owns documentation-closure selection and reporting.
-Return full text for each selected contextual record once, including crate docs;
-do not expand unrelated linked items recursively or trim text based on a guessed
-finding. Only the docs consumer decides which excerpts answer its question.
+Retrieval owns closure selection/reporting. Return each selected context's full
+text once, including crate docs; neither recursively expand unrelated links nor
+trim for guessed findings. The consumer chooses decisive excerpts.

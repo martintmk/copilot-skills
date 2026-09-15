@@ -10,117 +10,87 @@ description: >
 
 # Review Delivery
 
-Run in the coordinator's single fresh delivery worker under the
-[isolation protocol](../review-lens/worker-isolation.md), also for direct
-delivery requests; an already assigned worker does not dispatch itself again.
-For finding format alone, read the [findings contract](findings-contract.md);
-area workers never post.
-Accept the completed findings, coverage, reviewed revisions and delivery mode.
-Do not repeat the investigation or override an explicit report-only request.
+Read [worker isolation](../review-lens/worker-isolation.md) before entry, including
+direct requests, and [findings contract](findings-contract.md) when validating
+output. Accept finished findings, coverage, pinned revisions and authorized mode;
+do not investigate or override report-only.
 
-For a Review Lens result, require its snapshot-matching `coverageManifest`
-covering every entry in the [required roster](../review-lens/SKILL.md).
-Missing workers, skipped passes or `blocked` records prevent publication, even
-when the supplied findings are empty. A moved descendant head may additionally
-provide the coordinator's complete `findingRefresh` record. This permits only a
-best-effort `COMMENT`, not completed current-head coverage, approval or changes
-requested. This gate does not broaden a directly requested single-area review.
+For Review Lens, enforce its [roster/completion gate](../review-lens/SKILL.md):
+require matching `coverageManifest` records even for empty findings. Missing,
+skipped or blocked work prevents publication. This does not broaden single-area
+requests. A valid descendant `findingRefresh` permits only best-effort COMMENT,
+not approval, changes requested or completed current-head coverage.
 
 ## Prepare the review
 
-1. Apply the shared contract to the merged findings. Omit newly duplicated
-   discussion points if a stale snapshot needs refreshing; do not rerun the
-   area passes. Summarize outcome, coverage (including public surface), material
-   limitations and the supported verdict.
-2. Confirm the head/diff state still matches the evidence. Normally, a moved
-   head or changed local file returns affected claims to the coordinator before
-   posting; re-anchoring alone does not validate old evidence. For a descendant
-   head, accept a complete coordinator-produced `findingRefresh` only when it
-   identifies the exact reviewed/current heads and target, classifies every
-   original finding, omits `resolved` and `uncertain` findings, and updates
-   `updated` evidence and anchors against current source. The summary must say
-   that the added commits did not receive full specialist coverage.
-3. Check every body against the contract: exact bold attribution on its own
-   first line, followed by a blank line. Every finding, including a design note,
-   requires a concise bold title, **Problem** and **Why this matters**, in order.
-   Actionable findings use a diagnosis title and end with **Suggested fix**.
-   Design notes use an observation title and describe the constraint or
-   trade-off with evidence under **Problem**; omit only **Suggested fix**.
-   Clean summaries and coverage-only reports do not need finding sections.
-   Reject legacy, quoted, backticked, indented or run-in prefixes. Prose and
-   fences start at column zero. Inspect serialized bodies, not only the source
-   template.
-4. After any best-effort finding refresh, always use GitHub `COMMENT` / no ADO
-   vote, regardless of the original verdict. On the requester's own PR, also
-   use GitHub `COMMENT` / no ADO vote and omit
-   `Verdict:` framing. GitHub also rejects `APPROVE` and `REQUEST_CHANGES` when
-   the authenticated poster is the author; use `COMMENT` in that case.
+1. Validate merged findings under the contract; omit newly duplicated discussion
+   points during refresh. Summarize outcome, public-surface coverage, limitations
+   and supported verdict, without rerunning area passes.
+2. Revalidate head/diff and local file state. Movement returns claims to the
+   coordinator; re-anchoring alone is not validation. Accept only Lens's valid,
+   complete coordinator-produced `findingRefresh` for exact reviewed/current heads
+   and target/base, classifying every original finding. Omit `resolved`/`uncertain`;
+   require current evidence/anchors for `updated`. Disclose where full coverage
+   ended and that added commits lacked the full roster. Retargets/rewrites require
+   fresh review or blocking.
+3. Validate attribution and finding shape in **every serialized body**, not just
+   the template; reject contract violations before writing.
+4. Refreshed findings always use GitHub `COMMENT`/no ADO vote. Requester-own or
+   authenticated-poster-own PRs also require COMMENT/no vote and no `Verdict:`
+   framing, never self-approval or `REQUEST_CHANGES`.
 
 ## GitHub
 
-Post one review, not a series of independent inline reviews:
+Post one review:
 
 ```text
 gh api repos/<owner>/<repo>/pulls/<n>/reviews --method POST --input review.json
 ```
 
-The payload is `{ body, event, commit_id, comments[] }`. `event` is
-`REQUEST_CHANGES`, `COMMENT` or `APPROVE`; `commit_id` pins the reviewed head.
-Each comment is `{ path, line, side, body }`, plus `start_line` / `start_side`
-only for ranges.
+Payload: `{ body, event, commit_id, comments[] }`; events:
+`REQUEST_CHANGES`, `COMMENT`, `APPROVE`. Pin `commit_id` to the reviewed head or
+valid refresh's current head. Comments: `{ path, line, side, body }`, adding
+`start_line`/`start_side` only for ranges.
 
-- **Serialize, do not shell-quote bodies.** Generate the payload with a
-  file-based script and a JSON serializer, then post with `--input`. Inline
-  `python -c` quoting mangles backticks, newlines and suggestion fences.
-  Never use `-f body=@file` / `--raw-field`: it posts the literal path.
-  Normalize multiline indentation (for Python, `textwrap.dedent(...).strip()`).
-- **Anchor to the reviewed diff.** `line` is a head-side line for `RIGHT`
-  (added/changed code); use `LEFT` only for removed code. The anchor must be
-  inside a hunk, including context lines. Put out-of-hunk findings in the
-  summary with the same finding shape, never at an unrelated anchor.
-- **Ranges must be exact.** A single-line comment omits `start_line`; a range
-  requires `start_line < line`. A `suggestion` replaces exactly that range.
-- **Recheck immediately before posting.** Fetch `headRefOid` and compare it
-  with `review.json.commit_id`. On further movement, return to the coordinator
-  for another exact-delta finding refresh; never silently post against the
-  superseded commit.
-- **Read back the review and comments.** Confirm anchors and body structure.
-  A `422` usually means bad anchors/validation; correct the rejected payload.
-  A `403`/`429` means permissions/rate limiting, not a reason to change anchors.
-  After an ambiguous timeout, look for the posted review before retrying so
-  recovery does not duplicate it.
+- Use a file-based script and JSON serializer with `--input`, not shell-quoted
+  bodies/inline `python -c`. Never `-f body=@file`/`--raw-field` (literal path).
+  Normalize indentation, e.g. `textwrap.dedent(...).strip()`.
+- Anchor inside reviewed diff hunks, including context lines. `RIGHT` uses head
+  lines; `LEFT` only removed code. Put out-of-hunk findings in the summary with
+  the same contract, never unrelated anchors.
+- Single lines omit `start_line`; ranges require `start_line < line`.
+  A `suggestion` replaces exactly its range.
+- Immediately before posting, compare fetched `headRefOid` with
+  `review.json.commit_id`; movement returns to the coordinator for exact-delta
+  refresh, never silently posts stale evidence.
+- Read back review/comments to confirm anchors and serialized body structure.
+  Correct rejected `422` payloads; `403`/`429` are permission/rate limits, not
+  anchor failures. Reconcile ambiguous timeouts before retrying to avoid duplicates.
 
 ## Azure DevOps
 
-Discover the configured metadata, diff, thread-create/list and voting tool
-schemas; use their actual operation names and organization fields. A tool from
-another ADO deployment is not evidence that the same tool exists here.
+Discover configured metadata, diff, thread-create/list and voting schemas;
+use actual operations/organization fields, never another deployment's assumed tools.
 
-- Reuse the reviewed diff/iteration and head from context. Confirm the current
-  head still matches before writing; if it moved, return to the coordinator.
-- Create one thread per inline finding and one unanchored summary thread.
-  Supply the target organization, project, repository and PR plus the content
-  and head-side file/line range required by the discovered schema.
-- For tools exposing `rightFileStartOffset` / `rightFileEndOffset`, offsets are
-  1-based: whole-line start is `1`, end is the exact character count + 1.
-  Do not use `0` or arbitrary large offsets.
-- Threads are not atomic. Record successful thread IDs and read them back with
-  the list/read tool; recover only missing or failed writes, including after an
-  ambiguous response, rather than reposting the whole review.
-- Vote only after intended threads are confirmed and only when permitted.
-  Map the verdict to the tool's supported equivalents of approved,
-  approved-with-suggestions or waiting-for-author. Never vote on the requester's
-  or authenticated poster's own PR. If voting is unavailable, report that
-  limitation; do not invent a tool or claim the vote succeeded.
+- Pin reviewed diff/iteration/head; recheck before writes and return movement
+  to the coordinator.
+- Create one thread per inline finding plus one unanchored summary. Supply
+  organization/project/repository/PR, content and schema-required head-side ranges.
+- `rightFileStartOffset`/`rightFileEndOffset` are 1-based: whole-line start `1`,
+  end exact character count + 1, never `0` or arbitrary large values.
+- Threads are non-atomic. Record successful IDs and read back bodies, anchors
+  and iteration association. Reconcile ambiguous responses; recover only
+  provably unapplied writes, never repost the whole review.
+- Vote only after intended threads are confirmed and when permitted above.
+  Map to supported approved, approved-with-suggestions or waiting-for-author.
+  Unavailable voting must be disclosed; a missing required vote is incomplete
+  delivery, never invented success.
 
 ## Report-only and completion
 
-For local or report-only work, return attributed findings in the shared
-finding format, followed by coverage and verdict; post nothing. Preserve the
-same design-note and clean-summary exceptions. Do not replace full findings
-with a table.
+Local/report-only: return full contract-formatted findings, coverage and permitted
+verdict; **post nothing**. Do not substitute a table for findings.
 
-After external delivery, report the review URL and a compact one-line-per-finding
-table in chat rather than pasting the whole review back. Report partial delivery
-plainly. Remove owned payload scripts and return resource ownership to the
-coordinator for shared cleanup.
+After posting, return review URL and one-line-per-finding table, not the full
+review. Disclose partial delivery. Remove owned payload scripts and return
+resources to the coordinator for cleanup; retain caller-owned recovery evidence.

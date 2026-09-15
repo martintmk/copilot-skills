@@ -14,64 +14,50 @@ description: >
 # Review Perf
 
 Follow [shared context](../review-lens/review-context.md) and the
-[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+[findings contract](../review-delivery/findings-contract.md). Own cost
+classification/measurement and runtime clock/randomness injection. Test-only
+utilities belong to `review-tests`, signal contracts to `review-telemetry`, and
+abstractions without cost claims to `review-naming`. Reuse telemetry/resilience
+evidence without duplicating the same allocation or per-call finding.
 
-Own cost classification and measurement, plus injectable clocks and randomness
-in runtime code. Test-only utility use belongs to `review-tests`, emitted signal
-contracts to `review-telemetry`, and unnecessary abstractions without a cost
-claim to `review-naming`. Reuse telemetry and resilience evidence for shared
-costs rather than reporting the same allocation or per-call work twice.
+## Procedure
 
-## Lenses
+1. **Classify frequency:** per-request, per-item, per-connection or startup-only.
+   Only the first three earn optimization pressure. Off-path complexity to
+   avoid allocations can itself be a finding.
+2. Apply the cost/injection questions below.
+3. Benchmark faster/slower claims, preferring the repository's existing harness.
+   Never infer a regression by reading code; unmeasured runtime suspicions are
+   conditional questions.
 
-- **Classify first.** Is the path per-request, per-item, per-connection, or once
-  at startup? Only the first three earn optimization pressure; name the class in
-  findings. Off the hot path, added complexity to dodge an allocation is itself
-  a finding.
-- **No needless allocation for static data.** A `String` field forces an
-  allocation when every value is built from static text — prefer
-  `Cow<'static, str>`, `HeaderName`, `HeaderValue`, or an enum of common variants
-  with an `Other(..)` escape. Drop `str` → `Uri` → `str` round-trips, reflexive
-  `.clone()`, and `to_string()` on a value that is already owned.
-- **Branch once on values that never change.** A configuration flag read on every
-  call should be resolved when the pipeline or service is built, not switched at
-  runtime per request.
-- **Dispatch.** Prefer static dispatch on the hot path, but type erasure at the
-  edge of a stored pipeline is usually an acceptable, measured trade — do not
-  demand generics for their own sake.
-- **Algorithmic growth and contention.** Watch repeated work, quadratic scans,
-  lock contention and per-call synchronization. A cache or fast path that only
-  ever sees one entry is worth specializing.
-- **Time and randomness must be injectable.** Flag `tokio::time::sleep`,
-  `Instant::now()` and `SystemTime::now()` where a clock abstraction exists, and
-  ad-hoc entropy where a seedable source exists. This is a testability finding as
-  much as a performance one: injected time makes the behavior deterministic.
-- **Bounded memory.** Code handling external input should chunk or bound its
-  allocation rather than trusting the caller's size.
+## Specialist questions
 
-## Evidence
+- **Allocation:** For static text prefer `Cow<'static, str>`, `HeaderName`,
+  `HeaderValue`, or common enum variants with `Other(..)` over `String`.
+  Remove needless `str -> Uri -> str`, reflexive `.clone()` and `to_string()`
+  on owned values.
+- **Frequency/dispatch:** Resolve invariant flags when building the pipeline or
+  service, not per request. Prefer hot-path static dispatch; measured type
+  erasure at a stored pipeline's edge is legitimate, not grounds for generics
+  for their own sake.
+- **Growth/contention:** Check repeated work, quadratic scans, locks and
+  per-call synchronization. Consider specializing single-entry caches/fast
+  paths. Chunk or bound external-input allocations; never trust caller sizes.
+- **Determinism:** Flag `tokio::time::sleep`, `Instant::now()` and
+  `SystemTime::now()` where clock abstractions exist, and ad-hoc entropy where a
+  seedable source exists. Injection is also a testability requirement.
 
-- Bring a benchmark for any claim that a change is faster or slower, and prefer
-  the repository's existing harness over a new one.
-- **Report honestly.** Give the point estimate and the range, and say whether the
-  difference is significant — "~0.21 ns (~4%), not statistically significant in
-  Criterion, so it does not justify carrying the reference".
-- An allocation-count or instruction-count assertion is often a better regression
-  guard than wall-clock timing; prefer it where the repository supports it.
-- Do not claim a regression from reading code alone. Either measure it, or raise
-  it as a question and say it is unmeasured.
+## Proof and coverage
 
-## Findings
+Report benchmark point estimate, range and statistical significance: e.g.
+"~0.21 ns (~4%), not significant in Criterion, so insufficient to justify the
+reference." Prefer allocation/instruction-count regression guards over timing
+where supported.
 
-For actionable findings, use the shared attribution and a concise bold diagnosis
-title naming the affected path. **Problem** gives its classification, the
-avoidable work or hard-wired time/randomness source, and decisive evidence,
-including measurements when taken. **Why this matters** states the concrete cost
-or testability impact. **Suggested fix** gives the specific correction without
-adding unjustified complexity. Keep unmeasured runtime claims conditional.
+Identify path frequency, avoidable work or hard-wired source, decisive evidence
+and measurements, concrete cost/testability impact, and a correction without
+unjustified complexity. Keep unmeasured runtime claims conditional; off-path or
+unmeasured findings are `Non-blocking`. Report performance neutrality rather
+than inventing micro-optimizations.
 
-Mark a finding `Non-blocking` when it is off the hot path or unmeasured. If the
-change is performance-neutral, say so rather than inventing micro-optimizations.
-
-Coverage line: the paths classified, what you measured, and what remained
-unmeasured.
+Coverage: paths classified, measurements and unmeasured areas.

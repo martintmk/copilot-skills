@@ -12,87 +12,67 @@ description: >
 # Review Telemetry
 
 Follow [shared context](../review-lens/review-context.md) and the
-[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+[findings contract](../review-delivery/findings-contract.md). Own emitted names,
+dimensions, units, cardinality, redaction and duplicate instrumentation, on which
+dashboards, alerts and queries depend.
 
-Own emitted signal names, dimensions, units, cardinality, redaction and
-instrumentation duplication: dashboards, alerts and queries depend on them.
-General symbol names belong to `review-naming`; cost-only findings belong to
-`review-perf`. Hand stale or contradictory signal documentation to
-`review-consistency`, but keep emitted-contract changes here. When a signal
-defect also wastes work, retain its signal and measured-cost evidence in one
-finding.
+Route symbol names to `review-naming`, cost-only findings to `review-perf`, and
+stale/contradictory docs to `review-consistency`. Keep emitted-contract defects
+here, combining signal and measured-cost evidence rather than duplicating them.
 
-## Naming and conventions
+## Procedure
 
-- **Follow OpenTelemetry semantic conventions** for metric, span and attribute
-  names, and use the conventional value where one exists. Prefer a dot-separated
-  namespace (`oxidizer.hyper`) and reuse the namespace its siblings use.
-- **Align a new signal to the closest existing one.** If a sibling metric already
-  measures a comparable thing, match its name shape, unit and attribute set
-  rather than inventing a parallel vocabulary.
-- **Do not destabilize a stable dimension set.** Adding, removing or renaming an
-  attribute on an existing metric breaks the queries and dashboards built on it;
-  call it out and require the same treatment as any other breaking change. Where
-  a value can be missing, emit a sentinel rather than dropping the dimension.
-- **A service-specific dimension does not belong in a shared component's
-  defaults.** If only one consumer would query it, expose the value as an
-  extension the consumer emits itself.
-- **Telemetry names are required inputs, not optional.** A metrics or logging
-  layer should take its name at construction, with a sensible default for the
-  standard pipeline, and expose it on the pipeline context.
-- **Units belong in the instrument**, not in the metric name, when the convention
-  carries them.
+1. Inventory changed signals from instrument definitions and telemetry tests or
+   exported-signal snapshots, not surrounding prose. Locate comparable signals
+   and consumers.
+2. Apply the contract and emission questions below.
+3. Return exact emitted evidence and impact; apply `review-perf` measurement
+   requirements to per-emission cost claims.
 
-## Cardinality and cost
+## Signal-contract questions
 
-- **Bound every metric attribute and span name.** Reject request IDs, raw URIs,
-  and user or tenant identifiers as *metric* attribute values or in span names;
-  use a bounded classification such as an error kind or a route template instead.
-  Bounded labels look like `connect.hyper.timeout` or
-  `request.connect.connection_refused` — a small, enumerable vocabulary. Span and
-  log *attributes* may legitimately carry high-cardinality values where the
-  convention calls for it (`url.full` on an HTTP client span); judge those on
-  sensitivity and backend cost, not cardinality alone.
-- **Order composite labels from lower to higher cardinality**, so the prefix
-  stays queryable.
-- **Do not allocate per emission.** A `String` attribute built on every call is a
-  per-request allocation — prefer `&'static str`, `Cow<'static, str>` or a cached
-  attribute set. Cache the instrument, not just the value.
+- Follow OpenTelemetry semantic names/values for metrics, spans and attributes.
+  Reuse sibling dot-separated namespaces (`oxidizer.hyper`), name shapes, units
+  and attribute sets rather than inventing parallel vocabulary.
+- Treat additions/removals/renames in stable metric dimensions as breaking
+  changes to dependent queries/dashboards. Emit a sentinel for missing values,
+  never drop the dimension.
+- Keep service-specific dimensions out of shared defaults; expose an extension
+  for the consumer to emit.
+- Require metrics/logging layer names at construction, with sensible standard
+  pipeline defaults, and expose names on pipeline context.
+- Put convention-carried units in instruments, not metric names.
 
-## Structure and duplication
+## Emission questions
 
-- **Do not re-implement instrumentation a library already emits.** When a
-  middleware or client crate already publishes retry, timeout, breaker or request
-  telemetry, adding a parallel log or metric at the call site duplicates it;
-  remove the local copy and reuse the library's signal.
-- **Be skeptical of spans.** Do not add spans where the stack does not actually
-  consume them — a span that no backend reads carries no telemetry value, and
-  regular tracing APIs, a metric, or a log are usually the right signal. Require
-  a named consumer before accepting new span instrumentation.
-- **Choose the right signal.** A per-request measurement is a metric, not a log
-  line per request; use logs for events an operator must read.
-- **Prefer a tracing front end for logs** where the crate already uses one, so a
-  logger provider does not have to be boxed and stored locally.
-- **Redaction is part of telemetry.** Anything carrying user or customer data
-  must go through the repository's classification or redaction path before it is
-  emitted.
+- Bound **metric attributes and span names**: no request IDs, raw URIs, user or
+  tenant identifiers. Use enumerable error kinds or route templates, e.g.
+  `connect.hyper.timeout` or `request.connect.connection_refused`.
+  Convention-appropriate span/log **attributes** may be high-cardinality
+  (`url.full` on HTTP client spans); assess sensitivity/backend cost, not
+  cardinality alone. Order composite labels low-to-high cardinality so prefixes
+  remain queryable.
+- Avoid per-emission `String` allocation: prefer `&'static str`,
+  `Cow<'static, str>` or cached attributes. Cache instruments too.
+- Does middleware/client instrumentation already emit retry, timeout, breaker
+  or request signals? Remove duplicate call-site metrics/logs and reuse it.
+- Require a named consumer for new spans. If no backend consumes them, prefer
+  regular tracing APIs, metrics or logs. Per-request measurements are metrics;
+  logs describe events an operator must read.
+- Reuse an existing tracing log front end rather than boxing/storing a local
+  logger provider.
+- Route all user/customer data through repository classification/redaction
+  **before** emission.
 
-## Evidence and findings
+## Proof and coverage
 
-Ground findings in emitted instrument definitions and existing telemetry tests
-or exported-signal snapshots, not surrounding prose. For actionable findings,
-use the shared attribution and a concise bold diagnosis title naming the
-affected signal. **Problem** gives the exact signal and attribute set, the
-convention or sibling it diverges from, and decisive evidence.
-**Why this matters** states the operator-visible consequence: broken queries,
-cardinality blow-up or duplicated signals. **Suggested fix** specifies the
-corrected signal contract or instrumentation. Documented telemetry tables and
-dashboards are consumer evidence that a rename is breaking. Keep per-emission
-cost claims subject to `review-perf`'s measurement requirements.
+Name the exact signal/attributes and violated convention or sibling, with
+decisive emitted evidence, operator impact and corrected instrumentation.
+Telemetry tables/dashboards can prove consumer dependence for a breaking
+rename, not the emitted definition.
 
-If the change adds no telemetry where a comparable component instruments its
-behavior, say so once rather than demanding instrumentation the change does not
-need.
+If comparable components instrument behavior but this change adds none, note
+that once; do not demand unnecessary instrumentation.
 
-Coverage line: the signals reviewed and any emitted name or attribute set you
-could not confirm from the instrument definitions or telemetry tests.
+Coverage: signals reviewed and names/attribute sets unconfirmed by definitions
+or telemetry tests.

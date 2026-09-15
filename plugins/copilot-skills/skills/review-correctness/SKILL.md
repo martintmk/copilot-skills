@@ -12,72 +12,56 @@ description: >
 
 # Review Correctness
 
-Trace the implementation, not the signature. A correctness finding is only worth
-posting once it is reproduced. **No adequate reproduction means no correctness
-finding** — keep an unproven suspicion out of the review, or phrase it as a
-clearly identified question.
-
+Trace changed runtime implementations, including private code, not signatures.
 Follow [shared context](../review-lens/review-context.md) and the
-[findings contract](../review-delivery/findings-contract.md); reuse supplied context.
+[findings contract](../review-delivery/findings-contract.md).
 
-Own defects in changed runtime paths, including private implementation.
-`review-api-design` owns public contract and error/panic conventions;
-`review-resilience` owns recovery classification and middleware composition.
-`review-tests` owns test changes and behavior-preservation coverage: a missing
-regression test for a runtime defect belongs in that defect's fix, not a second
-finding.
+Public/error/panic contracts belong to `review-api-design`; recovery and
+middleware composition to `review-resilience`; test changes and preservation to
+`review-tests`. Missing regression coverage belongs in the runtime defect's fix,
+not a duplicate finding.
 
-## Coverage: trace every changed correctness-sensitive path
+## Procedure
 
-Trace the risky changed behaviour from entry point to effect — implementation,
-callers, error paths, cleanup, cancellation and drop, concurrency, and the tests.
-**Do not sample the implementation:** review *all* changed correctness-sensitive
-paths, not a representative few, and keep going after the first finding rather
-than stopping there.
-Public API priority elsewhere in the review never licenses skipping one here.
+1. Trace **every** changed correctness-sensitive path from entry to effect:
+   implementation, callers, errors, cleanup, cancellation/drop, concurrency and
+   tests. Never sample, stop at the first finding, or skip paths for API priority.
+2. Apply the relevant defect questions below, not an indiscriminate checklist.
+   Reproduce with faithful focused tests, bounded adversarial inputs and Miri
+   where appropriate, following shared baseline/configuration and falsification
+   rules.
+3. **No adequate reproduction means no correctness finding.** Omit unproven
+   suspicions or identify them as questions.
 
-## Defect classes
+## Defect questions
 
-These are the *kinds* of defect worth hunting, drawn from real reviews, not a
-checklist to force onto every PR. Apply the ones the change actually risks.
+- **Parsing/version gates:** Off-by-one ranges, accepted decoder versions
+  rejected by gates, success-shaped empty results? Patch a fixture to the
+  untested value, e.g. valid v2 returns `Ok` with `callers == None`.
+- **Representation:** Are sizes/indices checked against actual capacity/index
+  models? Can decoding accept an unrepresentable topology then iterate it?
+  Use bounded adversarial input.
+- **Resources/free lists/UB:** Unreleased slots on unlink, reads consuming
+  later-needed state, tables filling during ordinary use? Use Miri for applicable
+  focused tests and quote the decisive result.
+- **Cancellation/drop:** What commits when dropped at each await? Are abort
+  waiters notified? Can dropping a hedge prevent breaker opening? Transports and
+  middleware must honor cancellation, not assume completion.
+- **Concurrency:** Blocking async calls, locks across await, thread-affine state
+  crossing moves? Enforcing public `!Send` types belongs to `review-api-design`.
+- **Time:** Test `duration_since` and similar boundaries for every valid system
+  time; saturate rather than panic.
+- **Invariants/round-trips:** Prove fixed-width or round-trip promises on all
+  public paths, including `FromStr` and `TryFrom`, not just constructors.
+  Implementation violations stay here. Only when trusted intent supports
+  runtime behavior should `review-consistency` correct a wrong documented claim;
+  never weaken docs to conceal a runtime violation.
 
-- **Control-flow and version gates on parsing/decoding.** Off-by-one accept
-  ranges, a version the reader parses but the gate rejects, a valid input that
-  returns a success-shaped empty. Prove it by patching a fixture to the untested
-  value — "a valid v2 snapshot returns `Ok` with `callers == None`".
-- **Boundary and representation.** Sizes/indices not validated against the real
-  capacity or index model; an unrepresentable topology accepted then iterated.
-  Prove it by decoding a *bounded* adversarial input.
-- **Resource, free-list and UB models.** Slots not released on unlink, reads that
-  consume state a later read needs, tables that fill under ordinary operation —
-  the class where running the specific test under Miri turns a hunch into a
-  quoted panic.
-- **Cancellation and drop safety.** What stays committed if a future is dropped
-  at an await point; waiters not notified on abort; a dropped hedged attempt that
-  prevents a circuit breaker from opening. Transports and middleware must honor
-  cancellation rather than assume completion.
-- **Concurrency and thread affinity.** Blocking calls on an async path, a lock
-  held across an await, and thread-affine state relied on across a move. The
-  *contract* side of `!Send` — enforcing it in the returned public type rather
-  than in documentation — belongs to `review-api-design`.
-- **Time arithmetic.** `duration_since` and friends must not fail for any valid
-  system time; saturate rather than panic; test the boundary.
-- **Round-trip and invariant claims.** If a type advertises a fixed width or a
-  round-trip, prove it holds on *all* public paths (`FromStr`, `TryFrom`), not
-  just the constructor. A proven implementation violation stays here. If trusted
-  intent supports the runtime behavior and only the documented claim is wrong,
-  pass the evidence to `review-consistency` to scope or correct that claim.
-  Do not resolve a runtime violation by silently weakening its documentation.
+## Proof and coverage
 
-A private defect that produces wrong output, a hang, a leak, a panic or data
-loss is blocking even though it is not semver-visible.
+Give the triggering input/sequence, decisive reproduced result, concrete impact
+and specific correction, with a focused regression test when useful. Private
+wrong output, hangs, leaks, panics or data loss are blocking despite lacking
+semver visibility.
 
-## Findings
-
-For actionable findings, use the shared attribution and a concise bold diagnosis
-title naming the reproduced defect. **Problem** gives the triggering input or
-sequence and quotes the decisive reproduced result. **Why this matters** states
-the consumer or runtime consequence. **Suggested fix** gives the specific
-correction and, when useful, the focused regression test.
-
-Coverage line: the paths traced and what remained unverified.
+Coverage: all paths traced and what remained unverified.

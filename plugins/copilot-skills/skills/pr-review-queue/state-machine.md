@@ -1,322 +1,221 @@
 # Durable review queue
 
-Use [provider-preflight.md](provider-preflight.md) for authoritative facts and
-validated per-operation `operation_bindings` (MCP or official provider CLI).
-Raw HTTP is disabled by default; MCP+CLI coverage gaps block work, never silently enable HTTP.
-Review new commits until merge. Never perform discussion-only follow-ups,
-replies, fixes, or thread resolution.
-Revalidate prior issues on new heads: unresolved ones still affect verdict and
-summary, even when duplicate inline findings are omitted.
+This file owns local cache identity, persistence, recovery and acknowledgment.
+Use [preflight](provider-preflight.md) for provider facts and the
+[runner](review-runner.md) for review/delivery contracts.
 
-## Setup, storage, and ownership
+## One folder per PR
 
-- Resolve scoped GitHub `martintmk` and independent, stable ADO human identities;
-  never derive ADO identity from GitHub. Missing required unattended setup blocks.
-- First actual monitor setup asks/saves repositories and confirmed cadence before starting.
-  Explicit one-shot batches ask only for needed repos/identities; absent/null cadence is legal.
-  Preserve saved cadence; never create/change a schedule for a one-shot batch.
-- Store `state.json`, `in-flight.json`, and owned delivery artifacts outside
-  the checkout, under `%USERPROFILE%\.copilot\pr-review-queue\` on Windows
-  (the equivalent user-home directory on other hosts). Do not commit them.
-- Take an exclusive state-directory lock covering worker lifetimes. Overlapping runs
-  exit busy without writes. Never steal an old lock: prove its owner and workers
-  ended. Uncertain ownership/liveness blocks.
-- Write complete versioned JSON through a sibling staging file, flush it, then
-  atomically replace the destination. Atomic local replacement is **not** an
-  atomic provider transaction. Persistence failure stops further side effects.
-- Missing state is fresh setup only when no journal/history exists. Malformed
-  or unsupported state/journals block; preserve them, never silently reset.
-  Explicit migrations preserve identities, receipts, cycles, and pending work.
-- Configuration changes also take the lock. Never replace identities or remove
-  an in-flight repository mid-transaction; retain removed repositories' history.
+Store state outside the checkout at
+`%USERPROFILE%\.copilot\pr-review-queue\` (equivalent home path on other hosts):
 
-`configuration.repositories` is the **active** monitored set. When the user
-explicitly narrows scope, archive the prior configuration and retain removed
-entries in `configuration.inactiveRepositories` (or equivalent history), with
-their identities, blockers and receipts. Do not poll inactive entries or let
-their old preflight blockers disable an otherwise ready active scope.
-Unfinished transactions still block removing their repository. Keep the saved
-cadence unless the user changes it; an empty active list disables monitoring.
-
-### Windows persistence and lock lifetime
-
-PowerShell tool calls use separate processes. A lock acquired in a short-lived
-call is released when that process exits: it does not protect later workers.
-Use an exclusive OS handle held by a live owner across calls, or a create-new
-lock file with explicit ownership/liveness recovery. Record the owner
-PID/start time, session and owned workers without storing credentials. If a
-separate lock-holder is needed, confirm acquisition before touching state,
-keep it alive through the operation, then signal release only after workers
-have stopped and state is durable. Confirm release; do not abandon a detached
-lock-holder after reporting setup complete.
-
-For an existing destination, flush the sibling staging file with
-`FileStream.Flush(true)` before `File.Replace`. Pass a concrete sibling backup
-path: PowerShell can coerce `$null` in the backup-path argument to an empty
-string and fail with "The path is empty." For first creation, move the flushed
-staging file to the absent destination without overwrite. Never delete the
-destination first, truncate it in place, or treat a failed replace as committed.
-Preserve ambiguous staging/backup files for reconciliation; a rolling backup
-does not replace immutable configuration or operation history.
-
-Illustrative version-1 state; IDs/SHAs are placeholders and `15m` is not a default:
-
-```json
-{
-  "version": 1, "configuration": {
-    "cadence": "15m",
-    "repositories": [
-      {"provider": "github", "host": "github.com", "repositoryId": "R1", "repository": "example/project"},
-      {"provider": "ado", "host": "dev.azure.com", "organizationId": "O1", "projectId": "J1", "repositoryId": "R2"}
-    ],
-    "targets": {
-      "github|github.com": {"id": "U1", "login": "martintmk"},
-      "ado|dev.azure.com|O1": {"id": "human-identity-id", "kind": "human"}
-    }
-  },
-  "schedule": {"key": "monitor-1", "id": null, "status": "not-started"},
-  "tracked": {
-    "github|github.com|R1|P1": {
-      "url": "https://github.com/example/project/pull/1",
-      "lifecycle": "open", "watch": true, "observedRevision": 2, "observedHead": "head-2",
-      "lastVerifiedOperationId": "op-1",
-      "unfinishedOperation": null,
-      "pendingWork": {"key": "work-2", "eligibleAt": "2026-09-14T08:05:00Z"},
-      "completed": [{
-        "operationId": "op-1", "targetId": "U1",
-        "trigger": {"kind": "request", "cycle": "event-10"},
-        "reviewedBase": {"repositoryId": "R1", "ref": "main", "sha": "base-1"},
-        "reviewedHead": "head-1", "receiptArtifact": "operations\\op-1.json",
-        "acknowledgment": {"status": "verified", "evidenceId": "event-11"}
-      }]
-    }
-  }
-}
+```text
+state.json                         version 2: configuration and schedule only
+monitor.lock                       owner/session/worker liveness
+prs\<prKey-hash>\state.json         this PR's cache and active operation
+prs\<prKey-hash>\operations\<id>\    review, delivery, receipt and evidence files
 ```
 
-For monitor registration, persist a stable `schedule.key` and `registering`
-status before creation; include the key in the fixed tick prompt. Record the
-returned ID/status afterward. Reconcile that exact key against the scheduler
-before retrying an uncertain registration; multiple/unknown matches block.
-One-shot runs leave this record and existing schedules untouched.
-Read back the single registered schedule and its cadence before reporting it
-active. A fixed tick prompt identifies the monitor key/state location, invokes
-this skill as an unattended finite tick, and uses only the saved active scope;
-it never repeats setup or creates another schedule. Record/report the first
-scan policy instead of implying that scheduling already reviewed a PR.
+`prKey` combines provider, host, organization when applicable, immutable
+repository ID and stable PR ID. Normalize provider ID representations before
+keying; URLs, names and branches are not identities. Folder names are lowercase
+SHA-256 hex of UTF-8 `prKey`; verify the stored key matches before reuse.
+Keep owned artifact paths inside the state directory and never store credentials.
 
-Archive immutable, versioned review results, whole receipts, delivery journals, and request/acknowledgment
-proof before state references them. Keep history across lifecycle/configuration changes and payloads until durable acknowledgment.
-
-## Facts, selection, and deduplication
-
-1. Resume existing work before new collection/selection. Then capture one UTC
-   `scanAt` and a finite, fully paginated list of open/published non-draft PRs
-   without an age cutoff; refresh tracked lifecycles/heads only in the current
-   monitored scope. Retained history is not permission to poll a removed repo.
-   Bound reads/retries; exhaustion blocks.
-2. Derive individual target request cycles and request times from authoritative
-   provider events/history, preserving source IDs. Do not use assignment
-   membership, polling time, PR creation, or a reset-to-zero vote as substitutes.
-   ADO cycle evidence must distinguish reassignment, re-request, reset, and
-   iteration changes; unchanged membership alone is neither due nor completed.
-3. Select due PRs in exactly two groups; each PR appears only once:
-   - **Current explicit requests:** oldest authoritative current-generation
-     request time, then `prKey`. Prior submitted reviews never exclude them.
-   - **All other eligible work combined:** target-authored PRs initially or with
-     changed heads/targets, and watched head/target changes, irrespective of age
-     or prior reviews; plus other PRs with `24h < scanAt - createdAt <= 7 * 24h`
-     and complete authoritative history proving no submitted review by anyone.
-     Published partial work retained in `unfinishedOperation` is completion
-     debt, not a new age-fallback admission.
-     Sort this whole group by `pendingWork.eligibleAt` oldest first, then `prKey`;
-     ownership/eligibility categories have no separate priority.
-   Discussion/pending GitHub reviews do not count as submitted reviews;
-   dismissed/historical reviews do. Reset ADO votes never prove no prior review.
-4. Unknown request presence/generation/time that could affect request priority
-   blocks selection, not merely that PR. Unknown creation/history blocks
-   incidental eligibility; it does not exclude an otherwise fully established
-   request, own PR, or watched head change. Never report unknown as absence.
-5. `prKey` includes provider, host, organization where applicable, immutable
-   repository ID, and stable PR ID. Scope actors by provider/host/organization.
-   URLs, display names, and branch names alone are not durable identity.
-6. Request deduplication uses `(prKey, targetId, cycle, targetRepoId, targetRef, head)`;
-   pin the exact reviewed base separately. **Same-head new cycles are new work.**
-   Completed ADO cycles/heads suppress unchanged assignments, not later resets/iterations/heads.
-7. Non-request work uses `initial` or durable `observedRevision`, advanced only
-   on observed head/target changes, plus the scoped snapshot. Never use it as
-   request evidence. Compare the latest compatible baseline, not all historical SHAs.
-   Before sorting, persist the scoped `pendingWork.key` and first-observed
-   `eligibleAt`: `scanAt` for batch eligibility, actual UTC time for later changes.
-   Reuse it across ticks/restarts/pauses; a changed key gets a new observation time.
-   Never derive it from discussion/updated time or substitute it for request time.
-   Completion clears only pending work covered by the verified snapshot, not newer work.
-   An observation counter alone does not make the latest verified compatible
-   snapshot due again without a new request or unfinished work.
-8. Persist exact target repository/ref/base SHA, head SHA, and ADO iteration.
-   Retargeting needs a fresh baseline. Base-branch advancement alone is not a
-   new-head trigger; pin the actual base for work, never relabel old evidence.
-9. Consider each PR at most once per tick; do not replenish the list. New heads/
-   requests wait for later ticks. Settle the current transaction first; PRs are **sequential**.
-
-Revalidate age/history for fallback-only work before admission and first
-publication, including a zero-effect retry on a later day. If another review
-arrived or the age window expired and no other reason applies, retire it safely.
-After known publication, its own feedback or elapsed age must not invalidate
-completion recovery; preserve that debt rather than treating it as a new PR.
-
-## One in-flight operation
-
-Before review work, atomically create the sole `in-flight.json`:
-
-```json
-{
-  "version": 1, "operationId": "op-2",
-  "prKey": "github|github.com|R1|P1",
-  "targetId": "U1", "postingIdentity": "posting-actor-id", "phase": "reviewing",
-  "trigger": {"kind": "request", "cycle": "event-12", "requestedAt": "2026-09-14T08:00:00Z", "evidenceId": "event-12"},
-  "reviewedBase": {"repositoryId": "R1", "ref": "main", "sha": "base-2"},
-  "reviewedHead": "head-2", "reviewComplete": false,
-  "reviewArtifact": "operations\\op-2.review.json",
-  "deliveryJournal": "operations\\op-2.delivery.json", "receipt": null,
-  "acknowledgment": {"status": "not-started", "attempt": null}
-}
-```
-
-The queue alone owns `in-flight.json` and transitions. The fresh Review Lens
-coordinator runs report-only and returns its result; the queue saves it before
-starting the separate posting worker. Pass identity/snapshot, run-local
-`operation_bindings` and `direct_http: false` to both stages and their workers.
-One delivery worker exclusively writes the
-`deliveryJournal` while active; the queue never edits or duplicates its ledger.
-The [queue-owned runner](review-runner.md) owns execution/journal/receipt contracts;
-these are invocation requirements, not modifications to existing review skills.
-Match operation/snapshot/actor/completion across journals; mismatch blocks.
-Workers never select another PR or acknowledge requests. Before mutations, save
-lifecycle/head/request provenance, including proven absence and history anchors.
-
-| Phase | Allowed transition / durable gate |
+| Record | Retained data |
 | --- | --- |
-| `reviewing` | Receive complete report-only Review Lens work on the pinned snapshot; durably save `reviewArtifact` and coordinator-confirmed `reviewComplete=true` before `delivering`. |
-| `delivering` | Worker persists the complete plan before any remote write and journals each attempt/outcome. Read back all required posts/vote before `acknowledging`. |
-| `acknowledging` | Delivery is verified; perform only request acknowledgment/reconciliation, never repost review feedback. |
-| `commit-ready` | Verified whole receipt and acknowledgment proof are durable; idempotently merge into tracked history, set the watch baseline, then remove the journal last. |
-| `blocked` / `paused` | Persist `resumePhase`, the reason and all evidence. No next PR while review, delivery, or acknowledgment remains unsettled. |
+| Monitor | Confirmed active/inactive repositories, scoped target IDs, cadence, immutable configuration history, schedule key/ID/status and first-scan policy. |
+| PR cache | `version: 2`, `prKey`, URL, scoped actors, lifecycle, eligibility/request provenance, target/head/iteration observations, `observedRevision`, `pendingWork`, `watch`, `lastVerifiedOperationId`, `completed`, `unfinishedOperation`, `quarantinedWork`, `activeOperation`. |
+| Active operation | ID, complete work key, trigger/cycle/time/evidence, exact target repository/ref/base SHA, head/ADO iteration, posting identity, phase/`resumePhase`, `reviewComplete`, artifact/journal paths, receipt and acknowledgment status/attempt/evidence. |
+| Operation folder | Pinned metadata/diff/CI/rules, matching factual artifacts, versioned review/coverage result, exact payloads/hashes, delivery journal, whole receipt, request/acknowledgment proofs and actual outcome. Write artifacts before referencing them. |
 
-A posted review, verified whole operation, and acknowledged request are separate
-facts. Refresh lifecycle, target/head, and request cycle before every new write.
-With proven zero effects, changed inputs invalidate artifacts: archive the
-canceled attempt and end this tick. After attempted effects, pause further
-delivery on changes and reconcile first; never change its ID, snapshot, or cycle.
+Create/update the candidate's folder before comparing it with completed or
+pending work. There is no separate durable candidate queue or monitor-wide
+`tracked` map. Scan per-PR active records before collection; at most one may be
+in flight. Multiple/unknown active operations block rather than choosing one.
+Parse the cache locally; give selection only current observations, pending work,
+quarantine and completion summaries. Load historical artifacts only for the
+selected review or recovery, not into every tick's conversation.
 
-## Delivery receipt and crash recovery
+## Lock and persistence
 
-- Each `plannedWrites` entry has a stable key, kind, anchor/iteration, intent, and
-  **(exact body or immutable payload artifact) plus hash**. Persist `attempting`
-  before the bound MCP/CLI call; save provider IDs/outcomes/read-back in `receipts` before
-  later writes. Unknown attempted outcomes are ambiguous, never presumed unsent;
-  server errors alone do not prove non-delivery. Retain attempt intervals.
-- Require an **internal**, never posted, receipt: `status=verified|partial|ambiguous|blocked`,
-  `operationId`, `prKey`, `reviewedBase`, `reviewedHead`, `reviewIds/threadIds`,
-  `reviewUrl`, `postingIdentity`, `postedAt`, `verifiedAt`, and `voteStatus`.
-- Accept `verified` only for the exact operation/snapshot after full provider read-back
-  of intended feedback/required votes **and** coordinator-confirmed complete
-  Review Lens work with its full snapshot-matching coverage manifest. Never infer
-  `reviewComplete` from posted comments or journal existence.
-  It is not an extra receipt field; diagnostics with blocked/incomplete coverage and drafts never qualify.
-  No ADO vote on target/poster-owned PRs: use `voteStatus=not-requested`, not cast.
-- Recover by provider IDs first. After a lost response, a unique exact
-  author/head-or-iteration/body/authoritative-time match may reconcile a write.
-  Multiple matches, missing history, or an unprovable operation association
-  block. A matching old review on the same head is not enough.
-- Prefer provider receipts, not visible or supposedly hidden correlation tags.
-  Any marker requires a separately agreed delivery contract.
-- Partial ADO thread delivery resumes only missing writes proven unapplied,
-  preserving verified threads. Ambiguous writes are **read/reconciled**, not
-  retried. Missing results in an incomplete/eventually consistent listing are
-  not proof of no effect. No blind whole-operation retry or exactly-once claim.
-- Changed heads/targets/cycles do not invalidate historical receipts or satisfy
-  new work. Persist the new observation/debt before settling the old transaction;
-  never replace a newer observed head with the old receipt's head during commit.
-- A stronger review-coverage policy does not invalidate durably completed
-  historical receipts or trigger a same-head replay by itself. An in-flight
-  artifact missing the required coverage manifest cannot authorize new
-  publication; reconcile any already-attempted writes before obtaining missing
-  review work, preserving its operation/snapshot and all delivery evidence.
+All state/configuration/scheduler changes hold one monitor lock through workers
+and final persistence. Busy ticks exit without writes. A short-lived PowerShell
+process cannot hold a lock for later calls: retain a live exclusive handle or
+create-new lock file with PID/start time, session and worker ownership. Prove
+the old owner and workers ended before recovery; never steal an uncertain lock.
+Confirm acquisition and release; do not abandon a detached lock-holder.
 
-## Acknowledgment and finalization
+Write complete JSON to a sibling staging file, flush, then atomically replace.
+On Windows use `FileStream.Flush(true)` and `File.Replace` with a concrete
+sibling backup path, not `$null`. First creation moves the flushed file without
+overwrite. Never truncate/delete the destination first. Failed persistence
+stops effects; preserve uncertain staging/backup files for reconciliation.
+Atomic local replacement does not make provider writes atomic.
 
-**GitHub:** only after verified whole delivery, reread current individual
-requests and generation history. Automatic removal by review submission counts
-only when evidence proves the processed generation ended.
+Missing state is fresh setup only if no history/journals exist. Malformed or
+unsupported records block, never reset. Retain history across lifecycle/scope
+changes. Do not replace identities or deactivate a repository with unresolved
+work. Explicit scope narrowing preserves inactive history and confirmed cadence;
+inactive repositories are not polled or treated as active preflight blockers.
+An empty active set disables monitoring.
 
-- If that exact cycle is still current, refresh head/cycle immediately before
-  removing **only the configured target individual**, then read back requests
-  and authoritative generation history. Never remove teams or other users.
-- Do not assume a conditional-generation delete exists. Read/write/read-back
-  is not atomic: re-requests may occur between reads and either review submission
-  (which may auto-clear requests) or explicit removal. Do not attempt removal
-  if the available evidence cannot detect/attribute that race.
-- A newer current cycle stays untouched and unconsumed. Proven supersession of
-  the old cycle can settle only the old acknowledgment; retain the newer cycle
-  as due. Persist head-only changes as watched debt before settling the old
-  cycle; acknowledgment never marks the newer head reviewed.
-- If a newer cycle may have been cleared by this operation, or history cannot
-  establish which cycle disappeared, preserve the unconsumed work and **block
-  for reconciliation**. Do not silently acknowledge it, auto-restore assignments,
-  repost feedback, or claim the safeguards prevented the race.
-- Journal removal attempts in `in-flight.json` before writing. A transport error is not
-  success and not permission to repeat removal. Resolve the exact cycle's
-  disappearance from authoritative evidence; otherwise retain pending
-  acknowledgment. Verify the processed cycle is no longer pending before
-  proceeding. With no processed request, acknowledgment is not applicable;
-  never clear a newly arrived request.
+For scheduling, save a stable key and `registering` before creation. The fixed
+tick prompt names that key/state path and reads saved active scope only.
+Reconcile uncertain registration by exact key before retrying; ambiguous matches
+block. Read back the single schedule/cadence and save its ID before claiming
+it active. One-shot batches leave schedules untouched; null cadence is valid.
 
-**ADO:** preserve reviewer assignments and votes during acknowledgment. Never
-delete/reset them to emulate GitHub removal. After verified delivery, durably
-complete only the exact processed request cycle/iteration/head locally, retaining
-its provenance. A required non-own review verdict is part of delivery, not an
-acknowledgment cleanup. New authoritative cycles/heads remain due; missing
-generation evidence blocks rather than rerunning membership or suppressing it
-forever. Non-request operations have an explicit not-applicable acknowledgment.
+### Existing version-1 state
 
-Retain the delivery journal/payloads until acknowledgment is durable. Archive proof,
-enter `commit-ready`, merge by `operationId`, then delete the in-flight journal.
-If clearing succeeded but saving failed, idempotently finish the commit, never redeliver.
+Migrate under the same lock, with all old workers stopped, before new work:
 
-## Lifecycle and edge cases
+1. Validate and preserve an immutable copy of the old monitor, root
+   `in-flight.json` and referenced artifacts; write a migration manifest with
+   source hashes and old-to-new path mappings.
+2. Copy each `tracked[prKey]` into its PR folder, including all fields, completed
+   receipts/cycles, observed/pending/unfinished work, quarantines and identities.
+   Attach the sole old in-flight operation to its PR. Copy referenced artifacts
+   into that folder, remapping local paths without changing payloads/evidence.
+3. Verify all records, hashes and references, then atomically commit the version-2
+   monitor **last**, preserving configuration and the existing schedule identity.
+   Only after that commit are the old root journal/map retired.
 
-Draft/closed/abandoned/merged PRs stop new writes. Wait for workers to finish and
-reconcile all attempted writes; unknown outcomes still block. Once effects are
-settled, cancel unattempted steps, including acknowledgment that is no longer
-applicable, and archive the operation with its actual result and lifecycle
-reason. Do not record a partial review as complete or update its verified
-baseline. Remove the in-flight record last so another eligible PR can proceed.
+After interruption, resume from the manifest and verify existing destinations
+before reuse. Never overwrite a conflicting record, replay provider writes,
+register a new schedule or discard the legacy copy to complete migration.
+Editing/installing this skill alone performs no migration or monitoring.
 
-Merge ends watching. Other inactive states retain history and pending work;
-on reopening/publication, reconcile archived partial artifacts before starting
-due work, without replaying completed snapshots or blindly creating another
-draft review. Unsafe or unprovable recovery still blocks. Never post, vote or
-remove reviewers after a PR has become ineligible.
-Keep a tracked `unfinishedOperation` artifact reference for published partial
-work. On reopening it remains completion debt even if age/history no longer
-qualify for initial fallback; changed snapshots require a fresh review, not
-replay of stale writes. Clear only debt covered by successful completion, or
-retire it permanently on merge while retaining its audit history.
+## Compare fetched facts with cache
 
-| Case | Required outcome |
+Apply [eligibility and ordering](SKILL.md#eligibility) to a complete finite scan.
+Unknown request presence/generation/time that could affect priority blocks the
+whole selection. Unknown creation/review history blocks fallback only, not an
+otherwise established request, target-authored PR or watched change.
+
+- Derive request cycles/times from authoritative events with source IDs, not
+  membership, votes, polling or PR creation. ADO evidence must distinguish
+  assignment, re-request, reset and iteration changes.
+- Request work keys use `(prKey, targetId, cycle, targetRepoId, targetRef, head)`,
+  retaining ADO iteration evidence. A new same-head cycle is new work;
+  completed cycles suppress unchanged assignments, not later requests.
+- Other work uses `initial` or durable `observedRevision` plus the scoped
+  snapshot. Advance that counter only on observed head/review-target changes.
+  Compare the latest compatible verified baseline, not any historical matching
+  SHA or the counter alone. Pin the actual base SHA separately; base-branch
+  advancement alone is not a trigger, and retargeting requires a fresh baseline.
+- Before sorting, save `pendingWork.key` and first-eligible UTC time: `scanAt`
+  for collection, actual observation time for later changes. Preserve it
+  through restarts/pauses; a changed work key gets a new time. It never replaces
+  authoritative request time or derives from discussion activity.
+- Exclude only exact active quarantine-key matches. A changed head, target,
+  observed revision, applicable iteration or request cycle is not suppressed.
+  Completion clears only work covered by its verified snapshot, never newer debt.
+
+Consider each PR once per tick. Revalidate fallback age/history at admission and
+first publication, including later zero-effect retries. If eligibility lapses,
+retire without posting unless another reason applies. Known partial publication
+remains completion debt; its own review or elapsed age cannot invalidate recovery.
+
+## Active operation
+
+The queue atomically saves the active operation in its PR cache before workers
+start and exclusively owns phase transitions. The delivery worker alone writes
+its journal while active; the queue waits rather than editing that ledger.
+Match operation, snapshot, actor and completion across artifacts; mismatch blocks.
+Before each mutation retain lifecycle/head/request provenance, including proven
+absence and history anchors, and refresh those facts with validated bindings.
+
+| Phase | Required durable gate |
 | --- | --- |
-| Same SHA, new explicit request | New authoritative cycle creates a fresh review; old SHA receipt cannot consume it. |
-| New commits more than seven days later | Watched open PR remains due; the initial age window no longer applies. |
-| Target-authored PR already reviewed | Still initially eligible; thereafter review changed heads/targets or new requests. |
-| Exactly 24h / exactly 7d / over 7d | Incidental eligibility: no / yes / no, using the single UTC scan instant. |
-| Partial threads or lost posting response | Reconcile exact writes; no next PR and no blind duplicate posts. |
-| Crash after posting, before clearing | Verify whole receipt, then acknowledgment only; never redeliver. |
-| Merge/closure before all planned steps finish | Reconcile attempted writes, retire unattempted steps without claiming completion, then release the queue. |
-| New request during completion | Preserve newer cycle; if a mutation may have consumed it, block and reconcile. |
-| Unknown request time or review history | No fabricated ordering/absence; block the applicable selection/work. |
-| Closed/draft, then reopened | Retain history, pause writes, resume due current work; merged stays terminal. |
-| Concurrent scheduler ticks | One lock owner and one in-flight transaction; other ticks exit busy. |
-| Discovery budget expires | Preserve partial evidence, stop owned probes safely and report blocked; do not schedule or infer absent history. |
-| User narrows a blocked mixed-provider setup | Preserve inactive configuration/history, preflight the explicit active set and reuse the confirmed cadence. |
-| Missing sub-review or failed API filter | No completed-review publication or acknowledgment, even if the other passes found nothing. |
+| `reviewing` | Save the full report-only result and coordinator-confirmed completion before `delivering`. |
+| `delivering` | Journal every planned/attempted write; verify all findings, summary and required votes before `acknowledging`. |
+| `acknowledging` | Reconcile only the processed request; never repost the review. |
+| `commit-ready` | Archive verified receipt/acknowledgment; merge completion by operation ID, enroll watching, clear active operation last. |
+| `quarantined` | Apply [PR-local quarantine](#pr-local-quarantine); persist its record/evidence before clearing active state, then continue later candidates. |
+| `blocked` / `paused` | Retain reason, `resumePhase` and evidence; no next PR while provider effects or persistence are unsettled. |
+
+A posted review, verified whole delivery and acknowledged request are separate
+facts. On changed inputs with proven zero effects, save newer work, archive the
+canceled attempt and end this tick. After attempted effects, pause delivery and
+reconcile first; never relabel the old operation ID, snapshot or request cycle.
+
+## Recover delivery
+
+The [runner](review-runner.md#internal-receipt) owns receipt fields and verification.
+Recover by provider IDs first; a lost response may be matched only by unique,
+exact actor/head-or-iteration/body/authoritative-time evidence associated with
+this operation. An older same-head review, incomplete/eventually consistent
+listing or multiple matches cannot prove delivery or non-delivery.
+
+Read/reconcile ambiguous attempts, never retry them blindly. Resume partial ADO
+delivery only for missing writes proven unapplied, retaining verified threads.
+Do not claim exactly-once delivery. Use provider receipts; visible or hidden
+correlation markers require a separately agreed delivery contract.
+
+Save newly observed heads/targets/cycles as debt before settling the old operation;
+an old receipt cannot overwrite newer observations or complete newer work.
+Stronger coverage rules do not invalidate completed history or force same-head
+replay. In-flight work lacking a full manifest cannot authorize new publication:
+reconcile prior attempts before obtaining missing review work, preserving evidence.
+
+## Acknowledge and commit
+
+Only a verified whole receipt with complete review coverage permits acknowledgment.
+For non-request work, record `not-applicable`; never clear a newly arrived request.
+
+**GitHub:** reread current individual requests and authoritative generation
+history. If submission auto-cleared the processed cycle, verify that outcome.
+If it remains current, journal removal before the call, remove only the target
+individual, then verify that exact generation ended. Never remove other users/teams.
+Read/write/read-back is not atomic; do not attempt removal without evidence able
+to detect and attribute re-request races, including submission's automatic removal.
+Transport errors do not authorize retries.
+
+A newer cycle stays pending. Proven supersession can settle the old cycle only;
+head-only changes remain watched debt. If this operation might have cleared a
+newer cycle, or history cannot establish which disappeared, block and retain
+unconsumed work. Do not silently acknowledge, restore assignments or repost.
+
+**ADO:** preserve assignments and votes. After verified delivery, durably complete
+only the exact request cycle/iteration/head locally with provenance. Delivery's
+permitted verdict vote is separate; acknowledgment never deletes or resets it.
+New cycles/heads stay due, and missing generation evidence blocks.
+
+Retain payloads/journals until acknowledgment is durable, then enter `commit-ready`.
+Merge idempotently by operation ID and clear active state last. If acknowledgment
+succeeded but persistence failed, finish that commit without redelivery.
+
+## PR-local quarantine
+
+A review/evidence failure may release the queue only when it is confined to this
+exact PR work item, its snapshot and complete deduplication key are known, every
+owned worker has stopped, and the journal proves **no provider mutation was
+attempted** with `remoteWritesPerformed: 0`. Unknown snapshot/key blocks quarantine.
+Auth, scanning, request-history semantics, global capability and persistence
+failures do not qualify.
+
+Archive its complete work key, snapshot/cycle, reason, evidence and UTC time in
+`quarantinedWork` before clearing active state. Do not mark it completed, advance
+the verified watch baseline, clear pending work or acknowledge the request.
+Continue later candidates and keep recurrence active. Suppress only that exact
+unchanged key until fresh work arrives or the user clears the quarantine.
+
+Diagnostic comments are disabled unless confirmed configuration enables them.
+If enabled, use a separate journal and read back the comment before recording
+`quarantined-with-diagnostic`. It is never review completion or acknowledgment;
+an unknown comment outcome blocks and cannot qualify as zero-write quarantine.
+
+## Lifecycle
+
+Draft, closed, abandoned or merged PRs stop new writes, votes and acknowledgment.
+Stop/wait for workers and reconcile attempts first. Once effects are settled,
+cancel unattempted steps, archive the actual outcome/lifecycle reason and clear
+active state last. A partial review never updates the verified baseline.
+
+Retain `unfinishedOperation` for published partial work across inactivity.
+On reopening/publication, reconcile its artifacts before current due work,
+even if original fallback age/history no longer qualifies. Changed snapshots
+need fresh review, not stale writes; reopening alone never replays completion.
+Clear only successfully covered debt. Merge retires watching/debt permanently
+while preserving audit history.

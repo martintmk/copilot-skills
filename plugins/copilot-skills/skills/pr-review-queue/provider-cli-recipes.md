@@ -1,75 +1,61 @@
 # Focused provider CLI recipes
 
-These are operation candidates, not cached authorization. Validate installed
-help, provider metadata, credentials and repository scope before binding them.
-Use placeholders only after resolving their values; serialize write payloads
-to files. All hosting calls remain MCP or official provider CLI operations with
-`direct_http: false`. Public documentation and installed CLI source can explain
-an operation, but are not permission to call the SDK or raw HTTP directly.
+Load the relevant provider section when binding a CLI route. These are candidates,
+not cached authorization: validate installed help/metadata, credentials and scope.
+Resolve placeholders and serialize write payloads to files. Keep
+`direct_http: false`; reading CLI source/docs does not authorize SDK/raw HTTP.
 
 ## Check tools without installing them
 
-In the PowerShell probe process, disable implicit extension installation:
+Disable implicit Azure extension installation in the probe process:
 
 ```powershell
 $env:AZURE_EXTENSION_USE_DYNAMIC_INSTALL = 'no'
 ```
 
-Check `gh --version`, `az version`, and
-`az extension show --name azure-devops` before extension commands. A missing
-extension must not trigger its interactive installer merely from `--help`.
-After explicit setup approval, `az extension add --name azure-devops` is the
-official installation route. Do not change global defaults or credentials.
+Check `gh --version`, `az version` and `az extension show --name azure-devops`
+before extension commands, including `--help`. Install only after explicit setup
+approval with `az extension add --name azure-devops`; leave global defaults and
+credentials unchanged.
 
 ## GitHub
 
-Use separate identity reads: `gh api --hostname <host> user` for the poster and
-`gh api --hostname <host> users/<target>` for the target. Retain stable IDs and
-provider type, then read `repos/<owner>/<repo>` for its immutable ID/access.
-Review delivery and read-back use the shared delivery contract.
+Resolve the poster with `gh api --hostname <host> user`, the target separately
+with `gh api --hostname <host> users/<target>`, and repository ID/access from
+`repos/<owner>/<repo>`. Retain stable IDs and provider actor type.
 
-For paginated arrays, choose one supported output form:
+For complete paginated arrays, choose one supported form:
 
-- `gh api --paginate --slurp <endpoint>` returns an outer array of pages to
-  parse and flatten locally.
-- `gh api --paginate --jq <filter> <endpoint>` applies the filter to each page;
-  do not treat its concatenated output as one JSON array.
+- `gh api --paginate --slurp <endpoint>`: outer array of pages; flatten locally.
+- `gh api --paginate --jq <filter> <endpoint>`: per-page output, not one JSON array.
 
-GitHub CLI 2.74.2 rejects combining `--slurp` with `--jq` or `--template`.
-Preserve all pages and source fields needed for identity/history even if the
-display is compact. Read the complete PR reviews list, issue timeline and
-current requested reviewers separately: one does not replace the others.
-The requested-reviewer removal API accepts user logins, **not a request-cycle
-condition**; the queue's race and acknowledgment gates remain mandatory.
+CLI 2.74.2 rejects `--slurp` combined with `--jq`/`--template`. Preserve identity
+and history fields on every page. Read reviews, issue timeline and current
+requested reviewers separately. Reviewer removal accepts logins, **not a
+request-cycle condition**; it cannot replace the queue's race safeguards.
 
 ## Azure DevOps identity and repository
 
 Use `az repos show --repository <name-or-id> --organization <org-url>
---project <project>`; `--id` is not its repository selector. Once resolved,
-carry the exact organization URL, project ID and repository ID on every call.
+--project <project>`, not `--id`. Carry exact org URL/project ID/repo ID on calls.
 
-The official creator resolver provides a focused identity path:
+Focused identity candidates:
 
 ```text
 az repos pr list --organization <org-url> --project <project-id> --repository <repo-id> --creator <confirmed-target-upn> --status all --top 1
 az repos pr list --organization <org-url> --project <project-id> --repository <repo-id> --creator me --status all --top 1
 ```
 
-In the Azure DevOps extension 1.0.8, `--creator me` resolves
-`ConnectionData.authenticated_user.id`; a non-GUID UPN resolves through the
-provider identity service. Confirm that behavior for the installed version,
-then retain each result's `createdBy.id`. These are two independent resolutions,
-not an email/display-name comparison. An empty result does **not** resolve an
-identity: use another proven identity operation or report the gap, without
-searching unconfigured repositories.
+Extension 1.0.8 resolves `me` through `ConnectionData.authenticated_user.id` and
+non-GUID UPNs through the identity service. Verify installed behavior and retain
+each result's `createdBy.id`; an empty result does not resolve an identity. Use another
+proven route or report the gap, never search unconfigured repositories.
 
-When MCP exposes a documented `createdByMe` filter, the same exact-repository
-sample plus a full PR read can independently resolve its posting actor. Do not
-assume the MCP and CLI credentials match. All chosen write routes must resolve
-to the same approved actor.
+A documented MCP `createdByMe` filter plus a full PR read can independently
+identify its poster. Do not assume MCP/CLI actors match; all write routes must
+resolve the same approved actor.
 
-For provider classification and descriptor normalization, validate the Graph
-`users` and `storageKeys` resources through `az devops invoke`:
+Validate these `az devops invoke` resources for identity normalization:
 
 | Resource | Route parameters | Required evidence |
 | --- | --- | --- |
@@ -77,41 +63,31 @@ For provider classification and descriptor normalization, validate the Graph
 | `graph / storageKeys` | `subjectDescriptor=<same-descriptor>` | storage-key GUID matching the `IdentityRef.id` |
 | `core / projectCollections` | scoped list, then `collectionId=<returned-id>` | immutable hosting collection ID and its kind |
 
-Do not decode descriptor text and substitute its embedded identifier for the
-storage key. A project-collection ID is not an Accounts account ID, Entra tenant
-ID or identity-domain ID; retain the kind of the scoped identifier actually read.
-An entitlement-service permission denial is not permission to retry that
-protected data through another interface.
+Do not decode descriptors as storage keys or confuse collection IDs with
+Accounts, Entra tenant or identity-domain IDs. Retain the actual identifier kind.
+A permission denial cannot be retried through another interface to bypass access.
 
 ## Azure DevOps invocation and history
 
-Use **both** `--area` and `--resource`, with the repository-scoped route values,
-an explicit API version and `--http-method GET` for probes:
+Supply **both** area/resource, scoped route values, API version and GET for probes:
 
 ```text
 az devops invoke --organization <org-url> --area git --resource pullRequestThreads --route-parameters project=<project-id> repositoryId=<repo-id> pullRequestId=<pr-id> --api-version 7.1 --http-method GET
 ```
 
-Do not use argument-free `az devops invoke` for preflight discovery: it walks
-many service locations and can stall on unrelated services. In extension
-1.0.8, providing an area without a resource can fail with a `NoneType.lower`
-error. Some resource-area and resource names also differ; use installed
-metadata/docs rather than guessing names such as `location` or `profile`.
-The same extension's API-version parser accepts `7.1-preview` but rejects
-`7.1-preview.1`; verify the resource supports the selected version instead of
-blindly rewriting every version string.
+Avoid argument-free discovery, which enumerates unrelated services. Extension
+1.0.8 can fail with `NoneType.lower` for an area without resource; its parser
+accepts `7.1-preview` but rejects `7.1-preview.1`. Verify installed metadata and
+supported versions, not guessed names or blanket version rewriting.
 
-Useful validated Git resource names include `pullRequests`,
-`pullRequestIterations`, `pullRequestThreads`, `items`, and
-`pullRequestStatuses`. Preserve pagination/continuation metadata and select
-CI evidence by the pinned iteration, not the first status in the response.
-For effective permission evidence, discover the Git Repositories security
-namespace and read the exact repository token with
-`az devops security permission show`; never probe by casting a vote.
+Useful Git resources: `pullRequests`, `pullRequestIterations`,
+`pullRequestThreads`, `items`, `pullRequestStatuses`. Preserve actual continuation
+metadata and select CI for the pinned iteration. For permission evidence, resolve
+the Git Repositories security namespace and exact repository token, then use
+`az devops security permission show`; never cast a probe vote.
 
-Raw `pullRequestThreads` retains system properties and identity dictionaries
-that a compact MCP projection may omit. Resolve every identity reference
-through the thread's dictionary, not its displayed comment text:
+Raw `pullRequestThreads` retains properties/identity dictionaries compact MCP
+projections may omit. Resolve identities through dictionaries, not displayed text:
 
 | Observed thread type | Evidence it can establish |
 | --- | --- |
@@ -120,19 +96,13 @@ through the thread's dictionary, not its displayed comment text:
 | `ResetMultipleVotes` | a reset and the identities actually recorded; an example-voter list is not necessarily the complete voter set |
 | `RefUpdate` plus iterations | revision changes, not an individual same-head request generation |
 
-An assignment immediately followed by that user's vote can be self-initiated
-membership, not a pending request. A historical nonzero vote followed by a
-reset proves a prior review despite a current zero vote.
+Assignment followed by that user's vote can be self-initiated membership rather
+than a request. A historical nonzero vote then reset still proves prior review.
 
-**Transport-complete is not history-complete.** The threads List API has no
-`top`/`skip` parameters; do not invent them for the raw route. Account for
-continuation metadata actually returned. Even a fully received list can contain
-deleted threads/comments or omit the event semantics needed for re-requests.
-Current `isFlagged`, membership or vote values do not establish when a same-head
-request began. Prove the generation/time mapping and prior-review absence from
-an authoritative contract/history; otherwise keep those facts `unknown` and
-stop the applicable work under the state machine.
-
-Once this semantic gap is established, do not spend the remaining budget
-enumerating more APIs or claiming the provider can never supply the evidence.
-Report the exact unsupported fact and retain the successful bindings.
+**Transport-complete is not history-complete.** Threads List has no `top`/`skip`;
+honor actual continuation metadata. Deleted/omitted events can leave a fully
+received list semantically incomplete. Current `isFlagged`, membership or vote
+cannot date a same-head request. Without authoritative generation/time or
+prior-review-absence evidence, keep the fact `unknown` and block applicable work.
+Once that gap is established, stop discovery, retain successful bindings and
+report the missing fact, not a claim that the provider can never supply it.

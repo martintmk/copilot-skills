@@ -1,92 +1,71 @@
 # Queue Review Runner
 
-These are invocation-specific requirements for `pr-review-queue`, not changes
-to the shared review skills. Use Review Lens's existing review, evidence,
-isolation and presentation rules; keep queue bookkeeping here.
+Load this when a PR is selected or delivery needs recovery. It adapts existing
+[Review Lens](../review-lens/SKILL.md),
+[worker isolation](../review-lens/worker-isolation.md) and
+[finding](../review-delivery/findings-contract.md) contracts; no callbacks or
+queue-specific changes inside shared skills are needed.
 
-Preserve the [findings contract](../review-delivery/findings-contract.md)
-through report-only output, saved artifacts and posting. Every finding,
-including a design note, retains its attribution, bold title, **Problem** and
-**Why this matters**. Actionable findings also require **Suggested fix**. Clean
-summaries and internal receipts are not finding bodies.
+## Review, then deliver
 
-## Two stages, one PR at a time
+Pass each fresh stage only its needed facts: `operationId`, `prKey`, scoped
+target/poster IDs, pinned target/base/head and ADO iteration, trusted rules and
+execution permission, admission/debt evidence, matching artifacts, validated
+`operation_bindings`, owned paths, and `direct_http: false`. Propagate applicable
+requirements to child workers; use validated equivalent MCP/CLI routes without
+weakening the shared rules.
 
-The queue owns the phase boundary; it does not need callbacks or modifications
-inside shared skills. Supply each stage with the relevant subset of:
+1. Run a fresh **report-only** Review Lens coordinator. Every required specialist
+   runs; no posting or acknowledgment occurs, including in formatting stages.
+   Return the snapshot, anchored findings, coverage/verdict, full
+   `coverageManifest` and coordinator-confirmed `reviewComplete`.
+2. Validate each actual worker record, status, evidence and snapshot against
+   Review Lens's completion gate. Save the versioned `reviewArtifact` in this
+   PR's operation folder before setting `reviewComplete=true` and `delivering`.
+   Partial/blocked work cannot authorize publication of a completed review.
+3. Start one fresh **posting** `review-delivery` worker from that saved result,
+   with the journal/receipt contract below. Wait for its verified receipt;
+   only then may the queue acknowledge the request. No other PR runs between
+   stages, and workers never select work or acknowledge requests themselves.
 
-- operation ID, `prKey`, target/requester and posting identities;
-- exact target/base/head or iteration, trusted rules and execution permission;
-- admission reasons/evidence and any unfinished-operation references;
-- matching factual artifacts, never another review's reasoning;
-- the validated MCP/provider-CLI operation bindings from
-  [preflight](provider-preflight.md), with direct HTTP disabled; and
-- an exclusively owned delivery-journal path and the receipt contract below.
+Each due head/request gets a full fresh review, not a delta skim. Reuse matching
+facts, not stale conclusions or another review's reasoning. Still-applicable
+unresolved findings affect the outcome even when duplicate inline posts are
+omitted. Follow the shared finding format throughout artifacts and delivery.
+Target/requester-owned or poster-owned PRs use GitHub `COMMENT`, no ADO vote.
+No replies, thread resolution, fixes, pushes or feedback-autonomy cascades.
 
-1. Run a fresh `review-lens` coordinator with **explicit report-only mode**.
-   Return the pinned operation/snapshot, complete findings with anchors,
-   coverage/verdict, the full `coverageManifest` required by Review Lens, and
-   coordinator-confirmed `reviewComplete`. Every sub-review must run; the queue
-   does not authorize a risk-selected subset. Any local formatting stage must
-   remain report-only. No posting or request clearing
-   occurs in this stage.
-2. Validate and atomically save that result in the operation's versioned
-   `reviewArtifact`. Validate every required skill's actual worker record and
-   snapshot against Review Lens's completion gate. Only complete,
-   snapshot-matching work allows the queue to persist `reviewComplete=true` and
-   transition to `delivering`.
-3. Start one fresh `review-delivery` worker with the saved result and the
-   intended PR-posting mode. Supply the journal/receipt instructions below.
-   The queue waits for this worker, then validates its receipt before entering
-   acknowledgment. No other PR begins between these stages.
+## Delivery journal
 
-Tell the coordinator to carry these queue-specific requirements into its
-workers' prompts. Use the selected equivalent operation when a shared skill's
-default tool is unavailable; do not weaken its evidence, anchoring or verdict
-rules. Missing MCP support is not a blocker when a validated CLI route covers
-the operation. Workers cannot improvise unvalidated HTTP calls.
+The queue owns cleanup; the active delivery worker exclusively writes its
+per-operation journal. Before any remote write, atomically persist:
 
-Perform a full review of the selected current head. Suppress duplicate inline
-findings, but keep still-applicable unresolved issues in the outcome: no new
-finding is not approval when an existing blocker remains. Do not reply to
-discussion, resolve threads, edit code, or invoke feedback-autonomy.
-On the target's or posting identity's own PR, use COMMENT/no ADO vote.
+```text
+version: 1
+operationId, prKey, reviewedBase, reviewedHead, postingIdentity, reviewComplete
+plannedWrites[]: stable key, kind, intent, anchor/iteration, exact body or
+                immutable payload path, payload hash
+receipts[]: attempt interval, provider ID, outcome, read-back evidence
+```
 
-## Delivery and journaling
+`reviewComplete` comes from the saved coordinator result, never from comments.
+Before first publication revalidate fallback-only age/history; retire if it
+lapsed and no other eligibility applies. After known publication, retain
+completion debt even if age or the operation's own review changes eligibility.
 
-Pass these instructions to the fresh delivery worker alongside the normal
-`review-delivery` input. The queue owns the journal and recovery payloads; the
-delivery worker has exclusive write access while active, not cleanup ownership.
+Persist `attempting` before each bound call, then its outcome/IDs before any
+later write. Unknown outcomes, including server errors without non-delivery
+proof, are ambiguous. Follow [recovery](state-machine.md), not blind retries
+or persisted shell commands. Never store credentials or erase unsettled evidence.
 
-Before the first remote write, atomically save a version-1 JSON journal with
-`version`, `operationId`, `prKey`, `reviewedBase`, `reviewedHead`,
-`postingIdentity`, `reviewComplete`, `plannedWrites` and `receipts`.
-`reviewComplete` comes from the coordinator, not the existence of comments.
-Keep exact bodies or immutable payload artifacts plus hashes, stable write
-keys, kinds, anchors and intent in `plannedWrites`; never store credentials.
+GitHub requires a submitted review at the pinned head, not a draft or issue
+comment. ADO requires properly anchored iteration-bound threads, summary and
+any required verdict vote. Read back every intended finding, summary and vote.
+Acknowledgment remains the queue's separate responsibility.
 
-Before first publication, revalidate fallback-only age/history eligibility.
-If it has lapsed and no other admission reason applies, retire without posting.
-Do not apply that fresh-admission test to recovery after known publication:
-the operation's own feedback must not disqualify its completion.
+## Internal receipt
 
-Persist a write as `attempting` before calling its MCP or CLI operation, then
-record its provider ID/outcome before another write. Unknown attempted outcomes
-are ambiguous, not unsent; a server error alone is not proof of non-delivery.
-Use the journal and provider read-back to recover only missing work. Revalidate
-bindings on recovery instead of replaying stored shell commands.
-
-For GitHub, require a submitted review, not a draft or issue comment. Bind the
-head and verify all intended inline findings and summary. For ADO, pin threads
-to the reviewed iteration using actual diff/schema fields and confirm that
-association on read-back. Use the selected CLI route if it supplies a required
-operation missing from MCP; a missing required vote is not successful delivery.
-Request acknowledgment belongs to the queue, never to this delivery worker.
-
-## Return an internal receipt
-
-Return this metadata to the queue alongside the normal review result, never in
-the public review body:
+Return this to the queue, not in the public body:
 
 ```text
 status: verified | partial | ambiguous | blocked
@@ -97,17 +76,12 @@ voteStatus: not-requested | verified | missing
 ```
 
 `reviewedBase` retains the target repository ID, ref and exact base SHA;
-`reviewedHead` is the exact head SHA. Preserve ADO iteration evidence alongside
-the snapshot. Do not flatten a target change into a matching head alone.
+`reviewedHead` is an exact SHA, with ADO iteration evidence alongside it.
+Accept `verified` only when operation, snapshot and actor match both complete
+coordinator-confirmed coverage and read-back of all required writes.
+Diagnostics, drafts, local reports or prose success never qualify. Use actual
+IDs/times; missing writes/coverage are `partial`, unknown outcomes `ambiguous`,
+and unavailable operations `blocked`. Own-PR votes are `not-requested`.
 
-`verified` requires the complete Review Lens coverage manifest and provider
-read-back of every planned finding, summary and required vote for the exact snapshot.
-Posted diagnostics, incomplete coverage, drafts and local reports do not
-qualify. Return actual IDs/timestamps when known; do not invent them.
-Missing writes/coverage are `partial`, unknown write outcomes `ambiguous`, and
-unavailable operations `blocked`.
-
-Return the receipt unchanged to the queue. Retain the saved review result,
-delivery journals and referenced payloads until the queue records acknowledgment
-or lifecycle retirement durably under the [state machine](state-machine.md).
-Cleanup must not erase unresolved recovery evidence.
+Return the receipt unchanged and retain all artifacts until the queue durably
+records acknowledgment or lifecycle retirement.

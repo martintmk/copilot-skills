@@ -1,20 +1,15 @@
 # Shared Findings Contract
 
-Read this to produce findings; the coordinator dispatches `review-delivery`
-once in a fresh worker for final delivery.
-Area skills add domain-specific evidence within this shape, not new templates.
-`review-public-docs` is exempt: it returns a documentation bundle, not findings.
-
-Use this shape for findings in intermediate area results, filtered API reports,
-standalone reports and posted PR threads. Every finding, including a design
-note, requires a title, **Problem** and **Why this matters**. Actionable
-findings also require **Suggested fix**. Do not defer these fields until delivery.
+Read when producing or validating intermediate area findings, filtered API
+reports, standalone reports or posted threads. This is their sole shared shape;
+specialists add evidence, not templates. Do not defer fields until delivery.
+`review-public-docs` returns a bundle, not findings, and is exempt.
 
 ## Attribution and comment shape
 
-Start each review summary, finding, standalone report and PR thread with the
-exact bold attribution line below, followed by a blank line. Never imply the
-requester wrote the review, or quote, indent or backtick the attribution.
+Start every summary, finding, standalone report and PR thread with an exact bold
+attribution below on its own first line, then a blank line. Never imply requester
+authorship. Reject legacy, quoted, backticked, indented or run-in prefixes.
 
 ```markdown
 **Posted by an AI agent · Non-blocking**
@@ -22,82 +17,69 @@ requester wrote the review, or quote, indent or backtick the attribution.
 **<Concrete defect affecting a named surface>**
 
 **Problem**
-<What the code currently does or fails to guarantee, with decisive evidence
-when useful.>
+<Current defect and decisive evidence.>
 
 **Why this matters**
-<Concrete consumer/runtime impact.>
+<Consumer/runtime impact.>
 
 **Suggested fix**
-<Specific correction and, only when useful, why it fits.>
+<Specific correction.>
 ```
 
-The example's severity is not a default. The allowed first lines are:
+The example's severity is not a default. Allowed first lines:
 
-- `**Posted by an AI agent**` - summaries, clean reports or blocking findings.
-- `**Posted by an AI agent · Non-blocking**` - a real issue that should not gate.
+- `**Posted by an AI agent**` - summaries, clean reports, blocking findings.
+- `**Posted by an AI agent · Non-blocking**` - real issue that should not gate.
 - `**Posted by an AI agent · Nit**` - cosmetic.
-- `**Posted by an AI agent · Design note, no change requested**` - an observation,
-  with a concise bold observation title, **Problem** and **Why this matters**.
-  **Problem** describes the observed constraint or trade-off and supporting
-  evidence without asserting a defect; **Why this matters** explains its
-  significance. Omit only **Suggested fix**; no change is requested.
+- `**Posted by an AI agent · Design note, no change requested**` - observation,
+  not a change request.
 
-After the attribution and blank line, every finding needs a concise bold title
-naming the affected surface, understandable without the code anchor. For
-actionable findings, make it a diagnosis: state what is wrong, not merely the
-topic or proposed fix. Follow the title with **Problem**, **Why this matters**
-and, when requesting a change, **Suggested fix**, in that order. Use these exact
-headings, normally one or two sentences each, including for non-blocking
-findings and nits. The title identifies the issue; **Problem** explains it
-rather than repeating the title. Clean summaries and coverage-only reports
-need attribution, not empty finding sections. Keep questions explicitly
-conditional, not disguised as defects.
+Every finding, **including Design notes**, requires a concise bold title naming
+the surface without relying on its anchor, then **Problem** and
+**Why this matters**, in order. Actionable findings, including nits/non-blocking issues,
+use a diagnosis title (what is wrong, not topic/fix) and end with **Suggested fix**.
+Design notes use an observation title: **Problem** explains the evidenced
+constraint/trade-off without asserting a defect; **Why this matters** explains
+its significance. They omit **only Suggested fix**.
+
+Use those exact headings, normally one or two sentences each. Explain rather
+than repeat the title. Clean summaries/coverage-only reports need attribution,
+not empty finding sections. Keep questions conditional, not disguised defects.
+Markdown prose and fences start at column zero.
 
 ## Evidence, correction and severity
 
-One root cause per finding. Name the symbol and provide an exact `path:line`
-anchor as location metadata; use body line references only for a different
-location. Output-only API reports use exact public paths instead of source
-anchors and must not inspect source to obtain line numbers.
+One root cause per finding. Name the symbol; put exact `path:line` in location
+metadata, using body line references only for another location. Output-only API
+uses exact public paths, never source inspection for line numbers.
 
-Put the current defect or observed constraint and decisive evidence under
-**Problem**, and its consequence under **Why this matters**. For actionable
-findings, put the correction under **Suggested fix**. Preserve domain proof
-requirements and material uncertainty; concision is not permission to weaken the
-investigation. Omit routine `Verified:` paragraphs, investigation narration,
-redundant code restatements, generic advice and speculative API-evolution
-arguments. Explain existing intent or a trade-off only when it changes the
-recommendation or is the subject of a design note.
+Preserve domain proof and uncertainty: evidence/constraint under **Problem**,
+impact under **Why this matters**, actionable correction under **Suggested fix**.
+Omit routine `Verified:`, investigation narration, redundant code, generic advice
+and speculative API-evolution arguments. Explain intent/trade-offs only when
+they affect the recommendation or constitute a Design note.
 
-An exact-range `suggestion` fence belongs under **Suggested fix**. Include a
-complete focused failing test there only when useful as permanent regression
-coverage, and name its destination. Longer necessary proof may be collapsed
-under **Problem**. Keep Markdown and fences at column zero.
+Put exact-range `suggestion` fences under **Suggested fix**; include a complete
+focused failing test only as useful permanent regression coverage, naming its
+destination. Collapse longer necessary proof under **Problem**.
 
-Set severity from concrete impact, not category alone. A substantial public
-contract break is usually blocking; a new conversion inheriting a pre-existing
-quirk may need only a non-blocking documentation correction. Do not elevate a
-preference into a defect or pad the review with tooling-owned formatting issues.
+Severity follows concrete impact: substantial public contract breaks usually
+block; new conversions inheriting old quirks may need only non-blocking doc
+corrections. Preferences are not defects; omit tooling-owned formatting.
 
 ## Area result and final summary
 
-Return actionable findings in impact order, followed by one coverage line:
-what was reviewed and what could not be assessed. Keep uncertainty or design
-questions distinct from proven findings. If nothing is wrong, say so; the
-coverage line is the whole body after attribution. Area workers do not decide
-the combined verdict or deliver separately.
+Return actionable findings in impact order, then one coverage line: reviewed
+scope and unassessed areas. Separate uncertainty/design questions from proven
+findings. For no findings, say so in that line, the whole body after attribution.
+Area workers neither decide the combined verdict nor deliver separately.
 
-The coordinator merges findings about the same root cause and consolidates
-coverage without losing not-applicable/blocked areas or the public surface
-reviewed. Review Lens requires its full dispatched roster; a missing pass
-cannot be hidden by a clean summary.
-Lead the final summary with the outcome, then concise coverage and material
-limitations. Evidence stays with its finding rather than being repeated in a
-summary transcript.
+The coordinator merges root causes and coverage without losing public surface,
+not-applicable or blocked areas; missing roster entries cannot hide behind a
+clean summary. Lead the final summary with outcome, coverage and material
+limitations; leave evidence with its finding.
 
-Final verdicts are `approve`, `approve with non-blocking comments`,
-`changes requested`, or `blocked` when the review could not run (include the
-decisive diagnostic). Never infer approval from an unassessed area. On the
-requester's own PR, act as an investigative assistant and omit `Verdict:`
-framing; delivery handles the corresponding no-vote/COMMENT behavior.
+Verdicts: `approve`, `approve with non-blocking comments`, `changes requested`,
+or `blocked` with the decisive diagnostic when review could not run. Never
+approve unassessed areas. On the requester's own PR, omit `Verdict:` framing;
+delivery applies COMMENT/no-vote behavior.

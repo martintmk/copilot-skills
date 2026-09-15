@@ -60,87 +60,62 @@ the entry-point guide.
 Ask for "review this PR" or "review my changes" to use `review-lens`, or name a
 focused skill to review only that area.
 
-1. **Establish context once.** The coordinator resolves revisions, rules,
-   execution trust, CI and existing discussion using
-   [shared review context](skills/review-lens/review-context.md).
-2. **Run and isolate every sub-review.** Review Lens dispatches all ten review
-   and retrieval skills on every invocation, including small, docs-only and
-   manifest-only changes. Each gets a fresh agent session. The coordinator sends
-   a minimal factual handoff, not its conversation or other reviewers' reasoning.
-   Independent work may run in parallel; dependent work stays sequential but
-   never shares a reviewer context.
-3. **Reuse evidence.** Matching excerpts, targeted results and scoped docs
-   bundles are shared instead of repeating setup, builds or investigation.
-4. **Gate completion, refresh findings, then deliver once.** Every required
-   worker must return snapshot-matching coverage or an evidence-backed
-   not-applicable result; missing/blocked work cannot be called complete. If the
-   PR head advances afterward, the coordinator best-effort re-evaluates only
-   existing findings against the exact descendant delta. It does not claim full
-   coverage of the added commits, and refreshed delivery is comment-only. The
-   coordinator then dispatches one fresh `review-delivery` worker.
+1. **Establish context once:** pin revisions/configuration, trusted rules,
+   execution permission, CI and discussion using
+   [shared context](skills/review-lens/review-context.md).
+2. **Dispatch all ten specialists:** every invocation, even docs-only, uses
+   [fresh workers](skills/review-lens/worker-isolation.md) with minimal factual
+   handoffs. Reuse matching evidence, not reviewer conversations or reasoning.
+   Dependent stages remain sequential and isolated.
+3. **Complete and deliver:** require matching coverage or evidence-backed
+   not-applicability from every worker, then one fresh delivery worker.
+   Missing/blocked work is not completion. A later descendant-head refresh
+   checks existing findings only and forces comment-only delivery, not a claim
+   of full new-head coverage.
 
 The [findings contract](skills/review-delivery/findings-contract.md) owns the
-shared format. Every finding starts with AI attribution and a bold title,
-followed by **Problem** (issue and evidence) and **Why this matters** (impact).
-Actionable findings use a diagnosis title and end with **Suggested fix**
-(correction). This applies to intermediate specialist results, filtered API
-reports, standalone reports and PR threads, including non-blocking findings and
-nits. Design notes still require **Problem**: use an observation title and
-describe the constraint or trade-off with evidence, without asserting a defect.
-Only **Suggested fix** is omitted when no change is requested. Clean summaries
-and docs-only bundles do not need finding sections.
+format at every handoff: AI attribution, bold title, **Problem** (evidence),
+**Why this matters** (impact), and **Suggested fix** for actionable findings.
+Design notes use an observation title and omit only the fix. Clean summaries
+and docs bundles are not findings; specialists need no provider-posting guide.
 
-Specialists read that compact contract without loading provider posting
-mechanics. The
-[worker isolation protocol](skills/review-lens/worker-isolation.md) also covers
-standalone requests, docs retrieval and API filtering. Workers do not
-recursively redispatch themselves or reuse contexts across skills/passes. The
-coordinator routes dependency and documentation checks to specialists rather
-than doing inline review work.
-
-The mandatory `review-public-api` pass stays output-only and report-only: it
-receives no source-based findings, and its docs-based filtering stays isolated.
-`review-public-docs` is also always dispatched and returns a scoped bundle to
-docs consumers, never raw JSON or findings. Matching artifacts need not be
-rebuilt. Directly invoking a focused skill still runs only that workflow.
-
-For genuinely added or removed crates, a revision-bound
-[package-presence record](skills/review-lens/package-comparison.md) supplies a
-logical empty comparison side. Reviewers build only the side that exists and
-still review its complete API/docs, including root-only scaffolds. Missing or
-failed artifacts for an existing crate remain blockers; they are never treated
-as an empty baseline.
+`review-public-api` remains output-only/report-only with mandatory isolated docs
+filtering. `review-public-docs` returns scoped rustdoc bundles, not raw JSON,
+findings or verdicts. Proven added/removed crates use the
+[package-presence contract](skills/review-lens/package-comparison.md): a logical
+empty side and complete real artifacts for the existing side. Failed extraction
+for an existing crate is a blocker, never proof of absence.
 
 ## PR tracking and automation
 
-The radars discover and notify; they do not review PRs or act on feedback.
-Their Teams digests keep workflow-specific `Why review` / `Why respond` fields,
-not the code-review finding format. `teams-self-message` owns message delivery;
-each radar owns its eligibility and notification state.
+The radars discover and notify, not review or act. Each owns its eligibility
+and notification history; `teams-self-message` owns delivery. Digests use
+`Why review` / `Why respond`, not the code-review finding format.
 
-`pr-review-queue` performs the reviews. It asks for monitored GitHub/ADO
-repositories and a cadence, preflights MCP and provider-CLI capabilities, and
-handles explicit requests oldest first. It also covers all published PRs by the target
-author and otherwise-unreviewed PRs older than 24 hours but no older than seven
-days. After a successful review, new commits stay eligible regardless of age.
-GitHub requests are cleared only after verified delivery; ADO assignments and
-votes are retained, with request-cycle completion tracked locally. It does not
-reply to later discussion or apply fixes. Creating the skill does not start a
-schedule. MCP gaps can be filled by provider CLIs; missing combined capability
-blocks execution rather than falling back to direct HTTP. Preflight has a
-bounded discovery budget and [focused CLI recipes](skills/pr-review-queue/provider-cli-recipes.md)
-for identity, pagination and authoritative history. If one provider blocks
-setup, explicitly requesting a narrower scope (for example GitHub only)
-preserves the inactive configuration and the confirmed cadence; inactive
-providers are not monitored. The queue's runner gates posting on Review Lens's
-complete coverage manifest and keeps delivery/acknowledgment journals separate.
+`pr-review-queue` keeps [one folder per PR](skills/pr-review-queue/state-machine.md)
+with observations, pending work, reviews and recovery evidence. Its finite loop
+fetches candidates, compares the cache, then runs full reviews sequentially.
+Explicit requests are oldest-first; initial eligibility also includes all
+published target-authored PRs and otherwise-unreviewed PRs over 24 hours and at
+most seven days old. Completed PRs stay watched for new heads until merge.
 
-`feedback-autonomy` handles eligible automation and actionable instructions
-posted by the same human who created the PR, using provider identity data without
-a manual confirmation step. Other human or uncertain feedback remains gated.
-It finishes independent addressable comments and build problems before batching
-remaining approvals. Major changes and conflicts still need scoped direction,
-which an explicit PR-author instruction can supply.
+Setup requires explicit repositories/cadence and bounded MCP/official-CLI
+preflight; missing combined capability blocks rather than enabling raw HTTP.
+Installing the skill starts nothing. Explicit scope narrowing retains inactive
+history/cadence without polling those repositories. Existing version-1 state
+migrates without discarding receipts, requests or unfinished work.
+
+Only verified complete review delivery permits request acknowledgment: GitHub
+clears the processed generation only; ADO retains assignments/votes and records
+completion locally. Ambiguous writes block recovery, while proven zero-write
+PR-local failures can be quarantined without blocking later candidates.
+The queue does not reply to discussion or apply fixes.
+
+`feedback-autonomy` independently gates actions by authorship and impact.
+Eligible automation and stable-identity-matched PR-author instructions need no
+manual identity confirmation. Other human/uncertain feedback, major changes
+and conflicts need scoped authorization. Finish independent addressable work
+before batching remaining approvals.
 
 ## Layout and maintenance
 
@@ -155,11 +130,10 @@ plugins/copilot-skills/
   skills/<name>/*.md                  Shared rules or on-demand reference
 ```
 
-For a new skill, add YAML frontmatter with `name` and a precise `description`,
-including when not to use it. Reuse shared rules rather than copying them;
-keep domain-specific evidence and exceptions with their owning skill. Put
-reference-only detail in a linked procedure when it would otherwise burden
-every invocation. Add the skill to this guide.
+New skills need `name`/precise trigger and exclusion `description` frontmatter
+and a row above. Give each rule one owner; link shared contracts and load
+reference detail only at its relevant step. Keep specialist evidence/exception
+requirements, and measure total text including references, not entry points alone.
 
 When releasing, bump the plugin version in its manifest and both marketplace
 entries together.
