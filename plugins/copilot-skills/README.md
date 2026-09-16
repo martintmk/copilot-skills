@@ -74,6 +74,13 @@ focused skill to review only that area.
    checks existing findings only and forces comment-only delivery, not a claim
    of full new-head coverage.
 
+Complete current-head reviews automatically approve when clean or containing
+only nits, retaining any nit comments (GitHub approval; ADO approved or approved
+with suggestions). No extra confirmation is needed, including in the review
+queue. Unresolved findings still count even when duplicate comments are omitted.
+Report-only reviews never post; requester-owned/poster-owned PRs and descendant
+finding refreshes remain comment-only/no vote. Incomplete coverage cannot approve.
+
 The [findings contract](skills/review-delivery/findings-contract.md) owns the
 format at every handoff: AI attribution, bold title, **Problem** (evidence),
 **Why this matters** (impact), and **Suggested fix** for actionable findings.

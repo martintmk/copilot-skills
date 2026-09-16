@@ -80,6 +80,15 @@ clean summary. Lead the final summary with outcome, coverage and material
 limitations; leave evidence with its finding.
 
 Verdicts: `approve`, `approve with non-blocking comments`, `changes requested`,
-or `blocked` with the decisive diagnostic when review could not run. Never
-approve unassessed areas. On the requester's own PR, omit `Verdict:` framing;
-delivery applies COMMENT/no-vote behavior.
+or `blocked` with the decisive diagnostic when review could not run. For a
+complete review, automatically select `approve` when there are no findings and
+`approve with non-blocking comments` when the only actionable findings are
+cosmetic `Nit`s. Design notes requesting no change do not prevent approval.
+Do not ask for an additional approval confirmation.
+
+Decide from the complete merged result, including still-applicable unresolved
+findings whose duplicate posts were omitted, not the number of comments created.
+Never relabel substantive issues as nits to qualify or approve unassessed areas.
+Delivery's report-only, ownership and finding-refresh restrictions take
+precedence. On requester-owned or authenticated-poster-owned PRs, omit `Verdict:`
+framing; delivery applies COMMENT/no-vote behavior.

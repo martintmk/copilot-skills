@@ -32,6 +32,9 @@ Each due head/request gets a full fresh review, not a delta skim. Reuse matching
 facts, not stale conclusions or another review's reasoning. Still-applicable
 unresolved findings affect the outcome even when duplicate inline posts are
 omitted. Follow the shared finding format throughout artifacts and delivery.
+Apply delivery's automatic approval policy to complete current-head clean or
+nit-only reviews; report-only preparation does not suppress the required approval
+in the authorized posting stage. Do not ask for per-PR approval confirmation.
 Target/requester-owned or poster-owned PRs use GitHub `COMMENT`, no ADO vote.
 No replies, thread resolution, fixes, pushes or feedback-autonomy cascades.
 
@@ -58,10 +61,11 @@ later write. Unknown outcomes, including server errors without non-delivery
 proof, are ambiguous. Follow [recovery](state-machine.md), not blind retries
 or persisted shell commands. Never store credentials or erase unsettled evidence.
 
-GitHub requires a submitted review at the pinned head, not a draft or issue
-comment. ADO requires properly anchored iteration-bound threads, summary and
-any required verdict vote. Read back every intended finding, summary and vote.
-Acknowledgment remains the queue's separate responsibility.
+GitHub requires a submitted review at the pinned head with the intended event
+(including `APPROVED` for an `APPROVE` event), not a draft, issue comment or
+COMMENT substituted for approval. ADO requires properly anchored iteration-bound
+threads, summary and any required verdict vote. Read back every intended finding,
+summary and vote. Acknowledgment remains the queue's separate responsibility.
 
 ## Internal receipt
 

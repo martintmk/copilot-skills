@@ -39,6 +39,28 @@ not approval, changes requested or completed current-head coverage.
    authenticated-poster-own PRs also require COMMENT/no vote and no `Verdict:`
    framing, never self-approval or `REQUEST_CHANGES`.
 
+## Automatic approval
+
+For authorized posting of a complete, current-head review, apply the
+[verdict rules](findings-contract.md#area-result-and-final-summary): clean and
+nit-only reviews must approve automatically, not merely recommend approval in
+the summary or default to COMMENT. No additional confirmation is needed.
+Evaluate all merged findings, including unresolved duplicates not posted again;
+zero new inline comments alone is not evidence of a clean review.
+
+Map the supported combined verdict to the provider action:
+
+| Verdict | GitHub event | Azure DevOps vote |
+| --- | --- | --- |
+| `approve` | `APPROVE` | Approved |
+| `approve with non-blocking comments` | `APPROVE`, retaining the comments | Approved with suggestions |
+| `changes requested` | `REQUEST_CHANGES` | Waiting for author |
+| `blocked` | No completed review publication | No vote |
+
+Report-only mode never writes. Ownership and finding-refresh restrictions above
+override this mapping; missing or blocked required coverage never authorizes
+approval. A summary's approval wording is not a substitute for a provider vote.
+
 ## GitHub
 
 Post one review:
@@ -63,7 +85,9 @@ valid refresh's current head. Comments: `{ path, line, side, body }`, adding
 - Immediately before posting, compare fetched `headRefOid` with
   `review.json.commit_id`; movement returns to the coordinator for exact-delta
   refresh, never silently posts stale evidence.
-- Read back review/comments to confirm anchors and serialized body structure.
+- Read back review/comments to confirm the submitted event, pinned commit,
+  anchors and serialized body structure. An expected `APPROVE` must read back
+  as `APPROVED`; COMMENT is not successful approval delivery.
   Correct rejected `422` payloads; `403`/`429` are permission/rate limits, not
   anchor failures. Reconcile ambiguous timeouts before retrying to avoid duplicates.
 
@@ -82,7 +106,8 @@ use actual operations/organization fields, never another deployment's assumed to
   and iteration association. Reconcile ambiguous responses; recover only
   provably unapplied writes, never repost the whole review.
 - Vote only after intended threads are confirmed and when permitted above.
-  Map to supported approved, approved-with-suggestions or waiting-for-author.
+  Apply the verdict mapping above using the provider's supported vote values,
+  then read back the posting actor's vote to confirm the intended value.
   Unavailable voting must be disclosed; a missing required vote is incomplete
   delivery, never invented success.
 

@@ -33,7 +33,10 @@ required roster.
    evidence, not repeated whole passes. Read the
    [findings contract](../review-delivery/findings-contract.md) when merging;
    preserve it in intermediate and final output. Consolidate public-surface
-   coverage and limitations, then enforce the completion gate below.
+   coverage and limitations, then enforce the completion gate below. Apply the
+   contract's automatic clean/nit-only approval rule to the complete merged
+   result, not just newly posted comments; retain delivery's mode, ownership
+   and finding-refresh restrictions.
 4. **Refresh target/head immediately before delivery.** A completed review stays
    pinned to its snapshot unless the permitted descendant refresh below applies.
    Other movement requires a fresh review or blocked result, not stale publication.
