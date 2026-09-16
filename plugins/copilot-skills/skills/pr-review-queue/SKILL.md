@@ -1,10 +1,11 @@
 ---
 name: pr-review-queue
 description: >
-  Review eligible GitHub/ADO PRs sequentially at a confirmed cadence and watch
-  new commits until merge. Use for "monitor and review PRs", "review my PR queue"
-  or recurring reviews, not discovery digests or feedback/fix loops. Installing
-  or editing this skill does not start monitoring.
+  Review eligible GitHub/ADO PRs sequentially at a confirmed cadence. Watch
+  target-authored PRs until merge and other PRs only through their first seven
+  days. Use for "monitor and review PRs", "review my PR queue" or recurring
+  reviews, not discovery digests or feedback/fix loops. Installing or editing
+  this skill does not start monitoring.
 ---
 
 # PR Review Queue
@@ -42,7 +43,7 @@ Only one PR is in flight. The queue owns selection, progress and acknowledgment;
    in storage and recovery, without consuming its request.
 3. Capture one UTC `scanAt`. Fully enumerate open PRs and required history in
    active repositories, with no collection age cutoff. Refresh cached PRs
-   omitted from the list to distinguish drafts, closure, merge and reopening.
+   omitted from the list to distinguish drafts, closure and merge.
    Persist each candidate's identity, observations and eligibility evidence
    in its own folder. Incomplete required reads are not an empty queue.
 4. Compare candidates with their cached completion, pending work and quarantine.
@@ -65,24 +66,31 @@ Only one PR is in flight. The queue owns selection, progress and acknowledgment;
 
 ## Eligibility
 
-Only open, published, non-draft PRs in active repositories can be reviewed.
-Initial eligibility is the OR of:
+Only open PRs in active repositories can be reviewed. Non-target-authored PRs
+must be published, non-draft and no older than seven days. Target-authored PRs
+are eligible immediately after creation, including while draft. Initial
+eligibility is the OR of:
 
 | Reason | Requirement |
 | --- | --- |
-| Requested | The target is individually requested, not merely mentioned or assigned through a team/group. |
-| Target-authored | Authored by the scoped target, regardless of age or prior reviews. |
+| Requested | The target is individually requested, not merely mentioned or assigned through a team/group, and the PR is no older than `7 * 24h`. |
+| Target-authored | Authored by the scoped target, regardless of age, draft state or prior reviews. |
 | Age fallback | Another author's PR with `24h < scanAt - createdAt <= 7 * 24h` and complete history proving zero submitted reviews by anyone. |
 
-Age and prior-review restrictions apply only to fallback. After durable initial
-completion, watch head/review-target changes until merge regardless of age or
-later reviews. A new authoritative request cycle is fresh work even at the same
-head; persistent ADO membership is not. Unfinished published work remains debt.
-Overlapping reasons select one operation; completed unchanged work is not due.
-Base-branch advancement or discussion alone is not a new-head trigger.
+The prior-review restriction applies only to fallback. The seven-day maximum
+applies to every non-target-authored reason, including requests and watched
+changes. After durable initial completion, watch target-authored PRs until merge;
+watch other PRs only while `scanAt - createdAt <= 7 * 24h`. A new authoritative
+request cycle is fresh work at the same head only while the PR remains eligible;
+persistent ADO membership is not. Unfinished work remains debt only within the
+same eligibility window. Overlapping reasons select one operation; completed
+unchanged work is not due. Base-branch advancement or discussion alone is not a
+new-head trigger.
 
-Pause drafts and closed/abandoned PRs without discarding history. Reopened,
-nonmerged PRs resume due work, not already completed snapshots. Merge is terminal.
+Pause drafts only for non-target-authored PRs without discarding history.
+Closure, abandonment and merge are terminal: retire watching and debt after
+settling any attempted provider effects, preserve audit history, and do not
+resume monitoring if the PR later reopens.
 
 ## Boundaries
 

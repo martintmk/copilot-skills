@@ -90,8 +90,9 @@ Editing/installing this skill alone performs no migration or monitoring.
 
 Apply [eligibility and ordering](SKILL.md#eligibility) to a complete finite scan.
 Unknown request presence/generation/time that could affect priority blocks the
-whole selection. Unknown creation/review history blocks fallback only, not an
-otherwise established request, target-authored PR or watched change.
+whole selection. Unknown creation time blocks every non-target-authored reason.
+Unknown review history blocks fallback only, not an otherwise established
+in-window request, target-authored PR or in-window watched change.
 
 - Derive request cycles/times from authoritative events with source IDs, not
   membership, votes, polling or PR creation. ADO evidence must distinguish
@@ -112,10 +113,12 @@ otherwise established request, target-authored PR or watched change.
   observed revision, applicable iteration or request cycle is not suppressed.
   Completion clears only work covered by its verified snapshot, never newer debt.
 
-Consider each PR once per tick. Revalidate fallback age/history at admission and
-first publication, including later zero-effect retries. If eligibility lapses,
-retire without posting unless another reason applies. Known partial publication
-remains completion debt; its own review or elapsed age cannot invalidate recovery.
+Consider each PR once per tick. Revalidate age at admission and before every
+non-target-authored publication; revalidate fallback history as well, including
+later zero-effect retries. If eligibility lapses, retire without posting unless
+the target-authored reason applies. Attempted or unknown provider effects still
+require recovery, but elapsed age prevents any new write or retry after their
+actual outcome is settled.
 
 ## Active operation
 
@@ -131,7 +134,7 @@ absence and history anchors, and refresh those facts with validated bindings.
 | `reviewing` | Save the full report-only result and coordinator-confirmed completion before `delivering`. |
 | `delivering` | Journal every planned/attempted write; verify all findings, summary and required votes before `acknowledging`. |
 | `acknowledging` | Reconcile only the processed request; never repost the review. |
-| `commit-ready` | Archive verified receipt/acknowledgment; merge completion by operation ID, enroll watching, clear active operation last. |
+| `commit-ready` | Archive verified receipt/acknowledgment; merge completion by operation ID, enroll watching only for the applicable lifecycle/age window, clear active operation last. |
 | `quarantined` | Apply [PR-local quarantine](#pr-local-quarantine); persist its record/evidence before clearing active state, then continue later candidates. |
 | `blocked` / `paused` | Retain reason, `resumePhase` and evidence; no next PR while provider effects or persistence are unsettled. |
 
@@ -208,14 +211,15 @@ an unknown comment outcome blocks and cannot qualify as zero-write quarantine.
 
 ## Lifecycle
 
-Draft, closed, abandoned or merged PRs stop new writes, votes and acknowledgment.
-Stop/wait for workers and reconcile attempts first. Once effects are settled,
-cancel unattempted steps, archive the actual outcome/lifecycle reason and clear
-active state last. A partial review never updates the verified baseline.
+Non-target-authored drafts stop new writes, votes and acknowledgment;
+target-authored drafts remain eligible. Closed, abandoned or merged PRs stop all
+new effects. Stop/wait for workers and reconcile attempted effects first. Once
+effects are settled, cancel unattempted steps, archive the actual
+outcome/lifecycle reason, retire watching and debt, and clear active state last.
+A partial review never updates the verified baseline.
 
-Retain `unfinishedOperation` for published partial work across inactivity.
-On reopening/publication, reconcile its artifacts before current due work,
-even if original fallback age/history no longer qualifies. Changed snapshots
-need fresh review, not stale writes; reopening alone never replays completion.
-Clear only successfully covered debt. Merge retires watching/debt permanently
-while preserving audit history.
+Retain `unfinishedOperation` only while a paused PR remains eligible. Publication
+of a non-target-authored draft resumes its in-window work; changed snapshots
+need fresh review, not stale writes. Closure, abandonment and merge permanently
+retire watching/debt while preserving audit history. Reopening does not
+reenroll the PR or resume completed, pending or unfinished work.

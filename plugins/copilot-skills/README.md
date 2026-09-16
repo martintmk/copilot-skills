@@ -49,7 +49,7 @@ the entry-point guide.
 | [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit with isolated docs-based filtering. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A scoped, authoritative public-docs bundle from rustdoc JSON; no review verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
-| [`pr-review-queue`](skills/pr-review-queue/SKILL.md) | Sequential reviews of requested, self-authored and overlooked PRs, then reviews of new commits until merge. |
+| [`pr-review-queue`](skills/pr-review-queue/SKILL.md) | Sequential reviews of requested, self-authored and overlooked PRs, with age-bounded monitoring except for target-authored PRs. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
@@ -104,8 +104,10 @@ and notification history; `teams-self-message` owns delivery. Digests use
 with observations, pending work, reviews and recovery evidence. Its finite loop
 fetches candidates, compares the cache, then runs full reviews sequentially.
 Explicit requests are oldest-first; initial eligibility also includes all
-published target-authored PRs and otherwise-unreviewed PRs over 24 hours and at
-most seven days old. Completed PRs stay watched for new heads until merge.
+target-authored PRs, including drafts, and otherwise-unreviewed published PRs
+over 24 hours and at most seven days old. Requests and watched changes on other
+authors' PRs also stop after seven days. Target-authored PRs stay watched until
+merge; closed or abandoned PRs are retired and do not resume if reopened.
 
 Setup requires explicit repositories/cadence and bounded MCP/official-CLI
 preflight; missing combined capability blocks rather than enabling raw HTTP.

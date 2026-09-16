@@ -52,9 +52,10 @@ receipts[]: attempt interval, provider ID, outcome, read-back evidence
 ```
 
 `reviewComplete` comes from the saved coordinator result, never from comments.
-Before first publication revalidate fallback-only age/history; retire if it
-lapsed and no other eligibility applies. After known publication, retain
-completion debt even if age or the operation's own review changes eligibility.
+Before every non-target-authored publication revalidate the seven-day maximum;
+for fallback work, revalidate review history too. Retire if eligibility lapsed
+and the target-authored reason does not apply. After known publication,
+reconcile the actual outcome, but make no further writes after age expiry.
 
 Persist `attempting` before each bound call, then its outcome/IDs before any
 later write. Unknown outcomes, including server errors without non-delivery
