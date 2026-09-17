@@ -145,15 +145,28 @@ require trusted code or isolated credential-free execution. Generate once per
 required revision into distinct external targets:
 
 ```text
-cargo +nightly rustdoc --locked --lib <feature-args> --target-dir <temp-target-dir> <scope-args> -- -Z unstable-options --output-format json
+<command-local RUSTC_BOOTSTRAP=1 when needed> cargo +<toolchain> rustdoc --locked --lib <feature-args> --target-dir <temp-target-dir> <scope-args> -- -Z unstable-options --output-format json
 ```
 
 - `<feature-args>` is `--all-features` unless explicitly replaced by exact
   `--features`/`--no-default-features`.
 - `<scope-args>` carries selected `-p <package>`, `--manifest-path`, `--target`.
-  Preserve caller nightly-capable toolchains; never broaden scope for success.
+- Preserve the caller-selected compiler, including stable, MSRV and custom
+  Microsoft toolchains. Probe it through the Rust tool multiplexers:
+  `rustc +<toolchain> --version` and `cargo +<toolchain> --version`. Do not use
+  `rustup run` or absence from `rustup toolchain list` as proof that a custom
+  toolchain is unavailable; MSRustup and similar multiplexers resolve `+toolchain`
+  without registering the channel in rustup.
+- Set `RUSTC_BOOTSTRAP=1` only for the rustdoc subprocess that requests unstable
+  JSON output. Never persist or export it for the worker, repository, user or
+  machine. On PowerShell, save and restore any pre-existing value in `finally`;
+  on POSIX shells, use the command-local prefix shown above. This enables the
+  rustdoc output format without substituting a different compiler or changing
+  normal stable builds.
+- Preserve caller nightly-capable toolchains without the bootstrap when they
+  already accept `-Z unstable-options`; never broaden scope for success.
 - Never use `--document-private-items`. Reuse tool checks; install only missing
-  required nightly:
+  required nightly when the caller selected nightly:
   `rustup toolchain install nightly --profile minimal`.
 - `--locked` preserves lockfiles. Report absent/outdated locks, never update
   reviewed inputs; external targets alone do not protect them.
