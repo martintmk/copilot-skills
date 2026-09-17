@@ -18,11 +18,13 @@ weakening the shared rules.
 1. Run a fresh **report-only** Review Lens coordinator. Every required specialist
    runs; no posting or acknowledgment occurs, including in formatting stages.
    Return the snapshot, anchored findings, coverage/verdict, full
-   `coverageManifest` and coordinator-confirmed `reviewComplete`.
+   `coverageManifest` and coordinator-confirmed `reviewComplete` and
+   `reviewPublishable`.
 2. Validate each actual worker record, status, evidence and snapshot against
-   Review Lens's completion gate. Save the versioned `reviewArtifact` in this
-   PR's operation folder before setting `reviewComplete=true` and `delivering`.
-   Partial/blocked work cannot authorize publication of a completed review.
+   Review Lens's completion and publication gates. Save the versioned
+   `reviewArtifact` in this PR's operation folder before entering `delivering`.
+   A publishable incomplete result is delivered as COMMENT/no vote with the
+   required blocked-area warning; it never sets `reviewComplete=true`.
 3. Start one fresh **posting** `review-delivery` worker from that saved result,
    with the journal/receipt contract below. Wait for its verified receipt;
    only then may the queue acknowledge the request. No other PR runs between
@@ -45,13 +47,15 @@ per-operation journal. Before any remote write, atomically persist:
 
 ```text
 version: 1
-operationId, prKey, reviewedBase, reviewedHead, postingIdentity, reviewComplete
+operationId, prKey, reviewedBase, reviewedHead, postingIdentity
+reviewComplete, reviewPublishable
 plannedWrites[]: stable key, kind, intent, anchor/iteration, exact body or
                 immutable payload path, payload hash
 receipts[]: attempt interval, provider ID, outcome, read-back evidence
 ```
 
-`reviewComplete` comes from the saved coordinator result, never from comments.
+`reviewComplete` and `reviewPublishable` come from the saved coordinator result,
+never from comments. Incomplete publication must preserve `reviewComplete=false`.
 Before every non-target-authored publication revalidate the seven-day maximum;
 for fallback work, revalidate review history too. Retire if eligibility lapsed
 and the target-authored reason does not apply. After known publication,
@@ -82,8 +86,11 @@ voteStatus: not-requested | verified | missing
 
 `reviewedBase` retains the target repository ID, ref and exact base SHA;
 `reviewedHead` is an exact SHA, with ADO iteration evidence alongside it.
-Accept `verified` only when operation, snapshot and actor match both complete
-coordinator-confirmed coverage and read-back of all required writes.
+Accept `verified` only when operation, snapshot and actor match either
+coordinator-confirmed complete coverage or a coordinator-confirmed publishable
+incomplete review, and all required writes are confirmed by read-back. For
+incomplete reviews, verify the COMMENT/no-vote action and the blocked-area
+warning as required writes.
 Diagnostics, drafts, local reports or prose success never qualify. Use actual
 IDs/times; missing writes/coverage are `partial`, unknown outcomes `ambiguous`,
 and unavailable operations `blocked`. Own-PR votes are `not-requested`.

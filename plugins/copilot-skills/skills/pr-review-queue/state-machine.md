@@ -25,8 +25,8 @@ Keep owned artifact paths inside the state directory and never store credentials
 | Record | Retained data |
 | --- | --- |
 | Monitor | Confirmed active/inactive repositories, scoped target IDs, cadence, immutable configuration history, schedule key/ID/status and first-scan policy. |
-| PR cache | `version: 2`, `prKey`, URL, scoped actors, lifecycle, eligibility/request provenance, target/head/iteration observations, `observedRevision`, `pendingWork`, `watch`, `lastVerifiedOperationId`, `completed`, `unfinishedOperation`, `quarantinedWork`, `activeOperation`. |
-| Active operation | ID, complete work key, trigger/cycle/time/evidence, exact target repository/ref/base SHA, head/ADO iteration, posting identity, phase/`resumePhase`, `reviewComplete`, artifact/journal paths, receipt and acknowledgment status/attempt/evidence. |
+| PR cache | `version: 2`, `prKey`, URL, scoped actors, lifecycle, eligibility/request provenance, target/head/iteration observations, `observedRevision`, `pendingWork`, `watch`, `lastVerifiedOperationId`, `completed`, `incompleteCoverage`, `unfinishedOperation`, `quarantinedWork`, `activeOperation`. |
+| Active operation | ID, complete work key, trigger/cycle/time/evidence, exact target repository/ref/base SHA, head/ADO iteration, posting identity, phase/`resumePhase`, `reviewComplete`, `reviewPublishable`, artifact/journal paths, receipt and acknowledgment status/attempt/evidence. |
 | Operation folder | Pinned metadata/diff/CI/rules, matching factual artifacts, versioned review/coverage result, exact payloads/hashes, delivery journal, whole receipt, request/acknowledgment proofs and actual outcome. Write artifacts before referencing them. |
 
 Create/update the candidate's folder before comparing it with completed or
@@ -112,6 +112,10 @@ in-window request, target-authored PR or in-window watched change.
 - Exclude only exact active quarantine-key matches. A changed head, target,
   observed revision, applicable iteration or request cycle is not suppressed.
   Completion clears only work covered by its verified snapshot, never newer debt.
+- Suppress duplicate delivery for an exact `incompleteCoverage` work key. Make it
+  due again only when its head/request cycle changes, normal preflight observes
+  a changed blocker fingerprint, or an explicit retry clears that record. This
+  record is delivered coverage debt, not completion or a verified baseline.
 
 Consider each PR once per tick. Revalidate age at admission and before every
 non-target-authored publication; revalidate fallback history as well, including
@@ -125,16 +129,17 @@ actual outcome is settled.
 The queue atomically saves the active operation in its PR cache before workers
 start and exclusively owns phase transitions. The delivery worker alone writes
 its journal while active; the queue waits rather than editing that ledger.
-Match operation, snapshot, actor and completion across artifacts; mismatch blocks.
+Match operation, snapshot, actor and completion/publication status across
+artifacts; mismatch blocks.
 Before each mutation retain lifecycle/head/request provenance, including proven
 absence and history anchors, and refresh those facts with validated bindings.
 
 | Phase | Required durable gate |
 | --- | --- |
-| `reviewing` | Save the full report-only result and coordinator-confirmed completion before `delivering`. |
+| `reviewing` | Save the full report-only result and coordinator-confirmed `reviewComplete` or `reviewPublishable` before `delivering`; revalidate snapshot currency separately. |
 | `delivering` | Journal every planned/attempted write; verify all findings, summary and required votes before `acknowledging`. |
 | `acknowledging` | Reconcile only the processed request; never repost the review. |
-| `commit-ready` | Archive verified receipt/acknowledgment; merge completion by operation ID, enroll watching only for the applicable lifecycle/age window, clear active operation last. |
+| `commit-ready` | Archive verified receipt/acknowledgment; merge either completion or incomplete-coverage debt by operation ID, enroll watching only for the applicable lifecycle/age window, clear active operation last. |
 | `quarantined` | Apply [PR-local quarantine](#pr-local-quarantine); persist its record/evidence before clearing active state, then continue later candidates. |
 | `blocked` / `paused` | Retain reason, `resumePhase` and evidence; no next PR while provider effects or persistence are unsettled. |
 
@@ -164,7 +169,10 @@ reconcile prior attempts before obtaining missing review work, preserving eviden
 
 ## Acknowledge and commit
 
-Only a verified whole receipt with complete review coverage permits acknowledgment.
+Only a verified whole receipt permits acknowledgment: it must carry either
+coordinator-confirmed complete coverage or a coordinator-confirmed publishable
+incomplete review whose COMMENT/no-vote action and blocked-area warning were
+confirmed by read-back.
 For non-request work, record `not-applicable`; never clear a newly arrived request.
 
 **GitHub:** reread current individual requests and authoritative generation
@@ -186,8 +194,13 @@ permitted verdict vote is separate; acknowledgment never deletes or resets it.
 New cycles/heads stay due, and missing generation evidence blocks.
 
 Retain payloads/journals until acknowledgment is durable, then enter `commit-ready`.
-Merge idempotently by operation ID and clear active state last. If acknowledgment
-succeeded but persistence failed, finish that commit without redelivery.
+Merge idempotently by operation ID and clear active state last. Complete reviews
+advance `completed` and the compatible verified baseline. Publishable incomplete
+reviews instead save `incompleteCoverage` with the exact work key, snapshot,
+blocked areas, blocker fingerprint and receipt; clear the processed
+`pendingWork`, but do not mark it completed or advance the verified baseline.
+If acknowledgment succeeded but persistence failed, finish that commit without
+redelivery.
 
 ## PR-local quarantine
 
@@ -216,7 +229,9 @@ target-authored drafts remain eligible. Closed, abandoned or merged PRs stop all
 new effects. Stop/wait for workers and reconcile attempted effects first. Once
 effects are settled, cancel unattempted steps, archive the actual
 outcome/lifecycle reason, retire watching and debt, and clear active state last.
-A partial review never updates the verified baseline.
+A publishable incomplete review never updates the verified baseline. Its exact
+work key remains suppressed by `incompleteCoverage` until the head/request cycle
+or blocker fingerprint changes, or an explicit retry clears that debt.
 
 Retain `unfinishedOperation` only while a paused PR remains eligible. Publication
 of a non-target-authored draft resumes its in-window work; changed snapshots

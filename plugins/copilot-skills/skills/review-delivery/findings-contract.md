@@ -77,7 +77,24 @@ Area workers neither decide the combined verdict nor deliver separately.
 The coordinator merges root causes and coverage without losing public surface,
 not-applicable or blocked areas; missing roster entries cannot hide behind a
 clean summary. Lead the final summary with outcome, coverage and material
-limitations; leave evidence with its finding.
+limitations; leave evidence with its finding. When Review Lens coverage is
+incomplete but publishable, put a bold warning immediately after attribution,
+list each blocked area and concise diagnostic, and explicitly state that no
+combined verdict is issued. Findings from completed areas remain valid and may
+be published; never imply that blocked areas were reviewed or found clean.
+
+Use this summary shape:
+
+```markdown
+**Posted by an AI agent**
+
+**Warning: Incomplete review coverage**
+
+Some review areas could not be executed:
+- `<area>` (`<skill>`): <concise diagnostic>
+
+No combined verdict is issued. Findings below come only from completed areas.
+```
 
 Verdicts: `approve`, `approve with non-blocking comments`, `changes requested`,
 or `blocked` with the decisive diagnostic when review could not run. For a
@@ -85,6 +102,11 @@ complete review, automatically select `approve` when there are no findings and
 `approve with non-blocking comments` when the only actionable findings are
 cosmetic `Nit`s. Design notes requesting no change do not prevent approval.
 Do not ask for an additional approval confirmation.
+
+For a publishable incomplete Review Lens result, use `blocked` internally but
+omit public `Verdict:` framing and publish as COMMENT/no vote. The warning and
+blocked-area list replace a verdict; do not suppress supported findings merely
+because another area was blocked.
 
 Decide from the complete merged result, including still-applicable unresolved
 findings whose duplicate posts were omitted, not the number of comments created.

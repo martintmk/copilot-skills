@@ -48,7 +48,8 @@ Read the [findings contract](../review-delivery/findings-contract.md) when
 formatting results, not the delivery skill. Docs retrieval returns data.
 
 For Lens assignments, return pinned coverage under the supplied record contract;
-consult [its completion gate](SKILL.md#coverage-manifest-and-completion-gate)
+consult
+[its completion and publication gates](SKILL.md#coverage-manifest-completion-and-publication-gates)
 if missing. Standalone work does not inherit the full roster.
 
 Reuse commands/excerpts/artifacts only when revision/file state, inputs,

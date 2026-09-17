@@ -33,17 +33,20 @@ required roster.
    evidence, not repeated whole passes. Read the
    [findings contract](../review-delivery/findings-contract.md) when merging;
    preserve it in intermediate and final output. Consolidate public-surface
-   coverage and limitations, then enforce the completion gate below. Apply the
-   contract's automatic clean/nit-only approval rule to the complete merged
+   coverage and limitations, then enforce the publication gate below. Apply the
+   contract's automatic clean/nit-only approval rule only to a complete merged
    result, not just newly posted comments; retain delivery's mode, ownership
    and finding-refresh restrictions.
-4. **Refresh target/head immediately before delivery.** A completed review stays
-   pinned to its snapshot unless the permitted descendant refresh below applies.
-   Other movement requires a fresh review or blocked result, not stale publication.
-5. **Deliver once:** after required work completes, dispatch one fresh
-   `review-delivery` worker with merged findings, coverage manifest, the
-   coordinator's combined verdict and authorized mode. Local/report-only work
-   stays in chat. Finish with shared-context cleanup.
+4. **Refresh target/head immediately before delivery.** A review stays pinned to
+   its snapshot unless a complete review permits the descendant refresh below.
+   Head movement after incomplete coverage requires a fresh review; other
+   movement requires a fresh review or blocked result, not stale publication.
+5. **Deliver once:** after the roster passes either the completion or publication
+   gate, dispatch one fresh `review-delivery` worker with merged findings,
+   coverage manifest and authorized mode. Supply the combined verdict for a
+   complete review; for an incomplete review supply the internal `blocked`
+   status and blocked-area diagnostics, never a public verdict. Local/report-only
+   work stays in chat. Finish with shared-context cleanup.
 
 ## Best-effort finding refresh
 
@@ -100,7 +103,7 @@ to API-design/consistency or the isolated API filter, never to the output-only
 API worker as candidate evidence. Reuse matching captures/bundles, not workers;
 reuse saves builds, not required passes.
 
-## Coverage manifest and completion gate
+## Coverage manifest, completion and publication gates
 
 Keep one returned `coverageManifest` record per required skill: `skill`, actual
 `workerId`, exact pinned `snapshot`, `status`, concise `evidence`/artifact reference.
@@ -118,6 +121,19 @@ probes to fill rows.
   unavailable; failed workers and missing output also block, never succeed.
 
 Set `reviewComplete=true` only when all ten records match one reviewed snapshot
-and are `completed` or evidence-backed `not-applicable`. Publication requires
-that snapshot still current, or the valid finding refresh above. Otherwise
-return the decisive limitation, not approval or complete current-head coverage.
+and are `completed` or evidence-backed `not-applicable`.
+
+Set `reviewPublishable=true` when all ten specialists were dispatched, all ten
+records match one reviewed snapshot, and at least one record is `completed`.
+`blocked` records do not prevent publication of results from completed areas.
+Missing records, skipped specialists, snapshot mismatch, or a run with no
+completed area remains non-publishable. Treat snapshot currency separately:
+revalidate it immediately before delivery and never persist it as part of the
+`reviewPublishable` claim.
+
+When `reviewPublishable=true` and `reviewComplete=false`, deliver the review as
+`COMMENT`/no ADO vote regardless of the findings' severity. Lead the public
+summary with a prominent warning that coverage is incomplete, list every blocked
+area with its concise diagnostic, and state that the verdict is withheld. Do not
+describe unassessed areas as clean or claim complete current-head coverage.
+Complete reviews and valid finding refreshes retain their existing delivery rules.

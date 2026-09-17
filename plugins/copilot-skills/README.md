@@ -68,11 +68,13 @@ focused skill to review only that area.
    [fresh workers](skills/review-lens/worker-isolation.md) with minimal factual
    handoffs. Reuse matching evidence, not reviewer conversations or reasoning.
    Dependent stages remain sequential and isolated.
-3. **Complete and deliver:** require matching coverage or evidence-backed
-   not-applicability from every worker, then one fresh delivery worker.
-   Missing/blocked work is not completion. A later descendant-head refresh
-   checks existing findings only and forces comment-only delivery, not a claim
-   of full new-head coverage.
+3. **Complete and deliver:** require a matching coverage record from every
+   worker, then one fresh delivery worker. Missing work prevents publication.
+   Blocked areas make the review incomplete but do not suppress findings from
+   completed areas: delivery posts a COMMENT with a prominent blocked-area
+   warning and no verdict or vote. At least one area must complete. A later
+   descendant-head refresh checks existing findings only after a complete review
+   and forces comment-only delivery, not a claim of full new-head coverage.
 
 Complete current-head reviews automatically approve when clean or containing
 only nits, retaining any nit comments (GitHub approval; ADO approved or approved
@@ -115,10 +117,14 @@ Installing the skill starts nothing. Explicit scope narrowing retains inactive
 history/cadence without polling those repositories. Existing version-1 state
 migrates without discarding receipts, requests or unfinished work.
 
-Only verified complete review delivery permits request acknowledgment: GitHub
+Only verified review delivery permits request acknowledgment, including a
+verified incomplete COMMENT carrying the required coverage warning: GitHub
 clears the processed generation only; ADO retains assignments/votes and records
-completion locally. Ambiguous writes block recovery, while proven zero-write
-PR-local failures can be quarantined without blocking later candidates.
+delivery locally. Incomplete delivery records suppressed coverage debt rather
+than advancing the verified baseline, avoiding duplicate same-snapshot comments
+while allowing retry after the blocker changes. Ambiguous writes block recovery,
+while proven zero-write PR-local failures can be quarantined without blocking
+later candidates.
 The queue does not reply to discussion or apply fixes.
 
 `feedback-autonomy` independently gates actions by authorship and impact.

@@ -54,10 +54,12 @@ Only one PR is in flight. The queue owns selection, progress and acknowledgment;
    selection; never substitute discussion, creation or polling time.
 5. For each selected PR, revalidate scope, lifecycle, target/head and request
    cycle. Save its operation before starting the
-   [two-stage review runner](review-runner.md). Require a complete fresh pass
-   at the selected head, verified delivery, then acknowledgment of only the
-   processed request. Save completion and watch enrollment before the next PR.
-   Defer changed inputs and arrivals to another tick; do not replenish the list.
+   [two-stage review runner](review-runner.md). Require a fresh roster at the
+   selected head that is either complete or publishable under Review Lens,
+   verified delivery, then acknowledgment of only the processed request. Save
+   complete coverage or incomplete-coverage debt, plus watch enrollment, before
+   the next PR. Defer changed inputs and arrivals to another tick; do not
+   replenish the list.
 6. Release the lock only after workers stop and state is durable. Report reviewed
    links/heads, request outcomes, deferred/quarantined work and blockers. Pause
    recurrence for unsafe global/provider capability, ambiguous-write or

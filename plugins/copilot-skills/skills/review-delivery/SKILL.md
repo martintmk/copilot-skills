@@ -15,17 +15,23 @@ direct requests, and [findings contract](findings-contract.md) when validating
 output. Accept finished findings, coverage, pinned revisions and authorized mode;
 do not investigate or override report-only.
 
-For Review Lens, enforce its [roster/completion gate](../review-lens/SKILL.md):
-require matching `coverageManifest` records even for empty findings. Missing,
-skipped or blocked work prevents publication. This does not broaden single-area
-requests. A valid descendant `findingRefresh` permits only best-effort COMMENT,
-not approval, changes requested or completed current-head coverage.
+For Review Lens, enforce its
+[roster/publication gate](../review-lens/SKILL.md#coverage-manifest-completion-and-publication-gates):
+require matching `coverageManifest` records even for empty findings. Missing or
+skipped work prevents publication; blocked rows permit an incomplete review only
+when the coordinator sets `reviewPublishable=true` under that gate. This does not
+broaden single-area requests. A valid descendant `findingRefresh` permits only
+best-effort COMMENT, not approval, changes requested or completed current-head
+coverage.
 
 ## Prepare the review
 
 1. Validate merged findings under the contract; omit newly duplicated discussion
    points during refresh. Summarize outcome, public-surface coverage, limitations
    and supported verdict, without rerunning area passes.
+   For a publishable incomplete Lens review, put the incomplete-coverage warning
+   immediately after the attribution, name every blocked skill/area and concise
+   diagnostic, and say that no verdict is issued.
 2. Revalidate head/diff and local file state. Movement returns claims to the
    coordinator; re-anchoring alone is not validation. Accept only Lens's valid,
    complete coordinator-produced `findingRefresh` for exact reviewed/current heads
@@ -48,6 +54,10 @@ the summary or default to COMMENT. No additional confirmation is needed.
 Evaluate all merged findings, including unresolved duplicates not posted again;
 zero new inline comments alone is not evidence of a clean review.
 
+A publishable incomplete Lens review always uses GitHub `COMMENT` or no ADO vote.
+It may publish supported findings from completed areas, including substantive
+findings, but must not approve, request changes, or present a combined verdict.
+
 Map the supported combined verdict to the provider action:
 
 | Verdict | GitHub event | Azure DevOps vote |
@@ -55,11 +65,12 @@ Map the supported combined verdict to the provider action:
 | `approve` | `APPROVE` | Approved |
 | `approve with non-blocking comments` | `APPROVE`, retaining the comments | Approved with suggestions |
 | `changes requested` | `REQUEST_CHANGES` | Waiting for author |
-| `blocked` | No completed review publication | No vote |
+| `blocked` | `COMMENT` only when Lens marks the incomplete review publishable | No vote |
 
 Report-only mode never writes. Ownership and finding-refresh restrictions above
-override this mapping; missing or blocked required coverage never authorizes
-approval. A summary's approval wording is not a substitute for a provider vote.
+override this mapping; incomplete required coverage never authorizes approval or
+request changes. A summary's approval wording is not a substitute for a provider
+vote.
 
 ## GitHub
 
