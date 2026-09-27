@@ -37,6 +37,7 @@ the entry-point guide.
 
 | Skill | Use it for |
 | --- | --- |
+| [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Every sub-review on every Rust PR, branch, commit or working-tree review, with public API as the dominant lens. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Reproduced behavioral defects across every changed correctness-sensitive path. |
@@ -55,6 +56,31 @@ the entry-point guide.
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
 | [`minimal-local-validation`](skills/minimal-local-validation/SKILL.md) | Runs `cargo check` only for changed Rust crates and leaves comprehensive workspace validation to CI. |
 | [`teams-self-message`](skills/teams-self-message/SKILL.md) | Delivery to the user's own Teams chat. |
+
+## Large engineering work
+
+`engineering-workplan` turns an objective into a measurable destination,
+compatibility requirements, dependency-ordered slices, coordinator/worker prompts,
+and an evidence ledger. It can also use progress reports and repository evidence
+to produce bounded corrective instructions without silently changing the goal.
+It prepares instructions; it does not start agents or implement the rewrite.
+
+```text
+Use engineering-workplan to prepare instructions for replacing our legacy
+storage engine. Inspect the repository, preserve the public API and persisted
+data compatibility, keep releases shippable, and identify decisions I must make.
+Produce the workplan and prompts for the first ready slices. Do not implement it.
+
+Use engineering-workplan to steer the migration from the existing workplan and
+these progress reports. Identify unproven requirements and write the next bounded
+instructions without weakening the acceptance criteria.
+```
+
+The skill adapts lessons from the
+[Copilot runtime rewrite](https://github.blog/ai-and-ml/generative-ai/migrating-the-github-copilot-runtime-to-rust-using-copilot/):
+protect independent test oracles, separate faithful translation from optional
+redesign, give shared boundaries one owner, budget expensive checks, and verify
+the complete production outcome rather than code volume or compilation alone.
 
 ## Review pipeline
 
