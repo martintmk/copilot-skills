@@ -51,7 +51,7 @@ the entry-point guide.
 | [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit with isolated docs-based filtering. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A scoped, authoritative public-docs bundle from rustdoc JSON; no review verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
-| [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
+| [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
 | [`pr-review-queue-github`](skills/pr-review-queue-github/SKILL.md) | Sequential GitHub reviews of PRs labeled `human-review-required`, using native Copilot app automation and linked PR sessions. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
@@ -133,18 +133,22 @@ are allowed; breaking changes and weakened integration/E2E coverage are not.
 Approval is a real GitHub APPROVE review with a short automation-attributed
 message, not a full Review Lens review.
 
-It monitors one PR until merged, rechecking new commits and base changes. If
-later changes violate the rules, it dismisses its own approval, applies
-`human-approval-required`, and updates one short status comment across revisions.
+It monitors one PR until merged or labeled `human-review-required`, rechecking
+new commits and base changes. On escalation, it dismisses its own approval,
+applies the label and posts or updates one short PR comment explaining the
+specific reason human review is required and the action needed. It then cancels
+its owned monitoring trigger. Already-labeled PRs are not monitored, regardless
+of who applied the label; removing it does not automatically resume monitoring.
 Ordinary pending checks wait quietly without adding a human-review label.
 There are no inline findings or comment-heavy reviews. Monitoring continues
-after approval or escalation with no age cutoff; unmerged closures pause PR
-writes until reopening. Setup confirms a cadence and verifies a durable trigger.
+after approval with no age cutoff; unmerged closures without the human-review
+label pause PR writes until reopening. Setup confirms a cadence and verifies a
+durable trigger.
 Installing or editing the skill starts nothing; it never merges.
 
 ```text
 Use pr-auto-approve to monitor https://github.com/OWNER/REPO/pull/NUMBER
-until merged, checking every 10 minutes.
+until merged or labeled human-review-required, checking every 10 minutes.
 ```
 
 The radars discover and notify, not review or act. Each owns its eligibility
