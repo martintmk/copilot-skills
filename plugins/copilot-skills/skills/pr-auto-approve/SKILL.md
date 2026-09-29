@@ -41,8 +41,9 @@ from this skill.
    mask failures with retries, timeouts or suppressions. Unit coverage cannot
    replace integration/E2E coverage.
 
-Green CI and coverage percentages alone prove none of these. Generated output
-and dependency bumps are not mechanical by default.
+Green CI and coverage percentages alone prove none of these invariants, but
+approval still requires every check to be green. Generated output and dependency
+bumps are not mechanical by default.
 
 ## Monitor until merged or human review is required
 
@@ -63,8 +64,10 @@ and dependency bumps are not mechanical by default.
 3. **Refresh every tick.** Read actor, lifecycle and labels first. On merge or
    `human-review-required`, stop without further eligibility checks, regardless
    of who applied the label. Otherwise read trusted rules, revisions, checks and
-   reviews. Without the human-review label, closed-but-unmerged pauses PR writes,
-   not monitoring; resume on reopening. There is no age cutoff.
+   reviews. Paginate all check runs and commit statuses for the current head or
+   verified merge revision; required checks alone are insufficient. Without the
+   human-review label, closed-but-unmerged pauses PR writes, not monitoring;
+   resume on reopening. There is no age cutoff.
 4. **Prove current eligibility.** First scans, changed commits/base/target and
    unfinished proof require the complete merge-base-to-head diff and relevant
    source. Paginate; recover truncated content from exact revisions. Unread
@@ -72,23 +75,28 @@ and dependency bumps are not mechanical by default.
    checks, not exhaustive review suites. Identify each added test's meaningful
    scenario/assertion and confirm execution at this revision.
 5. **Prevent stale decisions.** Recheck prerequisites every tick and revisions/
-   lifecycle/labels before and after writes. A newly observed human-review label
-   takes the stop path, not reassessment. Revision movement invalidates proof;
-   reassess and withdraw approvals unless current eligibility is proven.
+   lifecycle/labels/checks before and after writes. A newly observed human-review
+   label takes the stop path, not reassessment. Revision or check movement
+   invalidates proof; reassess and withdraw approvals unless current eligibility
+   is proven.
 
 ## Decide
 
-Approval requires every invariant, an open non-draft conflict-free PR, successful
-required checks at the head or verified merge revision, and no active
-change-request review, known substantive finding or `human-review-required`.
+Approval requires every invariant, an open non-draft conflict-free PR, at least
+one reported check, and every check run and commit status at the current head or
+verified merge revision to have completed successfully. Pending, failed,
+cancelled, skipped, neutral or unknown checks, no reported checks, and incomplete
+check evidence block approval even when all required checks pass. Also require
+no active change-request review, known substantive finding or
+`human-review-required`.
 Never self-approve or approve the requester's PR through another account.
 
 | Outcome | Action |
 | --- | --- |
 | **Eligible** | Keep an effective owned approval only after current revalidation; otherwise issue an APPROVE review. |
 | **Already labeled** | `human-review-required` is present: stop without reviewing new revisions or duplicating comments; finish any pending owned escalation comment. |
-| **Wait** | No known violation or human-review label, but draft/conflicts, pending checks, another human hold or temporarily unavailable evidence: withhold approval, keep watching, no new label/comment. |
-| **Human required** | Proven violation, failed required check, or safety/ownership/access uncertainty needing judgment: withdraw approval, label, explain why in a short PR comment and stop monitoring. |
+| **Wait** | No known violation or human-review label, but draft/conflicts, any non-green or unverified check, another human hold or temporarily unavailable evidence: withhold approval, keep watching, no new label/comment. Check failure alone is not grounds for escalation. |
+| **Human required** | Proven violation or safety/ownership/access uncertainty needing judgment: withdraw approval, label, explain why in a short PR comment and stop monitoring. |
 
 Before waiting or escalating, dismiss still-active owned approvals whose
 eligibility is unproven, including earlier heads. Known violations take priority
