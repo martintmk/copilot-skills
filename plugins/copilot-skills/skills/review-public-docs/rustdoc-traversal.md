@@ -6,7 +6,7 @@ matching, baselines and bundles belong to [retrieval](SKILL.md).
 ## Inspect schema without dumping it
 
 Check `.format_version` first. Routes below describe format 61; adapt to actual
-schema or return `blocked` with decisive diagnostics for uninterpretable required
+schema or return `could not retrieve` with the reason for uninterpretable required
 fields. Parser failure never means undocumented.
 
 ```text
@@ -28,7 +28,7 @@ jq '{format_version, root, crate_version, local_path_count: ([.paths[] | select(
   Skip private tuple-field `null` holes **without renumbering** positions,
   including variant tuples.
 - Public output omits `#[doc(hidden)]`; absence alone proves no cause. Apply
-  retrieval's resolution statuses.
+  the skill's item statuses.
 
 ## Resolve exact public associations
 

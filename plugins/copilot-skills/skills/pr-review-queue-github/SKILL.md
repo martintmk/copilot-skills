@@ -123,7 +123,7 @@ Use this bounded instruction:
 > Target-authored and poster-authored PRs remain
 > COMMENT-only. Carry these publication constraints to the sole `review-delivery`
 > worker through Review Lens, not a second queue-specific posting stage.
-> Return the submitted review ID/URL, covered snapshot, complete/incomplete/blocked
+> Return the submitted review ID/URL, covered snapshot, complete/incomplete/failed
 > outcome, handled request event and any deferred newer work to the coordinator;
 > for a no-write skip/deferral, return its reason instead. Finish or stop all owned
 > review/delivery workers before reporting the terminal outcome.

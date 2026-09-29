@@ -70,43 +70,44 @@ corrections. Preferences are not defects; omit tooling-owned formatting.
 ## Area result and final summary
 
 Return actionable findings in impact order, then one coverage line: reviewed
-scope and unassessed areas. Separate uncertainty/design questions from proven
+scope and unassessed areas, and a status (`done`, `not applicable` or
+`could not review`, with a reason for the last two). Separate uncertainty/design questions from proven
 findings. For no findings, say so in that line, the whole body after attribution.
 Area workers neither decide the combined verdict nor deliver separately.
 
-The coordinator merges root causes and coverage without losing public surface,
-not-applicable or blocked areas; missing roster entries cannot hide behind a
-clean summary. Lead the final summary with outcome, coverage and material
-limitations; leave evidence with its finding. When Review Lens coverage is
-incomplete but publishable, put a bold warning immediately after attribution,
-list each blocked area and concise diagnostic, and explicitly state that no
-combined verdict is issued. Findings from completed areas remain valid and may
-be published; never imply that blocked areas were reviewed or found clean.
+The coordinator merges root causes and coverage without losing any area. A
+missing area cannot hide behind a clean summary. Lead the final summary with the
+outcome, what was reviewed and material limits, in plain words for the PR
+author; leave evidence with its finding. When a Review Lens review is
+incomplete, put a bold warning right after the attribution, list each topic not
+reviewed with a one-clause reason, and say no overall verdict is given.
+Findings from reviewed areas still count; never imply the other topics were
+checked or clean.
 
 Use this summary shape:
 
 ```markdown
 **Posted by an AI agent**
 
-**Warning: Incomplete review coverage**
+**Warning: Incomplete review**
 
-Some review areas could not be executed:
-- `<area>` (`<skill>`): <concise diagnostic>
+I reviewed <topics>. I could not check:
 
-No combined verdict is issued. Findings below come only from completed areas.
+- <Topic>: <plain one-clause reason>
+
+No overall verdict is given. The comments below come from the reviewed areas.
 ```
 
-Verdicts: `approve`, `approve with non-blocking comments`, `changes requested`,
-or `blocked` with the decisive diagnostic when review could not run. For a
-complete review, automatically select `approve` when there are no findings and
+Verdicts: `approve`, `approve with non-blocking comments` or
+`changes requested`. An unfinished review has no verdict. For a complete review, automatically select `approve` when there are no findings and
 `approve with non-blocking comments` when the only actionable findings are
 cosmetic `Nit`s. Design notes requesting no change do not prevent approval.
 Do not ask for an additional approval confirmation.
 
-For a publishable incomplete Review Lens result, use `blocked` internally but
-omit public `Verdict:` framing and publish as COMMENT/no vote. The warning and
-blocked-area list replace a verdict; do not suppress supported findings merely
-because another area was blocked.
+An incomplete Review Lens result has no public `Verdict:` and posts as
+COMMENT with no vote. The warning and list of unreviewed topics replace the
+verdict; do not suppress supported findings because another area could not
+finish.
 
 Decide from the complete merged result, including still-applicable unresolved
 findings whose duplicate posts were omitted, not the number of comments created.
