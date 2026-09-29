@@ -1,7 +1,7 @@
 {
   "name": "copilot-skills",
-  "description": "Personal Copilot CLI skills for large engineering plans and agent guidance, Rust reviews, code/docs consistency, PR review automation and tracking, feedback handling, public API docs, resilience, testing, and Teams messaging.",
-  "version": "0.17.0",
+  "description": "Personal Copilot CLI skills for large engineering plans and agent guidance, Rust reviews, code/docs consistency, lightweight monitored PR approval, PR review automation and tracking, feedback handling, public API docs, resilience, testing, and Teams messaging.",
+  "version": "0.18.0",
   "author": {
     "name": "Martin Tomka",
     "email": "martintmk@users.noreply.github.com"
@@ -16,6 +16,7 @@
     "code-review",
     "documentation-consistency",
     "pull-request",
+    "pr-auto-approve",
     "pr-tracking",
     "review-queue",
     "review-eligibility",
