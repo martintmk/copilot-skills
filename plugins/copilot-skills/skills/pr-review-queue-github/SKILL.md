@@ -1,9 +1,10 @@
 ---
 name: pr-review-queue-github
 description: >
-  Review eligible GitHub PRs sequentially using the GitHub Copilot app's native
-  session automation and linked PR sessions. Use for "monitor and review GitHub
-  PRs", "review my PR queue" or recurring GitHub reviews. Delegates selection
+  Review eligible GitHub PRs labeled human-review-required sequentially using
+  the GitHub Copilot app's native session automation and linked PR sessions.
+  Use for "monitor and review GitHub PRs", "review my PR queue" or recurring
+  GitHub reviews. Delegates selection
   policy to pr-review-eligibility and reviews to review-lens. Not for Azure
   DevOps, discovery digests or feedback/fix loops. Editing or installing this
   skill does not start monitoring.
@@ -52,10 +53,11 @@ Review Lens already owns specialist coordination and final delivery.
    alone is not completion.
    Continue an unfinished finite batch before collecting another.
 2. Capture one UTC `scanAt`. Use scoped, paginated `gh` reads to list **all open
-   PRs**, including drafts and old target-authored PRs. Refresh previously tracked
-   PRs omitted from that list to establish closure/merge, not presumed deletion.
-   Fetch only needed policy facts: current individual requests, their applicable
-   `review_requested` timeline event IDs/times, and submitted-review history.
+   PRs labeled `human-review-required`**, including drafts and old target-authored
+   PRs. Refresh previously tracked PRs omitted from that list to distinguish
+   label removal from closure/merge; absence from the list is not retirement.
+   Fetch only needed policy facts: current labels, individual requests, their
+   applicable `review_requested` timeline event IDs/times, and submitted reviews.
    Use stable identities; PR creation, `updatedAt` and polling are not request
    times. Failed or incomplete required reads never mean an empty queue.
 3. **Invoke `pr-review-eligibility` and apply it to each candidate**, supplying
@@ -93,17 +95,17 @@ Review Lens already owns specialist coordination and final delivery.
 
 ## PR session handoff
 
-Supply confirmed scope, PR URL/identity, scoped target and posting actor, exact
-head and base repository/ref, selected request event/reason, prior outcome/debt
-and any matching factual artifacts. Use this bounded instruction:
+Supply confirmed scope, PR URL/identity, scoped target and posting actor, current
+labels, exact head and base repository/ref, selected request event/reason, prior
+outcome/debt and any matching factual artifacts. Use this bounded instruction:
 
 > Invoke `pr-review-eligibility` with these facts and current metadata. If due,
 > invoke `review-lens` for one full, fresh review in authorized posting mode.
 > Preserve its required specialists, execution-trust rules and delivery gates.
 > Verify checkout/evidence match the pinned head; reused workspaces are not
 > automatically current. Preserve existing edits; never reset or clean to force
-> a match. Recheck eligibility with fresh UTC time and the selected head/target
-> immediately before publication; moved inputs are deferred, not a best-effort
+> a match. Recheck eligibility with fresh UTC time, labels and the selected
+> head/target immediately before publication; moved inputs are deferred, not a best-effort
 > descendant finding refresh. Target-authored and poster-authored PRs remain
 > COMMENT-only. Carry these publication constraints to the sole `review-delivery`
 > worker through Review Lens, not a second queue-specific posting stage.
@@ -111,8 +113,8 @@ and any matching factual artifacts. Use this bounded instruction:
 > outcome, handled request event and any deferred newer work to the coordinator;
 > for a no-write skip/deferral, return its reason instead. Finish or stop all owned
 > review/delivery workers before reporting the terminal outcome.
-> Do not edit code, push, reply to discussion, resolve threads, remove reviewers,
-> enable Agent Merge, invoke feedback-autonomy or create automation.
+> Do not edit code or labels, push, reply to discussion, resolve threads, remove
+> reviewers, enable Agent Merge, invoke feedback-autonomy or create automation.
 
 ## Recovery
 
