@@ -76,21 +76,30 @@ Review Lens already owns specialist coordination and final delivery.
    confirm the repository/PR and ownership with `get_session`. Never take over
    an unrelated or busy session. Record the selected snapshot/request in
    coordinator history before sending work.
-5. Use `open_pr_session` for a new linked workspace, with
+5. Before dispatching the review, create or update one top-level GitHub issue
+   comment owned by this queue using the stable marker
+   `<!-- pr-review-queue:preparing -->`. The visible text must state that review
+   preparation has started, include the repository/PR identity and pinned head,
+   and say that the submitted review will contain the result. Reuse the marked
+   comment on retries or newer preparations instead of creating duplicate
+   status comments. Read the comment back and verify its ID, author and head
+   before continuing; an uncertain comment write blocks dispatch until it is
+   reconciled.
+6. Use `open_pr_session` for a new linked workspace, with
    `kickoff: { prompt: <handoff below>, mode: "autopilot" }` and top-level
    `notify_on_idle: "always"`, `coordinate_with_creator: true`.
    Save its returned session ID. Reuse an idle queue-owned session with
    `send_session_message` (`delivery_mode: "immediate"`, `mode: "autopilot"`).
    Only one review handoff may be outstanding. Return control and resume from
    native child notifications or the next scheduled wake; do not busy-poll.
-6. Accept a reported publication only after confirming the actual GitHub submitted
+7. Accept a reported publication only after confirming the actual GitHub submitted
    review, its actor, commit, intended event and coverage result. Native pending
    review drafts, local reports and prose success are **not publication**.
    Save the child ID, reviewed head/target, handled request event, review ID/URL,
    coverage/blockers and any newer deferred work in coordinator history before
    advancing. No-write skips/deferrals are not completion; incomplete coverage
    stays debt under the eligibility policy.
-7. Let GitHub handle review-request state as part of normal review submission.
+8. Let GitHub handle review-request state as part of normal review submission.
    **Never remove reviewers manually.** Record only the request event actually
    processed; a newer request/head is not satisfied by the old result. Re-read
    current facts after delivery and retain changed work for the next batch.
