@@ -57,7 +57,8 @@ Review Lens already owns specialist coordination and final delivery.
    PRs. Refresh previously tracked PRs omitted from that list to distinguish
    label removal from closure/merge; absence from the list is not retirement.
    Fetch only needed policy facts: current labels, individual requests, their
-   applicable `review_requested` timeline event IDs/times, and submitted reviews.
+   applicable `review_requested` timeline event IDs/times, and submitted reviews
+   with stable reviewer IDs and provider actor/app types.
    Use stable identities; PR creation, `updatedAt` and polling are not request
    times. Failed or incomplete required reads never mean an empty queue.
 3. **Invoke `pr-review-eligibility` and apply it to each candidate**, supplying

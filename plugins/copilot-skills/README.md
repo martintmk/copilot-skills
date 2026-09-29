@@ -155,9 +155,11 @@ and notification history; `teams-self-message` owns delivery. Digests use
 without tools or side effects. Every queued review requires the exact label
 `human-review-required`, including target-authored PRs and follow-ups. Among
 labeled PRs, eligible reasons are individual requests, target authorship (including
-drafts), and otherwise-unreviewed published PRs over 24 hours and at most seven
-days old. Other authors' requests and watched changes also expire after seven
-days; target-authored PRs remain watched until closure or merge while labeled.
+drafts), and published PRs over 24 hours and at most seven days old with at most
+one distinct human reviewer. Copilot and other verified bot/app reviews do not
+count; repeated submissions by the same human count once. Other authors'
+requests and watched changes also expire after seven days; target-authored PRs
+remain watched until closure or merge while labeled.
 Removing the label pauses review and publication, not history; re-adding it alone
 does not repeat a completed review. The policy distinguishes
 new heads/requests from handled work and incomplete coverage, and keeps retired
