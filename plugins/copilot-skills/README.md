@@ -1,7 +1,8 @@
 # copilot-skills
 
 Personal [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli)
-skills, packaged as a cross-engine Agency-style plugin.
+skills, packaged as a cross-engine Agency-style plugin. The GitHub review queue
+uses the GitHub Copilot app's native session capabilities.
 
 ## Install
 
@@ -51,7 +52,8 @@ the entry-point guide.
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A scoped, authoritative public-docs bundle from rustdoc JSON; no review verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
-| [`pr-review-queue`](skills/pr-review-queue/SKILL.md) | Sequential reviews of requested, self-authored and overlooked PRs, with age-bounded monitoring except for target-authored PRs. |
+| [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
+| [`pr-review-queue-github`](skills/pr-review-queue-github/SKILL.md) | Sequential GitHub reviews of labeled or individually requested PRs, using native Copilot app automation and linked PR sessions. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
@@ -153,30 +155,41 @@ The radars discover and notify, not review or act. Each owns its eligibility
 and notification history; `teams-self-message` owns delivery. Digests use
 `Why review` / `Why respond`, not the code-review finding format.
 
-`pr-review-queue` keeps [one folder per PR](skills/pr-review-queue/state-machine.md)
-with observations, pending work, reviews and recovery evidence. Its finite loop
-fetches candidates, compares the cache, then runs full reviews sequentially.
-Explicit requests are oldest-first; initial eligibility also includes all
-target-authored PRs, including drafts, and otherwise-unreviewed published PRs
-over 24 hours and at most seven days old. Requests and watched changes on other
-authors' PRs also stop after seven days. Target-authored PRs stay watched until
-merge; closed or abandoned PRs are retired and do not resume if reopened.
+[`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) owns the decision
+without tools or side effects. Every queued review requires the exact label
+`human-review-required` **or a current individual review request for the target**.
+An explicit request bypasses the label, not the age or draft limits; team requests,
+assignments and mentions do not qualify. Other eligible reasons are target
+authorship (including drafts), watched follow-ups, and published PRs over 24 hours
+and at most seven days old with at most one distinct human reviewer. Copilot and
+other verified bot/app reviews do not count; repeated submissions by the same
+human count once. All other authors' PRs must be non-draft and no older than seven
+days, including requests and watched changes; target-authored PRs remain watched
+until closure or merge while labeled or individually requested.
+Losing both the label and individual request pauses review and publication, not
+history; re-adding the label alone does not repeat a completed review. The policy
+distinguishes new heads/requests from handled work and incomplete coverage, and
+keeps retired PRs retired after reopening.
 
-Setup requires explicit repositories/cadence and bounded MCP/official-CLI
-preflight; missing combined capability blocks rather than enabling raw HTTP.
-Installing the skill starts nothing. Explicit scope narrowing retains inactive
-history/cadence without polling those repositories. Existing version-1 state
-migrates without discarding receipts, requests or unfinished work.
+[`pr-review-queue-github`](skills/pr-review-queue-github/SKILL.md) is the thin
+Copilot app coordinator. It fetches GitHub facts with `gh`, invokes eligibility,
+and runs Review Lens sequentially in linked PR sessions. Native same-session
+automation supplies recurrence; app history, status and child notifications
+supply progress and recovery. There is no separate queue cache, lock, scheduler,
+provider preflight framework or two-stage review runner.
 
-Only verified review delivery permits request acknowledgment, including a
-verified incomplete COMMENT carrying the required coverage warning: GitHub
-clears the processed generation only; ADO retains assignments/votes and records
-delivery locally. Incomplete delivery records suppressed coverage debt rather
-than advancing the verified baseline, avoiding duplicate same-snapshot comments
-while allowing retry after the blocker changes. Ambiguous writes block recovery,
-while proven zero-write PR-local failures can be quarantined without blocking
-later candidates.
-The queue does not reply to discussion or apply fixes.
+Setup requires explicit GitHub repositories and, for recurrence, a confirmed
+cadence. Installing/editing starts nothing. A one-shot run leaves schedules alone.
+Review Lens still owns full reviews and verified publication; native pending
+review drafts do not count as submitted reviews. The queue never manually removes
+reviewers, replies to discussion or applies fixes. Changed inputs are deferred,
+incomplete coverage is not completion, and uncertain writes are reconciled before
+retrying.
+
+This replaces `pr-review-queue`; there is no ADO queue in this version. Before
+switching an existing monitor, stop its old schedule and settle in-flight work;
+retain its audit history and carry verified outcomes into the coordinator session.
+Other skills' ADO support is unchanged.
 
 `feedback-autonomy` independently gates actions by authorship and impact.
 Eligible automation and stable-identity-matched PR-author instructions need no
