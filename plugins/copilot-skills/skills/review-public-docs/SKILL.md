@@ -27,9 +27,8 @@ explicit paths and members (preferred). Also accept package or manifest,
 features, target and toolchain. Use whatever the caller supplies; fill in the
 rest yourself.
 
-Building runs the package's build scripts and proc macros with your
-credentials. Build only when the caller allows it or you are reviewing the
-user's own local changes. Otherwise return `could not retrieve` with that
+Building runs the package's build scripts and proc macros. If your execution
+constraints do not allow building, return `could not retrieve` with that
 reason.
 
 ## Item status
@@ -119,7 +118,7 @@ reuse.
 Find the output at `<temp-target-dir>/doc/<crate_name>.json` or
 `<temp-target-dir>/<target>/doc/<crate_name>.json`. The library name may differ
 from the package name. If several files match, confirm the library with
-`cargo metadata --no-deps --format-version 1 <manifest-args>`.
+`cargo metadata --locked --no-deps --format-version 1 <manifest-args>`.
 
 If generation fails, return `could not retrieve` with the command and its
 error, plus anything already resolved, marked partial.

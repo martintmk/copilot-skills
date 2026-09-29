@@ -20,9 +20,9 @@ not review areas yourself.
 call, implement, match, store and depend on across releases. Risk changes how
 much attention an area needs, never which areas run.
 
-The area skills are self-contained. This skill adds what only a coordinator
-needs: shared setup, permission to run code, fresh agents, merging and
-delivery. Details are in the [coordinator reference](coordinator-reference.md).
+The area skills hold only review rules. This skill supplies everything else:
+the change and its context, execution constraints, a dedicated agent per area,
+merging and delivery. Details are in the [coordinator reference](coordinator-reference.md).
 
 ## Review areas
 
@@ -55,7 +55,7 @@ authoritative rustdoc text for public items.
    | GitHub PR | `gh pr view <n>`, `gh pr diff <n>` | merge base of target and head |
    | Azure DevOps PR | the configured PR tools | merge base of target and head |
    | Branch | `git diff <target>...HEAD` | merge base |
-   | Commit | `git show <sha>` | parent; pick one parent for a merge commit |
+   | Commit | `git show <sha>`; for a merge commit, `git diff <sha>^<n> <sha>` | the chosen parent; never mix it with combined merge output |
    | Local changes | `git diff`, `git diff --staged`, untracked files | `HEAD` |
 
    Review local changes in place, not in a fresh worktree.
@@ -70,10 +70,11 @@ authoritative rustdoc text for public items.
    [package presence](coordinator-reference.md#package-presence) before the
    public API area starts.
 
-### 2. Decide whether code may run
+### 2. Set execution constraints
 
 Builds, `build.rs`, proc macros, tests and rustdoc run code with your network
-and credentials. A worktree is not a sandbox. Decide once and tell every area.
+and credentials. A worktree is not a sandbox. Decide once; every area inherits
+the decision.
 
 | Code under review | Decision |
 | --- | --- |
@@ -91,26 +92,35 @@ When code may run, prepare it once:
    `rustup toolchain install` in the repository root.
 2. Run `cargo fetch --locked` for each revision that will be built. Retry once
    on a network error. Never update lockfiles.
-3. Write one line for the areas, for example: "You may run code. Toolchain
+3. Write one line for the areas, for example: "Code may run. Toolchain
    1.97.0 is installed. Dependencies are fetched."
 
 If setup fails, keep going. Areas that read source can still finish.
 
-### 3. Start one fresh agent per area
+### 3. Start one dedicated agent per area
 
-Start each area in its own fresh agent, for example with the `task` tool. Run
-independent areas in parallel. Never run an area inline or combine two areas in
-one agent: a separate context keeps each area's judgment independent.
+Run each area in its own fresh agent with a high-reasoning model: for example,
+the `task` tool with `agent_type: general-purpose`, the strongest available
+reasoning model and `reasoning_effort: high` or higher. Run independent areas
+in parallel. Never run an area inline or combine two areas in one agent: a
+separate context keeps each area's judgment independent.
 
-Give every area the same short handoff:
+Each agent inherits your permissions and execution constraints. Do not widen
+them, and do not narrow them beyond step 2.
+
+The area skills contain only rules, so the handoff carries the context:
 
 - The skill to invoke and that it is part of a Review Lens review.
-- Repository, base and head, and the dirty-state note for local changes.
+- Repository, base and head, the diff command, and the dirty-state note for
+  local changes.
 - The repository rules and notes from step 1.
-- The run-code line from step 2.
+- The execution line from step 2.
 - CI facts and points already raised, with comment IDs.
 - Worktree paths it owns, if it needs another revision. Areas must not switch
   the shared checkout.
+- Verification rules for areas that run code: compare base and head with the
+  same focused command, match the configuration, use targeted commands rather
+  than whole suites, never update lockfiles, and remove only its own probes.
 
 Do not pass other areas' findings, your reasoning or full logs.
 
@@ -127,7 +137,7 @@ Ask each area to return findings in the
 | `not applicable` | It showed its topic is absent from the change, for example no Rust library for public API. |
 | `could not review` | It could not follow its procedure. It gives the reason in one sentence. |
 
-If you cannot start fresh agents, stop and report that the review cannot run.
+If you cannot start dedicated agents, stop and report that the review cannot run.
 
 ### 4. Check results and retry once
 
@@ -136,7 +146,7 @@ scope, even when they could not run code, measure or reproduce. Missing proof
 limits findings, not coverage. Only the public API area needs a successful
 build to finish.
 
-Send an area back once to a new fresh agent when its result is fixable:
+Send an area back once to a new dedicated agent when its result is fixable:
 
 - It returned `could not review` only because it could not run code, but it is
   an area that reads source. Ask it to finish by reading.
@@ -159,7 +169,7 @@ Report the second result. Keep the first reason if it still fails.
 
 | Outcome | When | Delivery |
 | --- | --- | --- |
-| Complete | Every area is `done` or `not applicable`. | Verdict from the findings contract. Read-only reviews post as a comment with no vote. |
+| Complete | Every area is `done` or `not applicable`. | Verdict from the findings contract. |
 | Incomplete | At least one area is `done` and at least one `could not review`. | Comment, no vote, no verdict. Publish findings from finished areas. |
 | Failed | No area is `done`. | Do not publish. Tell the user why. |
 

@@ -56,7 +56,6 @@ passes to fill gaps.
 | Complete, verdict `changes requested` | `REQUEST_CHANGES` | Waiting for author |
 | Incomplete | `COMMENT` | No vote |
 | Refreshed | `COMMENT` | No vote |
-| Code was not allowed to run (read-only review) | `COMMENT`; the summary may state the recommended verdict | No vote |
 | The PR belongs to the requester or to the posting account | `COMMENT`, no `Verdict:` line | No vote |
 | Report only | Nothing is posted | Nothing is posted |
 

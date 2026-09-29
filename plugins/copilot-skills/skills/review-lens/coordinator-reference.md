@@ -23,7 +23,9 @@ Establish this before the public API area starts, and pass the result.
    | present | present | `paired`: compare both surfaces. |
    | absent | present | `added`: every head item is new. |
    | present | absent | `removed`: every base item is removed. |
-   | unknown | any | Resolve it, or the public API area cannot review this library. |
+
+   If either side is unknown, resolve it; otherwise the public API area cannot
+   review this library.
 
 A package is absent only when a complete inventory of that revision shows it.
 A failed build, a failed `cargo metadata`, a feature error or a PR description

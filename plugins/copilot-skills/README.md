@@ -88,18 +88,20 @@ the complete production outcome rather than code volume or compilation alone.
 ## Review pipeline
 
 Ask for "review this PR" or "review my changes" to use `review-lens`, or name a
-focused skill to review only that area. Each area skill is self-contained: it
-explains how to get the change, what to look for, what evidence it needs and
-how to report. Only the findings contract is shared.
+focused skill to review only that area. Area skills contain only review rules:
+what to look for, what evidence counts and how to report. The coordinator
+supplies the change, context and execution constraints. Only the findings
+contract is shared.
 
 `review-lens` adds the coordination:
 
 1. **Pin the change once:** base and head, repository rules, CI and existing
    discussion.
-2. **Decide whether code may run:** local work and PRs from branches in the
+2. **Set execution constraints:** local work and PRs from branches in the
    target repository may run; fork PRs are reviewed by reading. When code may
    run, install the pinned toolchain and fetch dependencies once.
-3. **Run nine areas in fresh agents:** public contract, correctness, tests,
+3. **Run nine areas in dedicated high-reasoning agents** that inherit the
+   coordinator's permissions and execution constraints: public contract, correctness, tests,
    performance, naming, telemetry, resilience, consistency and public API
    surface. `review-public-docs` is a helper that supplies rustdoc text.
 4. **Retry once and merge:** areas that read source finish even when they
@@ -111,7 +113,6 @@ how to report. Only the findings contract is shared.
 | --- | --- |
 | Complete | Approves when clean or nit-only; otherwise approves with comments or requests changes. |
 | Incomplete | Comment with a warning that lists unreviewed topics; no verdict or vote. |
-| Read-only (code not allowed to run) | Comment with the recommended verdict; no vote. |
 | Refreshed after new commits | Comment rechecking existing findings only. |
 | Requester's or poster's own PR | Comment, no verdict. |
 | Report only | Nothing posted. |

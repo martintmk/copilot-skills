@@ -44,11 +44,9 @@ coverage.
    `--manifest-path` and `--target` as needed.
 
    If the change has no Rust library, return `not applicable`.
-2. **Check permission and tools.** Building runs the package's build scripts
-   and proc macros with your credentials. Build only when the caller allows it
-   or you are reviewing the user's own local changes. Otherwise return
-   `could not review`: "Public API surface: building untrusted code was not
-   allowed."
+2. **Check tools.** Building runs the package's build scripts and proc macros.
+   If your execution constraints do not allow building, return
+   `could not review`: "Public API surface: building the code was not allowed."
 
    ```text
    cargo public-api --version
@@ -59,7 +57,9 @@ coverage.
    If installation or extraction fails, return `could not review` with the
    command and its error. Do not read source to work around it.
 3. **Capture the full surface** with an external target directory
-   (`CARGO_TARGET_DIR`) and without changing lockfiles:
+   (`CARGO_TARGET_DIR`). External targets do not protect `Cargo.lock`: check
+   `git status` after each capture, and if a lockfile changed, restore it and
+   return `could not review` rather than review changed inputs.
 
    ```text
    cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> > <full-api-output>
@@ -119,8 +119,9 @@ coverage.
 
    Examples: facade docs can defeat "accidental foreign re-export"; documented
    thread-local intent can refute an assumed `Send` requirement. Rewrite
-   narrowed titles and sections to match what survives. If you cannot get the
-   docs, keep the draft and say so in coverage.
+   narrowed titles and sections to match what survives. If the draft has claims
+   and you cannot get their docs, return `could not review` with the reason;
+   never return an unchecked draft. An empty draft needs no docs.
 
 ## Specialist questions
 
