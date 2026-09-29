@@ -25,7 +25,11 @@ agents and people to follow.
    permissions plainly.
 5. Update related README tables, examples, or reference files when the change
    affects them.
-6. Check links and formatting, then review the final text as a human reader.
+6. Whenever a skill or its reference files change, increment the plugin version.
+   Keep it identical in `plugins/copilot-skills/.claude-plugin/plugin.json`,
+   `.claude-plugin/marketplace.json`, and `.github/plugin/marketplace.json`.
+   Change the plugin entry's version, not the marketplace metadata version.
+7. Check links and formatting, then review the final text as a human reader.
 
 ## Structure for `SKILL.md`
 
