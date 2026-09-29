@@ -20,7 +20,8 @@ required roster.
 ## Procedure
 
 1. **Establish facts once** using [shared context](review-context.md); reuse
-   matching caller-supplied facts. Inventory affected packages/configurations
+   matching caller-supplied facts. Run its execution preflight so every worker
+   receives one `executionRecord`. Inventory affected packages/configurations
    and scan changed public surface first. Read
    [package comparison](package-comparison.md) to establish comparison scope
    before API/docs extraction.
@@ -28,7 +29,8 @@ required roster.
    naming-only or manifest-only changes. Read [worker isolation](worker-isolation.md)
    before dispatch; give each fresh worker its permitted factual handoff and
    the coverage-record contract below. No inline or combined specialist passes.
-3. **Merge by root cause/fix**, including existing discussion. Keep the strongest
+3. **Recover fixable blocks once** (see below), then **merge by root
+   cause/fix**, including existing discussion. Keep the strongest
    supported evidence; resolve contradictions with the owners and decisive
    evidence, not repeated whole passes. Read the
    [findings contract](../review-delivery/findings-contract.md) when merging;
@@ -106,22 +108,44 @@ reuse saves builds, not required passes.
 ## Coverage manifest, completion and publication gates
 
 Keep one returned `coverageManifest` record per required skill: `skill`, actual
-`workerId`, exact pinned `snapshot`, `status`, concise `evidence`/artifact reference.
-Never invent IDs, substitute coordinator passes or invent findings. No unrelated
-probes to fill rows.
+`workerId`, exact pinned `snapshot`, `status`, concise `evidence`/artifact
+reference and any `limitations`. Never invent IDs, substitute coordinator passes
+or invent findings. No unrelated probes to fill rows.
 
 - `completed`: worker finished its scoped procedure, including required
   extraction/comparison/filtering, and returned findings/data or explicit
   no-findings. Supported one-sided package comparisons can complete under the
-  package-comparison contract.
+  package-comparison contract. Unexecuted proof is a `limitation`, not a block.
 - `not-applicable`: dispatched worker established no applicable surface from
   stated, permitted evidence. Confirmed absence of Rust library packages can
   qualify API/docs; small/docs-only Rust changes alone cannot.
-- `blocked`: required evidence, permission, tools, isolation or dependency is
-  unavailable; failed workers and missing output also block, never succeed.
+- `blocked`: the worker could not perform its procedure: failed worker, missing
+  output, unreadable scope, missing isolation, or a required artifact that
+  cannot be produced.
+
+What each area needs to complete:
+
+| Areas | Completes when | Missing execution or artifacts means |
+| --- | --- | --- |
+| `review-api-design`, `review-naming`, `review-tests`, `review-telemetry`, `review-consistency`, `review-correctness`, `review-perf`, `review-resilience` | every changed path in scope is traced from source, diff and trusted rules | `completed` with limitations; unproven suspicions become questions or are dropped |
+| `review-public-api`, `review-public-docs` | required extractions and comparisons succeed | `blocked` with the exact failed command |
+
+A source-based area never blocks only because reproductions, benchmarks, Cargo
+commands or another area's artifacts are unavailable. Correctness, perf,
+resilience and consistency name their static fallbacks.
+
+**Recover before merging.** When a worker returns `blocked` for a cause the
+coordinator can fix (missing toolchain or tool, dependency fetch, transient
+network or registry error, lost worktree), fix it, update the
+`executionRecord`, and dispatch one fresh worker for that area at the same
+snapshot. Retry each area once. Report the retry's result, with the original
+diagnostic if it still blocks. Do not retry `static-only` provenance decisions.
 
 Set `reviewComplete=true` only when all ten records match one reviewed snapshot
-and are `completed` or evidence-backed `not-applicable`.
+and are `completed` or evidence-backed `not-applicable`. List material
+limitations in the summary. When the `executionRecord` is `static-only`, a
+complete review still states its verdict but delivers as `COMMENT`/no ADO vote:
+unexecuted untrusted code is never approved or rejected automatically.
 
 Set `reviewPublishable=true` when all ten specialists were dispatched, all ten
 records match one reviewed snapshot, and at least one record is `completed`.

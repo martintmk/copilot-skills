@@ -41,7 +41,8 @@ coverage.
    fresh review or blocking.
 3. Validate attribution and finding shape in **every serialized body**, not just
    the template; reject contract violations before writing.
-4. Refreshed findings always use GitHub `COMMENT`/no ADO vote. Requester-own or
+4. Refreshed findings and Lens reviews with a `static-only` `executionRecord`
+   always use GitHub `COMMENT`/no ADO vote. Requester-own or
    authenticated-poster-own PRs also require COMMENT/no vote and no `Verdict:`
    framing, never self-approval or `REQUEST_CHANGES`.
 

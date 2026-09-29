@@ -91,8 +91,10 @@ Ask for "review this PR" or "review my changes" to use `review-lens`, or name a
 focused skill to review only that area.
 
 1. **Establish context once:** pin revisions/configuration, trusted rules,
-   execution permission, CI and discussion using
-   [shared context](skills/review-lens/review-context.md).
+   CI and discussion using [shared context](skills/review-lens/review-context.md).
+   Its execution preflight decides trust from provenance (same-repository PRs
+   and local work execute; forks stay static and comment-only), installs the pinned toolchain and
+   fetches dependencies, then hands one `executionRecord` to every worker.
 2. **Dispatch all ten specialists:** every invocation, even docs-only, uses
    [fresh workers](skills/review-lens/worker-isolation.md) with minimal factual
    handoffs. All specialists and nested stages inherit the coordinator's execution
@@ -101,6 +103,9 @@ focused skill to review only that area.
    Dependent stages remain sequential and isolated.
 3. **Complete and deliver:** require a matching coverage record from every
    worker, then one fresh delivery worker. Missing work prevents publication.
+   Source-based areas complete statically when execution is unavailable,
+   recording limitations; only public API/docs extraction blocks on it. Fixable
+   blocks (toolchain, fetch, network) get one fresh retry before merging.
    Blocked areas make the review incomplete but do not suppress findings from
    completed areas: delivery posts a COMMENT with a prominent blocked-area
    warning and no verdict or vote. At least one area must complete. A later

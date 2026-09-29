@@ -32,6 +32,9 @@ not a duplicate finding.
    rules.
 3. **No adequate reproduction means no correctness finding.** Omit unproven
    suspicions or identify them as questions.
+4. **Without execution** (`static-only` record or a failed build), still finish
+   step 1 and return `completed` with the unexecuted paths as limitations.
+   Missing reproductions limit findings, not coverage.
 
 ## Defect questions
 

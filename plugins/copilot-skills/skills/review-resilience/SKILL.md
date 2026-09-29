@@ -35,6 +35,10 @@ else use repository equivalents, not new Oxidizer dependencies.
    recommending `seatbelt`, resolve dependency/workspace-approved version,
    enabled features and module docs. If approved without an established version,
    recommend only crate/feature, never an invented version-specific call.
+   If `cargo metadata` fails, resolve versions from `Cargo.lock` and manifests,
+   then read that exact version's recipes from the local registry source
+   (`~/.cargo/registry/src/*/recoverable-<version>/`) or docs.rs. Block only when
+   no source gives the version; changes without recovery concerns still complete.
 2. **Inventory failure flows.** Trace transient failures, unavailability,
    timeouts, throttling, connection loss, temporary resource pressure and
    wrappers from origin to caller, including conversions erasing inner errors.

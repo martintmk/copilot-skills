@@ -25,7 +25,9 @@ Follow [shared context](../review-lens/review-context.md) and the
    Historical changelogs and explicitly scoped exceptions are not current
    contradictions. Reuse matching public-docs bundles; request fresh
    `review-public-docs` retrieval when authoritative reachable-public-item docs
-   are needed.
+   are needed. If no bundle is available, compare source doc comments and
+   re-exports directly and record the missing bundle as a limitation; do not
+   block the area.
 3. **Compare contracts:** signatures/examples, defaults/allowed values,
    units/limits, feature gates, lifecycle/ordering and error/panic guarantees.
    Follow re-exports, wrappers and configuration sources to the reachable

@@ -140,8 +140,9 @@ flags. `cargo public-api` JSON also needs suitable public output/schema; private
 items are not public evidence. Matching complete closure/status bundles skip
 generation/traversal. Filenames alone never justify reuse.
 
-Before builds/installations use established execution trust: scripts/proc macros
-require trusted code or isolated credential-free execution. Generate once per
+Before builds/installations use the supplied `executionRecord` (standalone:
+run the [execution preflight](../review-lens/review-context.md#execution-preflight)):
+scripts/proc macros require `execute` or isolated credential-free execution. Generate once per
 required revision into distinct external targets:
 
 ```text

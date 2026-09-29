@@ -70,8 +70,10 @@ never as a substitute for mandatory filtering.
    and output options.
 
 2. **Establish trust/tools once.** Builds can execute scripts/proc macros.
-   Reuse trust and version records; otherwise require trusted provenance or
-   isolated credential-free execution, not source inspection.
+   Use the supplied `executionRecord` and version records; standalone callers
+   run the [execution preflight](../review-lens/review-context.md#execution-preflight).
+   `static-only` code needs isolated credential-free execution, not source
+   inspection.
 
    ```text
    cargo public-api --version

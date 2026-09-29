@@ -28,7 +28,8 @@ evidence without duplicating the same allocation or per-call finding.
 2. Apply the cost/injection questions below.
 3. Benchmark faster/slower claims, preferring the repository's existing harness.
    Never infer a regression by reading code; unmeasured runtime suspicions are
-   conditional questions.
+   conditional questions. Missing or impossible measurements do not block the
+   area: finish steps 1-2 and return `completed` with unmeasured paths listed.
 
 ## Specialist questions
 
