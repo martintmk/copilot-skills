@@ -26,7 +26,8 @@ explicitly isolated stage.
 ## Minimal factual handoff
 
 Pass assignment/result role, scope, repository/revision/dirty-state identity,
-trusted rules, configuration/toolchain, execution permission, CI facts and owned
+trusted rules, configuration/toolchain, the inherited
+[execution boundary](review-context.md#execution-boundary), CI facts and owned
 artifact paths. Supply existing-comment IDs/anchors for deduplication; keep
 narratives with the coordinator. Never fork conversations, prior reasoning,
 other areas' drafts or full logs. Reuse only matching factual artifacts with

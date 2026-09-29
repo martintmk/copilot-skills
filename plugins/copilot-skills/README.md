@@ -95,7 +95,9 @@ focused skill to review only that area.
    [shared context](skills/review-lens/review-context.md).
 2. **Dispatch all ten specialists:** every invocation, even docs-only, uses
    [fresh workers](skills/review-lens/worker-isolation.md) with minimal factual
-   handoffs. Reuse matching evidence, not reviewer conversations or reasoning.
+   handoffs. All specialists and nested stages inherit the coordinator's execution
+   boundary and may run required tools directly within it. Reuse matching evidence,
+   not reviewer conversations or reasoning.
    Dependent stages remain sequential and isolated.
 3. **Complete and deliver:** require a matching coverage record from every
    worker, then one fresh delivery worker. Missing work prevents publication.

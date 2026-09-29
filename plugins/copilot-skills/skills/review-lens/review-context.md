@@ -38,6 +38,14 @@ The coordinator, including a standalone specialist's caller, owns this setup.
    and establish its per-package record before extraction. Supply compact
    facts/provenance, not underlying source, to restricted workers.
 
+## Execution boundary
+
+All specialists and nested stages inherit the coordinator's execution boundary
+(the caller's for standalone work) for their assigned scope, and may run required
+tools directly within it. Fresh-context isolation does not change that boundary:
+the same permissions, trust constraints and resource limits apply, together with
+runtime restrictions and each skill's evidence and delivery boundaries.
+
 ## Reuse and resource ownership
 
 Follow isolation's factual handoff and result roles. Use assigned worktrees;
