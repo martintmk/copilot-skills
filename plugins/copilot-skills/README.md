@@ -142,6 +142,9 @@ specific reason human review is required and the action needed. It then cancels
 its owned monitoring trigger. Already-labeled PRs are not monitored, regardless
 of who applied the label; removing it does not automatically resume monitoring.
 Ordinary pending checks wait quietly without adding a human-review label.
+Fast approval requires at least one reported check and every check to complete
+successfully, not just required checks; absent, failed, skipped, neutral or
+unverified checks also wait without escalation solely for their check result.
 There are no inline findings or comment-heavy reviews. Monitoring continues
 after approval with no age cutoff; unmerged closures without the human-review
 label pause PR writes until reopening. Setup confirms a cadence and verifies a
