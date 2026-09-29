@@ -24,12 +24,12 @@ runtime behavior.
 
 Accept any of: a PR, branch, commit, `<base>...<head>`, the working tree, or
 explicit paths and members (preferred). Also accept package or manifest,
-features, target and toolchain. Use whatever the caller supplies; fill in the
-rest yourself.
+features, target and toolchain. Keep the caller's scope and configuration;
+request missing or ambiguous facts rather than selecting a different review.
 
-Building runs the package's build scripts and proc macros. If your execution
-constraints do not allow building, return `could not retrieve` with that
-reason.
+Use the caller's inherited permissions and execution constraints. Reuse matching
+JSON before considering a build. If generation is needed but unavailable,
+report that specific limit, not a new permission requirement.
 
 ## Item status
 
@@ -110,8 +110,7 @@ reuse.
 - Set `RUSTC_BOOTSTRAP=1` only on this command, to allow JSON output on a
   stable compiler. Never export or persist it. On PowerShell, save and restore
   any previous value in `finally`. Skip it when the toolchain is nightly.
-- Install nightly only when the caller chose nightly and it is missing:
-  `rustup toolchain install nightly --profile minimal`.
+- Report a missing toolchain to the caller; do not substitute another compiler.
 - Never use `--document-private-items`. `--locked` keeps lockfiles unchanged;
   report missing or outdated locks instead of updating them.
 

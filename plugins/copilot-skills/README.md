@@ -90,23 +90,26 @@ the complete production outcome rather than code volume or compilation alone.
 Ask for "review this PR" or "review my changes" to use `review-lens`, or name a
 focused skill to review only that area. Area skills contain only review rules:
 what to look for, what evidence counts and how to report. The coordinator
-supplies the change, context and execution constraints. Only the findings
-contract is shared.
+supplies context and commands, selects the review model and passes down the
+session's permissions and execution constraints. A focused request needs that
+setup for only its selected skill. Only the findings contract is shared.
 
 `review-lens` adds the coordination:
 
 1. **Pin the change once:** base and head, repository rules, CI and existing
    discussion.
-2. **Set execution constraints:** local work and PRs from branches in the
-   target repository may run; fork PRs are reviewed by reading. When code may
-   run, install the pinned toolchain and fetch dependencies once.
-3. **Run nine areas in dedicated high-reasoning agents** that inherit the
-   coordinator's permissions and execution constraints: public contract, correctness, tests,
-   performance, naming, telemetry, resilience, consistency and public API
-   surface. `review-public-docs` is a helper that supplies rustdoc text.
-4. **Retry once and merge:** areas that read source finish even when they
-   cannot run code; unproven runtime concerns become questions. Only the public
-   API surface needs a successful build. Fixable failures get one retry.
+2. **Inherit execution limits:** reviewers use the same permissions, tools and
+   constraints as their parent, not separate approval checks or branch-based
+   policies. Prepare missing tools or artifacts only when needed and permitted.
+3. **Run nine areas in dedicated high-reasoning agents:** public contract,
+   correctness, tests, performance, naming, telemetry, resilience, consistency
+   and public API surface. Set high reasoning in the launch settings, honor the
+   configured model, and never silently downgrade. `review-public-docs` is a
+   helper that supplies rustdoc text.
+4. **Resolve gaps and merge:** source review can finish without executing code;
+   unproven runtime concerns remain questions. Public API review needs matching
+   captures and docs for its claims, not necessarily a new local build. Resume
+   a reviewer once after fixing a concrete setup problem.
 5. **Deliver once** through `review-delivery`, with a plain-language summary.
 
 | Outcome | Delivery |
@@ -124,6 +127,8 @@ Design notes use an observation title and omit only the fix.
 
 `review-public-api` drafts only from `cargo public-api` output, then reads the
 rustdoc of criticized items to remove or narrow claims, never to add them.
+The coordinator supplies the captures or the commands to produce them; the
+skill contains the review rules, not tool installation or checkout management.
 
 ## PR tracking and automation
 

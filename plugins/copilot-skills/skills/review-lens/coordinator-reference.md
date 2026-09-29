@@ -1,7 +1,7 @@
 # Review Lens coordinator reference
 
-Details the coordinator needs for less common situations. Area skills do not
-read this file.
+Setup and edge cases owned by the coordinator. Area skills do not read this
+file.
 
 ## Package presence
 
@@ -33,6 +33,52 @@ saying "new crate" does not prove absence. Never invent an empty side for a
 package that exists.
 
 Decide per library. A new crate does not remove problems with an existing one.
+
+## Public API evidence
+
+The coordinator owns capture setup. Supply validated commands and owned
+directories to the API reviewer, or generate captures once before dispatch.
+The reviewer applies API rules without inspecting source to work out setup.
+
+1. Select the package/library at each revision, including moved or renamed
+   counterparts. Keep the requested features, default-feature mode, target,
+   toolchain and build flags. Without an explicit configuration, use
+   `--all-features` and the host target; record that choice.
+2. Reuse full captures only when their repository, revision or dirty state and
+   configuration match. Matching artifacts remain usable when new builds are
+   not allowed. Do not replace a failed comparison with a current-only audit.
+3. For missing captures, check `cargo public-api --version` and installed
+   help. Install the official tool only if missing and permitted:
+   `cargo +stable install cargo-public-api --locked`. Keep the selected
+   compiler; provision a missing compatible toolchain only within inherited
+   limits, not by silently substituting an arbitrary nightly.
+4. Use assigned revision directories and separate external target directories.
+   Preserve the actual working tree for dirty-head captures. Another revision
+   may need an owned `git worktree add --detach <path> <revision>`; never
+   switch or force-clean the caller's checkout.
+5. Use the installed tool's lock-preserving options for every capture.
+   External targets alone do not protect `Cargo.lock`. If the tool cannot
+   preserve reviewed inputs, report that limit rather than updating them and
+   trying to restore them afterward.
+
+   ```text
+   cargo public-api --color=never --include function-parameter-names <lock-args> <feature-args> <scope-args> > <full-api-output>
+   ```
+
+   Resolve placeholders from installed help and the selected configuration.
+   Keep full output; `-sss` hides impls needed for absence claims. Capture
+   each present side separately and compare the saved outputs, rather than
+   running commit-diff commands that switch checkouts. An absent side is a
+   logical empty surface, never fabricated tool output.
+6. When the API reviewer has drafted claims, obtain matching item, owner,
+   trait and applicable module/crate docs. Reuse a bundle or give exact paths,
+   configuration and artifact locations to `review-public-docs`; do not pass
+   candidate rationales. Return its bundle to the original API reviewer.
+   An empty draft needs no docs. Retain captures until all consumers finish.
+
+Keep command errors for recovery, but summarize their consequence in ordinary
+language. Do not pass source, manifests, other reviewers' findings or premature
+docs into the output-only API draft.
 
 ## When the head moves
 

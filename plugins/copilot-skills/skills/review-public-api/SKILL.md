@@ -21,93 +21,48 @@ It also sets limits: output cannot prove correctness, validation, panics,
 soundness, performance, redaction or docs quality. State these limits once in
 coverage.
 
-## Rules
+## Evidence boundary
 
 - **Draft from output only.** Do not open source, manifests, lockfiles, build
   scripts, tests, examples, diffs, history or rendered docs while drafting. Do
   not use `cargo metadata`, rust-analyzer or code search to find claims.
-- **Docs can only remove or narrow claims.** After the draft, step 6 reads the
+- **Docs can only remove or narrow claims.** After the draft, read the
   rustdoc of the items you criticize. Docs can show a choice was deliberate.
   They never add findings, raise severity or prove runtime behavior.
-- **Report only.** Never edit, post or vote. Keep captures and build output
-  outside the reviewed checkout.
+- **Report only.** Never edit, post or vote.
 
-## Procedure
+## Review rules
 
-1. **Pick the package and configuration.** Use the package, revisions,
-   features, target and toolchain a caller gives you. Otherwise use the package
-   `cargo public-api` selects, `--all-features` and the host target. If the
-   package is ambiguous, ask for its name.
-
-   `<feature-args>` is `--all-features` unless the caller chose
-   `--features` or `--no-default-features`. `<scope-args>` holds `-p`,
-   `--manifest-path` and `--target` as needed.
-
-   If the change has no Rust library, return `not applicable`.
-2. **Check tools.** Building runs the package's build scripts and proc macros.
-   If your execution constraints do not allow building, return
-   `could not review`: "Public API surface: building the code was not allowed."
-
-   ```text
-   cargo public-api --version
-   cargo +stable install cargo-public-api --locked      # only if missing
-   rustup toolchain install nightly --profile minimal   # only if missing
-   ```
-
-   If installation or extraction fails, return `could not review` with the
-   command and its error. Do not read source to work around it.
-3. **Capture the full surface** with an external target directory
-   (`CARGO_TARGET_DIR`). External targets do not protect `Cargo.lock`: check
-   `git status` after each capture, and if a lockfile changed, restore it and
-   return `could not review` rather than review changed inputs.
-
-   ```text
-   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> > <full-api-output>
-   ```
-
-   `-sss` gives a simpler view but hides blanket, auto-trait and derived impls.
-   Claims that `Debug`, `Clone` or `Send` is missing need the full output.
-4. **Compare base and head** for a change review. The caller tells you whether
-   the package exists on both sides:
+1. **Use complete, matching output.** The public surface must match the
+   selected package, revision, features, target and toolchain. A simplified
+   `-sss` listing hides blanket, auto-trait and derived impls. Claims that
+   `Debug`, `Clone` or `Send` is missing need full output.
+2. **Compare the right surfaces.** A change review needs both base and head,
+   not an unrelated published version or a current-only audit. Match renamed
+   or moved packages using the supplied package facts.
 
    | Package | Compare |
    | --- | --- |
-   | exists at base and head | the real surfaces with `diff` |
+   | exists at base and head | both real surfaces |
    | new at head | an empty base with the full head surface; every item is new |
    | removed at head | the full base surface with an empty head; every item is removed |
 
-   Treat a side as empty only when the caller proved the package is absent. A
-   failed build or a rename is not absence. Never build a package that does not
-   exist. For both sides, use one of:
-
-   ```text
-   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff <version>
-   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff <ref1>..<ref2>
-   ```
-
-   Record the resolved version or revision, not `latest`. Commit diffs check
-   out revisions: run them in a disposable worktree
-   (`git worktree add --detach <path> <rev>`), never the caller's checkout and
-   never with `--force`. For local changes, compare against the actual working
-   tree, not `HEAD`. If a needed comparison fails, return `could not review`;
-   do not fall back to a head-only audit.
-5. **List every emitted family before judging:** modules and re-exports, types
+   An empty side needs proof of package absence, never a failed build. Local
+   changes need output from the actual working tree, not just `HEAD`.
+   Missing required output leaves that surface unreviewed; request the
+   missing evidence from the caller rather than changing scope or reading
+   source.
+3. **List every emitted family before judging:** modules and re-exports, types
    and fields, traits and impls, functions and methods, constants and statics,
    macros, errors, builders and iterators. A standalone audit covers the whole
    surface. A change review covers changed items and signatures, using
    unchanged neighbors only as context. Separate existing concerns from new
    ones. A crate that emits only its root module is valid output.
-6. **Draft, then check against docs.** Draft findings with the smallest
-   decisive output excerpts. Then, for each item a claim depends on, read its
-   rustdoc text, its owner's and trait's docs, and applicable module or crate
-   docs. Use a rustdoc bundle if the caller gave one. Otherwise generate
-   rustdoc JSON for the same configuration and read only those items:
-
-   ```text
-   RUSTC_BOOTSTRAP=1 cargo +<toolchain> rustdoc --locked --lib <feature-args> --target-dir <temp-target-dir> <scope-args> -- -Z unstable-options --output-format json
-   ```
-
-   Set `RUSTC_BOOTSTRAP=1` only on that command. Then apply:
+4. **Draft, then check against docs.** Draft findings with the smallest
+   decisive output excerpts. Request matching rustdoc text for each item the
+   draft depends on, its owner and trait, and applicable module or crate docs.
+   Check every claim, including design questions and claims that an API is
+   already suitable.
 
    | Docs show | Action |
    | --- | --- |
@@ -120,8 +75,9 @@ coverage.
    Examples: facade docs can defeat "accidental foreign re-export"; documented
    thread-local intent can refute an assumed `Send` requirement. Rewrite
    narrowed titles and sections to match what survives. If the draft has claims
-   and you cannot get their docs, return `could not review` with the reason;
-   never return an unchecked draft. An empty draft needs no docs.
+   and the required docs could not be retrieved, report that limit; never
+   return an unchecked draft. This differs from successfully retrieved docs
+   with no explanation. An empty draft needs no docs.
 
 ## Specialist questions
 
@@ -226,39 +182,8 @@ depend on context are conditional design questions.
 
 Write each finding in the
 [findings contract](../review-delivery/findings-contract.md), with exact public
-paths instead of source lines. As part of a larger review, return findings
-plus:
-
-- **Coverage:** families and configurations reviewed, docs checked, and
-  evidence limits.
-- **Status:** `done`, `not applicable` with the reason, or `could not review`
-  with the failed command and its error.
-
-For a standalone audit use this outline. Omit `Verdict:` on the requester's own
-PR.
-
-```text
-**Posted by an AI agent**
-
-# Public API review: <package>
-
-Scope: <tool version, package, features, target, and optional baseline>
-Verdict: <approve | approve with non-blocking comments | changes requested>
-
-## Findings
-<Findings in impact order, with exact public paths and API excerpts.>
-
-## Design questions
-<Conditional design notes.>
-
-## What is already clean
-<Specific strengths, no generic praise.>
-
-## Coverage and limitations
-<Families and configurations, docs checked, and evidence limits.>
-```
-
-Say explicitly when there are no findings. Remove worktrees and target
-directories you created.
+paths instead of source lines. Coverage names the families and configurations
+reviewed, docs checked, and evidence limits. Say explicitly when there are no
+findings; missing captures or unfinished doc checks are not a clean result.
 
 [pragmatic-rust]: https://microsoft.github.io/rust-guidelines/
