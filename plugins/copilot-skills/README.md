@@ -53,7 +53,7 @@ the entry-point guide.
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
-| [`pr-review-queue-github`](skills/pr-review-queue-github/SKILL.md) | Sequential GitHub reviews of PRs labeled `human-review-required`, using native Copilot app automation and linked PR sessions. |
+| [`pr-review-queue-github`](skills/pr-review-queue-github/SKILL.md) | Sequential GitHub reviews of labeled or individually requested PRs, using native Copilot app automation and linked PR sessions. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
@@ -157,17 +157,19 @@ and notification history; `teams-self-message` owns delivery. Digests use
 
 [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) owns the decision
 without tools or side effects. Every queued review requires the exact label
-`human-review-required`, including target-authored PRs and follow-ups. Among
-labeled PRs, eligible reasons are individual requests, target authorship (including
-drafts), and published PRs over 24 hours and at most seven days old with at most
-one distinct human reviewer. Copilot and other verified bot/app reviews do not
-count; repeated submissions by the same human count once. Other authors'
-requests and watched changes also expire after seven days; target-authored PRs
-remain watched until closure or merge while labeled.
-Removing the label pauses review and publication, not history; re-adding it alone
-does not repeat a completed review. The policy distinguishes
-new heads/requests from handled work and incomplete coverage, and keeps retired
-PRs retired after reopening.
+`human-review-required` **or a current individual review request for the target**.
+An explicit request bypasses the label, not the age or draft limits; team requests,
+assignments and mentions do not qualify. Other eligible reasons are target
+authorship (including drafts), watched follow-ups, and published PRs over 24 hours
+and at most seven days old with at most one distinct human reviewer. Copilot and
+other verified bot/app reviews do not count; repeated submissions by the same
+human count once. All other authors' PRs must be non-draft and no older than seven
+days, including requests and watched changes; target-authored PRs remain watched
+until closure or merge while labeled or individually requested.
+Losing both the label and individual request pauses review and publication, not
+history; re-adding the label alone does not repeat a completed review. The policy
+distinguishes new heads/requests from handled work and incomplete coverage, and
+keeps retired PRs retired after reopening.
 
 [`pr-review-queue-github`](skills/pr-review-queue-github/SKILL.md) is the thin
 Copilot app coordinator. It fetches GitHub facts with `gh`, invokes eligibility,

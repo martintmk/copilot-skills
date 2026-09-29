@@ -1,10 +1,10 @@
 ---
 name: pr-review-queue-github
 description: >
-  Review eligible GitHub PRs labeled human-review-required sequentially using
-  the GitHub Copilot app's native session automation and linked PR sessions.
-  Use for "monitor and review GitHub PRs", "review my PR queue" or recurring
-  GitHub reviews. Delegates selection
+  Review eligible GitHub PRs labeled human-review-required or individually
+  requested for the target, sequentially using native GitHub Copilot app
+  session automation and linked PR sessions. Use for "monitor and review GitHub
+  PRs", "review my PR queue" or recurring GitHub reviews. Delegates selection
   policy to pr-review-eligibility and reviews to review-lens. Not for Azure
   DevOps, discovery digests or feedback/fix loops. Editing or installing this
   skill does not start monitoring.
@@ -52,10 +52,12 @@ Review Lens already owns specialist coordination and final delivery.
    another review prompt; surface any human gate. A notification or idle status
    alone is not completion.
    Continue an unfinished finite batch before collecting another.
-2. Capture one UTC `scanAt`. Use scoped, paginated `gh` reads to list **all open
-   PRs labeled `human-review-required`**, including drafts and old target-authored
-   PRs. Refresh previously tracked PRs omitted from that list to distinguish
-   label removal from closure/merge; absence from the list is not retirement.
+2. Capture one UTC `scanAt`. Use scoped, paginated `gh` reads to collect the
+   **union of open PRs labeled `human-review-required` and open PRs individually
+   requesting the target**, including drafts and old target-authored PRs.
+   Deduplicate by repository/PR identity. Refresh previously tracked PRs omitted
+   from both lists to distinguish loss of admission signals from closure/merge;
+   absence from discovery is not retirement.
    Fetch only needed policy facts: current labels, individual requests, their
    applicable `review_requested` timeline event IDs/times, and submitted reviews
    with stable reviewer IDs and provider actor/app types.
@@ -97,17 +99,19 @@ Review Lens already owns specialist coordination and final delivery.
 ## PR session handoff
 
 Supply confirmed scope, PR URL/identity, scoped target and posting actor, current
-labels, exact head and base repository/ref, selected request event/reason, prior
-outcome/debt and any matching factual artifacts. Use this bounded instruction:
+labels and individual requests, exact head and base repository/ref, selected
+request event/reason, prior outcome/debt and any matching factual artifacts.
+Use this bounded instruction:
 
 > Invoke `pr-review-eligibility` with these facts and current metadata. If due,
 > invoke `review-lens` for one full, fresh review in authorized posting mode.
 > Preserve its required specialists, execution-trust rules and delivery gates.
 > Verify checkout/evidence match the pinned head; reused workspaces are not
 > automatically current. Preserve existing edits; never reset or clean to force
-> a match. Recheck eligibility with fresh UTC time, labels and the selected
-> head/target immediately before publication; moved inputs are deferred, not a best-effort
-> descendant finding refresh. Target-authored and poster-authored PRs remain
+> a match. Recheck eligibility with fresh UTC time, labels, individual requests
+> and the selected head/target immediately before publication; moved inputs are
+> deferred, not a best-effort descendant finding refresh.
+> Target-authored and poster-authored PRs remain
 > COMMENT-only. Carry these publication constraints to the sole `review-delivery`
 > worker through Review Lens, not a second queue-specific posting stage.
 > Return the submitted review ID/URL, covered snapshot, complete/incomplete/blocked
