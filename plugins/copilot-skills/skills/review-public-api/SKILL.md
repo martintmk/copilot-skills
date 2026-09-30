@@ -2,160 +2,82 @@
 name: review-public-api
 description: >
   Audit a Rust library's exported contract using cargo-public-api output only,
-  then isolated rustdoc-based filtering of provisional claims. Use for a
-  whole-crate or explicit output-only API audit, or review-lens's mandatory
-  output-only pass; small PRs cover changed public items and their immediate
-  family. Applies idiomatic Rust API practices and
-  API-visible Pragmatic Rust Guidelines. Not for source-based findings,
-  implementation correctness, docs quality/consistency, performance or posting.
+  then check provisional claims against the items' rustdoc. Use for a
+  whole-crate or explicit output-only API audit, or review-lens's public API
+  surface area; small PRs cover changed public items and their immediate
+  family. Applies idiomatic Rust API practices and API-visible Pragmatic Rust
+  Guidelines. Not for source-based findings, implementation correctness, docs
+  quality/consistency, performance or posting.
 ---
 
 # Review Public API
 
-Apply the [fresh-worker entry gate](../review-lens/worker-isolation.md); an
-assigned output-only worker executes here without redispatching itself. Follow
-the [findings contract](../review-delivery/findings-contract.md) and
-[shared context](../review-lens/review-context.md) for trust, matching, handoff
-and cleanup only. Do not restart coordinator setup or invoke `review-lens`.
-Source/diff, CI, repository-rule inspection and executable-reproduction
-prerequisites do **not** apply; exact public paths replace source anchors.
+Judge a library's public surface the way a consumer sees it: from
+`cargo public-api` output alone. Apply idiomatic Rust conventions and the
+API-visible [Pragmatic Rust Guidelines][pragmatic-rust].
 
-## Evidence boundary: OUTPUT-ONLY, REPORT-ONLY
+Reading only the output keeps the review honest about what users actually get.
+It also sets limits: output cannot prove correctness, validation, panics,
+soundness, performance, redaction or docs quality. State these limits once in
+coverage.
 
-- Generate candidates solely from exact `cargo public-api` output. Never
-  open/search source, manifests/lockfiles, build scripts, docs, tests/examples,
-  source diffs, repository history, rustdoc JSON or rendered docs; do not supplement with
-  `cargo metadata`, rust-analyzer or code search.
-- Scope/use cases orient review. Tool help/versions, diagnostics, revision IDs
-  and artifact metadata guide execution/matching, not API-quality claims.
-  `packageComparison` establishes presence/mode only: neither inspect its source
-  evidence nor infer absence from failed Cargo commands.
-- Mandatory isolated [post-processing](rustdoc-post-processing.md) uses
-  `review-public-docs` and only removes/narrows claims. It cannot add/strengthen
-  them, increase severity or prove runtime behavior. Keep JSON/full bundles out
-  of this worker; returned provenance cannot support new claims.
-- Never edit, post, vote or invoke `review-delivery`. Keep captures/targets
-  outside the unchanged reviewed worktree; remove only owned resources after
-  consumers finish.
+## Evidence boundary
 
-Assess consumer-visible contracts using idiomatic Rust conventions and
-API-visible [Pragmatic Rust Guidelines][pragmatic-rust]. Output cannot prove
-correctness, validation, panics, soundness, allocation/performance, redaction or
-docs quality; docs prove intent, not behavior. State these limits once in
-coverage. The caller/coordinator routes code/docs or docs/docs disagreements
-with scope/artifact references to [`review-consistency`](../review-consistency/SKILL.md),
-never as a substitute for mandatory filtering.
+- **Draft from output only.** Do not open source, manifests, lockfiles, build
+  scripts, tests, examples, diffs, history or rendered docs while drafting. Do
+  not use `cargo metadata`, rust-analyzer or code search to find claims.
+- **Docs can only remove or narrow claims.** After the draft, read the
+  rustdoc of the items you criticize. Docs can show a choice was deliberate.
+  They never add findings, raise severity or prove runtime behavior.
+- **Report only.** Never edit, post or vote.
 
-## Procedure
+## Review rules
 
-1. **Resolve scope.** Review Lens dispatches this pass every run. Proven **no
-   Rust library scope** in the coordinator's factual package inventory permits
-   `not-applicable` with provenance, without Cargo. Unknown selection or missing
-   required extraction is `blocked`. Every Rust-library change, including small,
-   docs-only and clean reviews, requires this procedure and filtering.
+1. **Use complete, matching output.** The public surface must match the
+   selected package, revision, features, target and toolchain. A simplified
+   `-sss` listing hides blanket, auto-trait and derived impls. Claims that
+   `Debug`, `Clone` or `Send` is missing need full output.
+2. **Compare the right surfaces.** A change review needs both base and head,
+   not an unrelated published version or a current-only audit. Match renamed
+   or moved packages using the supplied package facts.
 
-   Accept caller package/manifest, revisions, features, target, toolchain and
-   artifacts; otherwise use the tool-selected package, `--all-features` and host
-   target. Ambiguous selection needs the package name or a blocker, not manifest
-   inspection. Before change extraction consume the exact
-   [packageComparison](../review-lens/package-comparison.md); resolve `unknown`
-   sides/mode through its context owner or block. Head-only audits need no
-   baseline record.
+   | Package | Compare |
+   | --- | --- |
+   | exists at base and head | both real surfaces |
+   | new at head | an empty base with the full head surface; every item is new |
+   | removed at head | the full base surface with an empty head; every item is removed |
 
-   `<feature-args>` defaults to `--all-features`, replaced only by explicit
-   `--features`/`--no-default-features` choices. `<scope-args>` contains established
-   package/manifest/target options; preserve toolchain through installed help.
-   Record effective configuration and inherited surface-affecting build flags.
-   Reuse only matching revision/dirty state, package, configuration, toolchain
-   and output options.
+   An empty side needs proof of package absence, never a failed build. Local
+   changes need output from the actual working tree, not just `HEAD`.
+   Missing required output leaves that surface unreviewed; request the
+   missing evidence from the caller rather than changing scope or reading
+   source.
+3. **List every emitted family before judging:** modules and re-exports, types
+   and fields, traits and impls, functions and methods, constants and statics,
+   macros, errors, builders and iterators. A standalone audit covers the whole
+   surface. A change review covers changed items and signatures, using
+   unchanged neighbors only as context. Separate existing concerns from new
+   ones. A crate that emits only its root module is valid output.
+4. **Draft, then check against docs.** Draft findings with the smallest
+   decisive output excerpts. Request matching rustdoc text for each item the
+   draft depends on, its owner and trait, and applicable module or crate docs.
+   Check every claim, including design questions and claims that an API is
+   already suitable.
 
-2. **Establish trust/tools once.** Builds can execute scripts/proc macros.
-   Reuse trust and version records; otherwise require trusted provenance or
-   isolated credential-free execution, not source inspection.
+   | Docs show | Action |
+   | --- | --- |
+   | nothing relevant | Keep the claim. |
+   | the claim's premise is wrong, or the choice is a documented deliberate exception | Remove the claim. |
+   | the answer to a design question | Remove the question. |
+   | part of the claim is wrong | Keep only the part the output still proves. |
+   | conflicting or missing docs | Keep the claim; note the gap in coverage. |
 
-   ```text
-   cargo public-api --version
-   ```
-
-   Only if missing, install the official tool with stable:
-
-   ```text
-   cargo +stable install cargo-public-api --locked
-   ```
-
-   Install a missing compatible nightly, honoring any caller-specified version:
-
-   ```text
-   rustup toolchain install nightly --profile minimal
-   ```
-
-   Unsafe execution, failed installation/extraction: return `blocked`, exact
-   attempted command and decisive reason. Never troubleshoot by reading source.
-
-3. **Capture the full present-side surface once.** Usually head; for proven
-   `removed-package`, use exact baseline in an owned disposable worktree, never
-   the absent head. Use an external target (`CARGO_TARGET_DIR`) and a documented
-   lock-preserving option when supported. Block if reviewed inputs would change;
-   external targets alone do not protect lockfiles. Capture verbatim:
-
-   ```text
-   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> > <full-api-output>
-   ```
-
-   Keep the complete capture despite display truncation; inventory paths/families
-   privately, not in handoff dumps. Optional readability view:
-
-   ```text
-   cargo public-api --color=never --include function-parameter-names <feature-args> -sss <scope-args> > <simplified-api-output>
-   ```
-
-   Reuse matching tool artifacts/cache when supported; no mandatory second
-   build or JSON parsing here. `-sss` omits blanket, auto-trait and auto-derived
-   impls: `Debug`/`Clone`/`Send` absence claims require full output. Retain JSON
-   paths/provenance for downstream retrieval without opening them.
-
-4. **Complete every PR/change/semver comparison.** Record mode, exact revisions,
-   presence provenance and real capture paths:
-   - `added-package`: logical empty base versus full real head, including crate
-     module; all emitted items are additions.
-   - `removed-package`: full real baseline versus logical empty head; all
-     emitted items are removals.
-   - `paired`: real counterparts and matching API diff. Failed captures or
-     renamed packages never justify empty sides.
-
-   Logical emptiness is metadata, not fabricated output. Never extract/build a
-   proven absent package, including through commit-diff commands. For `paired`,
-   reuse a matching capture or choose one supported alternative, capturing
-   outside the reviewed repository:
-
-   ```text
-   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff latest
-   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff <version>
-   cargo public-api --color=never --include function-parameter-names <feature-args> <scope-args> diff <ref1>..<ref2>
-   ```
-
-   Record resolved baseline version/revision, not `latest`. Commit diffing
-   checks out revisions: use an external disposable worktree, never the caller's
-   worktree or `--force`. It is neither a sandbox nor a dirty-head copy. Paired
-   dirty reviews require tool-supported comparison against the actual captured
-   head, not `HEAD`. One-sided dirty reviews likewise require actual dirty
-   captures. Unavailable required comparisons are `blocked`, not full-crate
-   fallback audits.
-
-5. **Inventory all emitted families before judging.** Include modules/re-exports,
-   types/fields, traits/impls, functions/methods, constants/statics, macros,
-   errors/builders/iterators. Standalone audits cover the full current surface;
-   small diffs cover changed items/affected signatures, using immediate unchanged
-   families only as context. Explain full-surface scope for broad changes;
-   separate pre-existing concerns from regressions. Missing diffs prove neither breadth
-   nor no change. One-sided modes cover the full real surviving surface.
-   Crate-module-only scaffold output is valid, not failure or `not-applicable`.
-
-6. **Draft, then always filter.** Apply lenses to the selected set with decisive
-   emitted excerpts; separate conditional questions and omit unprovable claims.
-   Run [post-processing](rustdoc-post-processing.md) once with its complete
-   handoff, **even for clean/empty reports**. Return only its filtered report;
-   unavailable/failed isolation is `blocked`, never permission to release drafts.
+   Examples: facade docs can defeat "accidental foreign re-export"; documented
+   thread-local intent can refute an assumed `Send` requirement. Rewrite
+   narrowed titles and sections to match what survives. If the draft has claims
+   and the required docs could not be retrieved, report that limit; never
+   return an unchecked draft. This differs from successfully retrieved docs
+   with no explanation. An empty draft needs no docs.
 
 ## Specialist questions
 
@@ -247,45 +169,21 @@ require output-demonstrated consumer or compatibility cost.
 - Inventory visible macro names/signatures only; syntax, expansion hygiene,
   generated bounds and behavior remain out of scope.
 
-## Proof and output
+## Evidence and output
 
-Use exact public paths and smallest decisive excerpts, including related emitted
-lines needed to establish absence. Explain concrete usability, interoperability,
-type-identity or compatibility cost and a specific better public shape, not an
-implementation patch; cite useful `M-*` IDs/conventions.
+Use exact public paths and the smallest decisive excerpts, including the lines
+that show something is absent. Explain the concrete cost to users, interop,
+type identity or compatibility, and a better public shape. Cite useful `M-*`
+guideline IDs.
 
-Cleanliness is usually `Non-blocking`/`Nit`; blocking requires substantial,
-demonstrated consumer/compatibility impact. Context-dependent alternatives are
-conditional **Design questions**, not defects or simplified-output guesses.
+Findings about tidiness are usually `Non-blocking` or `Nit`. Blocking needs
+substantial, demonstrated impact on users or compatibility. Alternatives that
+depend on context are conditional design questions.
 
-Choose area or standalone role before drafting and preserve it through filtering.
-Area results use the shared findings/coverage contract. Standalone outline
-(omit `Verdict:` on the requester's own PR):
-
-```text
-**Posted by an AI agent**
-
-# Public API review: <package>
-
-Scope: <tool version, package, features, target, and optional baseline>
-Verdict: <approve | approve with non-blocking comments | changes requested | blocked>
-
-## Findings
-<Shared finding blocks, exact public paths and API excerpts; impact order.>
-
-## Design questions
-<Conditional Design notes using the findings contract.>
-
-## What is already clean
-<Specific strengths, no generic praise.>
-
-## Coverage and limitations
-<Families/configurations, rustdoc filtering coverage and evidence limits.>
-```
-
-Distinguish excerpts with code formatting. Explicitly report no findings with
-covered families/configurations when clean. Extraction failure returns
-`blocked` and decisive diagnostics, not an API verdict. The coordinator owns
-combined presentation/delivery; this worker returns only the filtered report.
+Write each finding in the
+[findings contract](../review-delivery/findings-contract.md), with exact public
+paths instead of source lines. Coverage names the families and configurations
+reviewed, docs checked, and evidence limits. Say explicitly when there are no
+findings; missing captures or unfinished doc checks are not a clean result.
 
 [pragmatic-rust]: https://microsoft.github.io/rust-guidelines/

@@ -39,7 +39,7 @@ the entry-point guide.
 | Skill | Use it for |
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
-| [`review-lens`](skills/review-lens/SKILL.md) | Every sub-review on every Rust PR, branch, commit or working-tree review, with public API as the dominant lens. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust PR, branch, commit or working-tree reviews that run every review area, with public API as the dominant lens. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Reproduced behavioral defects across every changed correctness-sensitive path. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
@@ -48,8 +48,8 @@ the entry-point guide.
 | [`review-naming`](skills/review-naming/SKILL.md) | Sibling naming conventions and unnecessary abstractions. |
 | [`review-telemetry`](skills/review-telemetry/SKILL.md) | Signal contracts, OpenTelemetry conventions, cardinality and duplicate instrumentation. |
 | [`review-consistency`](skills/review-consistency/SKILL.md) | Agreement between code, public docs, examples and related guides, including stale defaults or conflicting instructions. |
-| [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit with isolated docs-based filtering. |
-| [`review-public-docs`](skills/review-public-docs/SKILL.md) | A scoped, authoritative public-docs bundle from rustdoc JSON; no review verdict. |
+| [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit, with claims checked against rustdoc. |
+| [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
@@ -88,44 +88,47 @@ the complete production outcome rather than code volume or compilation alone.
 ## Review pipeline
 
 Ask for "review this PR" or "review my changes" to use `review-lens`, or name a
-focused skill to review only that area.
+focused skill to review only that area. Area skills contain only review rules:
+what to look for, what evidence counts and how to report. The coordinator
+supplies context and commands, selects the review model and passes down the
+session's permissions and execution constraints. A focused request needs that
+setup for only its selected skill. Only the findings contract is shared.
 
-1. **Establish context once:** pin revisions/configuration, trusted rules,
-   execution permission, CI and discussion using
-   [shared context](skills/review-lens/review-context.md).
-2. **Dispatch all ten specialists:** every invocation, even docs-only, uses
-   [fresh workers](skills/review-lens/worker-isolation.md) with minimal factual
-   handoffs. All specialists and nested stages inherit the coordinator's execution
-   boundary and may run required tools directly within it. Reuse matching evidence,
-   not reviewer conversations or reasoning.
-   Dependent stages remain sequential and isolated.
-3. **Complete and deliver:** require a matching coverage record from every
-   worker, then one fresh delivery worker. Missing work prevents publication.
-   Blocked areas make the review incomplete but do not suppress findings from
-   completed areas: delivery posts a COMMENT with a prominent blocked-area
-   warning and no verdict or vote. At least one area must complete. A later
-   descendant-head refresh checks existing findings only after a complete review
-   and forces comment-only delivery, not a claim of full new-head coverage.
+`review-lens` adds the coordination:
 
-Complete current-head reviews automatically approve when clean or containing
-only nits, retaining any nit comments (GitHub approval; ADO approved or approved
-with suggestions). No extra confirmation is needed, including in the review
-queue. Unresolved findings still count even when duplicate comments are omitted.
-Report-only reviews never post; requester-owned/poster-owned PRs and descendant
-finding refreshes remain comment-only/no vote. Incomplete coverage cannot approve.
+1. **Pin the change once:** base and head, repository rules, CI and existing
+   discussion.
+2. **Inherit execution limits:** reviewers use the same permissions, tools and
+   constraints as their parent, not separate approval checks or branch-based
+   policies. Prepare missing tools or artifacts only when needed and permitted.
+3. **Run nine areas in dedicated high-reasoning agents:** public contract,
+   correctness, tests, performance, naming, telemetry, resilience, consistency
+   and public API surface. Set high reasoning in the launch settings, honor the
+   configured model, and never silently downgrade. `review-public-docs` is a
+   helper that supplies rustdoc text.
+4. **Resolve gaps and merge:** source review can finish without executing code;
+   unproven runtime concerns remain questions. Public API review needs matching
+   captures and docs for its claims, not necessarily a new local build. Resume
+   a reviewer once after fixing a concrete setup problem.
+5. **Deliver once** through `review-delivery`, with a plain-language summary.
+
+| Outcome | Delivery |
+| --- | --- |
+| Complete | Approves when clean or nit-only; otherwise approves with comments or requests changes. |
+| Incomplete | Comment with a warning that lists unreviewed topics; no verdict or vote. |
+| Refreshed after new commits | Comment rechecking existing findings only. |
+| Requester's or poster's own PR | Comment, no verdict. |
+| Report only | Nothing posted. |
 
 The [findings contract](skills/review-delivery/findings-contract.md) owns the
 format at every handoff: AI attribution, bold title, **Problem** (evidence),
 **Why this matters** (impact), and **Suggested fix** for actionable findings.
-Design notes use an observation title and omit only the fix. Clean summaries
-and docs bundles are not findings; specialists need no provider-posting guide.
+Design notes use an observation title and omit only the fix.
 
-`review-public-api` remains output-only/report-only with mandatory isolated docs
-filtering. `review-public-docs` returns scoped rustdoc bundles, not raw JSON,
-findings or verdicts. Proven added/removed crates use the
-[package-presence contract](skills/review-lens/package-comparison.md): a logical
-empty side and complete real artifacts for the existing side. Failed extraction
-for an existing crate is a blocker, never proof of absence.
+`review-public-api` drafts only from `cargo public-api` output, then reads the
+rustdoc of criticized items to remove or narrow claims, never to add them.
+The coordinator supplies the captures or the commands to produce them; the
+skill contains the review rules, not tool installation or checkout management.
 
 ## PR tracking and automation
 

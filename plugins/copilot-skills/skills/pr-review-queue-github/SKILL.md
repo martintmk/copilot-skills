@@ -114,7 +114,8 @@ Use this bounded instruction:
 
 > Invoke `pr-review-eligibility` with these facts and current metadata. If due,
 > invoke `review-lens` for one full, fresh review in authorized posting mode.
-> Preserve its required specialists, execution-trust rules and delivery gates.
+> Let Review Lens supply specialist context and dedicated high-reasoning agents.
+> Preserve inherited session permissions, execution limits and delivery rules.
 > Verify checkout/evidence match the pinned head; reused workspaces are not
 > automatically current. Preserve existing edits; never reset or clean to force
 > a match. Recheck eligibility with fresh UTC time, labels, individual requests
@@ -123,7 +124,7 @@ Use this bounded instruction:
 > Target-authored and poster-authored PRs remain
 > COMMENT-only. Carry these publication constraints to the sole `review-delivery`
 > worker through Review Lens, not a second queue-specific posting stage.
-> Return the submitted review ID/URL, covered snapshot, complete/incomplete/blocked
+> Return the submitted review ID/URL, covered snapshot, complete/incomplete/failed
 > outcome, handled request event and any deferred newer work to the coordinator;
 > for a no-write skip/deferral, return its reason instead. Finish or stop all owned
 > review/delivery workers before reporting the terminal outcome.

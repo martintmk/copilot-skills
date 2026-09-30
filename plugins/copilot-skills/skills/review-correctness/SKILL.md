@@ -5,63 +5,72 @@ description: >
   it: control-flow and version gates, boundary and representation limits,
   resource and free-list models, cancellation and drop safety, time arithmetic,
   and round-trip or invariant claims. Uses reproductions, Miri and bounded
-  adversarial inputs under the shared verification discipline. Use for a
-  focused defect audit, or when review-lens routes behavioral risk here. Not for
-  API design, naming, or formatting.
+  adversarial inputs when code may run. Use for a focused defect audit, or when
+  review-lens routes behavioral risk here. Not for API design, naming, or
+  formatting.
 ---
 
 # Review Correctness
 
-Trace changed runtime implementations, including private code, not signatures.
-Follow [shared context](../review-lens/review-context.md) and the
-[findings contract](../review-delivery/findings-contract.md).
+Find runtime defects in changed code, including private code. Trace what the
+code does, not just its signatures.
 
-Public/error/panic contracts belong to `review-api-design`; recovery and
-middleware composition to `review-resilience`; test changes and preservation to
-`review-tests`. Missing regression coverage belongs in the runtime defect's fix,
-not a duplicate finding.
+Leave public contract design, retry and recovery policy, and test preservation
+to their own reviews. When a defect lacks a regression test, put the test in
+this finding's fix instead of a separate finding.
 
 ## Procedure
 
-1. Trace **every** changed correctness-sensitive path from entry to effect:
-   implementation, callers, errors, cleanup, cancellation/drop, concurrency and
-   tests. Never sample, stop at the first finding, or skip paths for API priority.
-2. Apply the relevant defect questions below, not an indiscriminate checklist.
-   Reproduce with faithful focused tests, bounded adversarial inputs and Miri
-   where appropriate, following shared baseline/configuration and falsification
-   rules.
-3. **No adequate reproduction means no correctness finding.** Omit unproven
-   suspicions or identify them as questions.
+1. **Trace every changed path** that can affect behavior, from entry to effect:
+   implementation, callers, errors, cleanup, cancellation, drop, concurrency and
+   tests. Do not sample or stop at the first finding.
+2. **Ask the relevant questions below**, not every question for every change.
+3. **Prove each suspected defect** when you can run code:
+   - Write the smallest test that shows the wrong behavior. It should fail
+     before a fix and make a good regression test.
+   - Run the same test at the base. If it fails there too, the defect is not new.
+   - Use Miri for unsafe code and allocator claims. Use bounded adversarial
+     inputs; never trigger a real `2^32` blow-up.
+   - Try to disprove your own finding. Drop it if the check refutes it.
+   - Match the configuration: `--all-features` does not test
+     `#[cfg(not(feature = "..."))]` code or another target.
+4. **Without a reproduction, there is no correctness finding.** Drop the
+   suspicion or ask it as a question. This includes reviews where you cannot
+   run code or the build fails: finish tracing, raise questions, and list what
+   you could not run.
 
-## Defect questions
+## Questions
 
-- **Parsing/version gates:** Off-by-one ranges, accepted decoder versions
-  rejected by gates, success-shaped empty results? Patch a fixture to the
-  untested value, e.g. valid v2 returns `Ok` with `callers == None`.
-- **Representation:** Are sizes/indices checked against actual capacity/index
-  models? Can decoding accept an unrepresentable topology then iterate it?
-  Use bounded adversarial input.
-- **Resources/free lists/UB:** Unreleased slots on unlink, reads consuming
-  later-needed state, tables filling during ordinary use? Use Miri for applicable
-  focused tests and quote the decisive result.
-- **Cancellation/drop:** What commits when dropped at each await? Are abort
-  waiters notified? Can dropping a hedge prevent breaker opening? Transports and
-  middleware must honor cancellation, not assume completion.
-- **Concurrency:** Blocking async calls, locks across await, thread-affine state
-  crossing moves? Enforcing public `!Send` types belongs to `review-api-design`.
-- **Time:** Test `duration_since` and similar boundaries for every valid system
-  time; saturate rather than panic.
-- **Invariants/round-trips:** Prove fixed-width or round-trip promises on all
-  public paths, including `FromStr` and `TryFrom`, not just constructors.
-  Implementation violations stay here. Only when trusted intent supports
-  runtime behavior should `review-consistency` correct a wrong documented claim;
-  never weaken docs to conceal a runtime violation.
+- **Parsing and version gates:** Off-by-one ranges? A decoder version accepted
+  in one place but rejected by a gate? An empty result that looks like success?
+  Patch a fixture to the untested value, for example a valid v2 input that
+  returns `Ok` with `callers == None`.
+- **Representation:** Are sizes and indices checked against the real capacity
+  or index model? Can decoding accept a shape it cannot represent and then
+  iterate it?
+- **Resources, free lists, undefined behavior:** Slots not released on unlink?
+  Reads that consume state needed later? Tables that fill up in normal use?
+- **Cancellation and drop:** What is committed if the future is dropped at each
+  `.await`? Are waiters notified on abort? Can dropping a hedge stop a breaker
+  from opening? Transports and middleware must handle cancellation.
+- **Concurrency:** Blocking calls in async code? Locks held across `.await`?
+  Thread-affine state moved between threads?
+- **Time:** Test `duration_since` and similar at every valid system time.
+  Saturate instead of panicking.
+- **Invariants and round-trips:** Does every public path keep a fixed-width or
+  round-trip promise, including `FromStr` and `TryFrom`, not just
+  constructors? If docs promise behavior the code breaks, fix the code; never
+  weaken the docs to hide it.
 
-## Proof and coverage
+## Evidence
 
-Give the triggering input/sequence, decisive reproduced result, concrete impact
-and specific correction, with a focused regression test when useful. Private
-wrong output, hangs, leaks, panics or data loss are blocking despite lacking
-semver visibility.
+Give the triggering input or sequence, the reproduced result, the concrete
+impact and a specific fix, with a focused regression test when useful. Wrong
+output, hangs, leaks, panics or data loss are blocking even in private code.
+Show decisive values; never describe reasoning as if you ran it.
 
-Coverage: all paths traced and what remained unverified.
+## Report
+
+Write each finding in the
+[findings contract](../review-delivery/findings-contract.md).
+Coverage names the paths traced, what you ran, and what remains unverified.
