@@ -41,7 +41,7 @@ Within those bounds, at least one reason must apply:
 | --- | --- |
 | Target-authored | Author matches the scoped target, regardless of age, draft state or prior reviews. |
 | Requested | A current individual request for the target, with an authoritative request event and time. Team requests, assignments and mentions do not count. |
-| Under-reviewed | Another author's PR with `24h < now - createdAt <= 7 * 24h` and complete history proving at most one distinct human reviewer. This includes no reviews, Copilot-only reviews and reviews from one human. |
+| Under-reviewed | Another author's PR with `1h < now - createdAt <= 7 * 24h` and complete history proving at most one distinct human reviewer. This includes no reviews, Copilot-only reviews and reviews from one human. |
 | Follow-up | A previous complete queue review enrolled this PR for watching, or admitted work remains unfinished. An unpublished under-reviewed attempt must still meet the human-reviewer limit. |
 
 Count humans by stable GitHub user ID across submitted reviews; repeated reviews

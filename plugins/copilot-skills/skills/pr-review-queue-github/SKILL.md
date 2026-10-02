@@ -48,9 +48,12 @@ Review Lens already owns specialist coordination and final delivery.
 
 1. Reconcile the previously dispatched PR first. Use `get_session` for its saved
    session ID; use `get_sessions_status` when live attention/ownership is unclear.
-   If it is still working or awaiting input, do not dispatch another PR or send
-   another review prompt; surface any human gate. A notification or idle status
-   alone is not completion.
+   If it is still working, do not dispatch another PR or send another review
+   prompt. If it is awaiting input, answer from the confirmed scope and handoff
+   when the decision is already authorized, using `answer_session_input` or
+   `respond_to_session_plan` as applicable; otherwise surface the exact human
+   gate. Do not leave a child waiting for routine choices covered by its
+   instructions. A notification or idle status alone is not completion.
    Continue an unfinished finite batch before collecting another.
 2. Capture one UTC `scanAt`. Use scoped, paginated `gh` reads to collect the
    **union of open PRs labeled `human-review-required` and open PRs individually
@@ -115,6 +118,11 @@ Use this bounded instruction:
 > Invoke `pr-review-eligibility` with these facts and current metadata. If due,
 > invoke `review-lens` for one full, fresh review in authorized posting mode.
 > Let Review Lens supply specialist context and dedicated high-reasoning agents.
+> Work autonomously in autopilot mode: do not switch to plan/interactive mode or
+> ask the user to approve or clarify routine decisions within this handoff.
+> Make reasonable choices within the confirmed scope. If an environment or
+> tool-level permission gate actually prevents an action, do not bypass it;
+> report the exact gate and stop rather than waiting on an avoidable question.
 > Preserve inherited session permissions, execution limits and delivery rules.
 > Verify checkout/evidence match the pinned head; reused workspaces are not
 > automatically current. Preserve existing edits; never reset or clean to force
