@@ -5,9 +5,10 @@ description: >
   Fast-track mechanical changes, small compatible API additions and
   evidence-backed fixes that unblock the pipeline.
   Approve with a short automation-attributed review; dismiss this skill's
-  approvals when eligibility is lost. Use for lightweight automatic approval,
-  not full reviews, PR discovery, merging or Azure DevOps. Installing or editing
-  this skill starts no monitoring.
+  approvals when eligibility is lost. Each PR has its own monitor state and
+  trigger, independent of the GitHub review queue. Use for lightweight automatic
+  approval, not full reviews, PR discovery, merging or Azure DevOps. Installing
+  or editing this skill starts no monitoring.
 ---
 
 # PR Auto-Approve
@@ -17,6 +18,9 @@ approval, but stop when the PR merges or carries `human-review-required`.
 When escalating, leave a short comment explaining why human review is required.
 Full reviews belong to [Review Lens](../review-lens/SKILL.md); do not dispatch it
 from this skill.
+
+Each PR monitor owns its state and trigger. The `human-review-required` label is
+a GitHub handoff signal, not shared state with the review queue.
 
 ## Three invariants
 
@@ -47,34 +51,47 @@ bumps are not mechanical by default.
 
 ## Monitor until merged or human review is required
 
-1. **Set up once.** Confirm one explicit/session-linked PR and cadence; resolve
-   the GitHub actor. Restore saved state and read lifecycle/labels before
-   scheduling. Resumed terminal runs, merged PRs and PRs with
-   `human-review-required` go straight to stop handling without starting
-   monitoring. Otherwise register/reuse one durable trigger, preferably session
-   automation, without replacing unrelated automation. Verify the trigger and
-   approve/dismiss-own-review/label/comment access before approving. Ticks reuse
-   setup; unavailable capability blocks approval.
-2. **Persist and serialize.** Outside the checkout, save PR/actor and trigger
-   identity, last fully proven snapshot (base ref/SHA, merge-base, head), owned
-   review IDs and issued snapshots, status-comment ID, terminal reason and
-   unfinished writes. Serialize ticks; reconcile uncertain writes before retrying
-   or approving. Terminal retries finish only pending cleanup, never eligibility
-   checks.
-3. **Refresh every tick.** Read actor, lifecycle and labels first. On merge or
+1. **Own one PR.** Confirm one explicit/session-linked PR and cadence. Use one
+   dedicated monitor session for that PR, never a review-queue coordinator or
+   its linked review session. In the Copilot app, find an existing monitor with
+   `list_sessions_and_chats` and `get_session`; reuse it only after confirming
+   the PR, session and trigger in its saved state. If none exists and this
+   session belongs to another task, use `create_session` with `detached: true`
+   and the confirmed PR and cadence in its kickoff. Stop if that is unavailable
+   or ownership is uncertain; do not start a second monitor or share an
+   automation.
+2. **Set up once.** Resolve the GitHub actor. Restore this monitor's saved state
+   and read lifecycle/labels before scheduling. Resumed terminal runs, merged
+   PRs and PRs with `human-review-required` go straight to stop handling without
+   starting monitoring. Otherwise persist PR/session ownership before
+   registering only this monitor's durable trigger. In the Copilot app, read its
+   `get_session_automation` result before `save_session_automation`, then
+   read back and save the trigger identity; never replace an unrelated
+   automation. Verify the trigger and approve/dismiss-own-review/label/comment
+   access before approving. Ticks reuse setup; unavailable capability blocks
+   approval.
+3. **Persist and serialize.** Save state in this monitor's per-session storage
+   outside the checkout, namespaced to `pr-auto-approve` and the exact
+   host/repository/PR identity. Bind the record to its session and trigger; never
+   use review-queue history or a shared queue file. Save PR/actor, last fully
+   proven snapshot (base ref/SHA, merge-base, head), owned review IDs and issued
+   snapshots, status-comment ID, terminal reason and unfinished writes. Serialize
+   ticks; reconcile uncertain writes before retrying or approving. Terminal
+   retries finish only pending cleanup, never eligibility checks.
+4. **Refresh every tick.** Read actor, lifecycle and labels first. On merge or
    `human-review-required`, stop without further eligibility checks, regardless
    of who applied the label. Otherwise read trusted rules, revisions, checks and
    reviews. Paginate all check runs and commit statuses for the current head or
    verified merge revision; required checks alone are insufficient. Without the
    human-review label, closed-but-unmerged pauses PR writes, not monitoring;
    resume on reopening. There is no age cutoff.
-4. **Prove current eligibility.** First scans, changed commits/base/target and
+5. **Prove current eligibility.** First scans, changed commits/base/target and
    unfinished proof require the complete merge-base-to-head diff and relevant
    source. Paginate; recover truncated content from exact revisions. Unread
    changes block approval. Use existing API tools, current CI and focused
    checks, not exhaustive review suites. Identify each added test's meaningful
    scenario/assertion and confirm execution at this revision.
-5. **Prevent stale decisions.** Recheck prerequisites every tick and revisions/
+6. **Prevent stale decisions.** Recheck prerequisites every tick and revisions/
    lifecycle/labels/checks before and after writes. A newly observed human-review
    label takes the stop path, not reassessment. Revision or check movement
    invalidates proof; reassess and withdraw approvals unless current eligibility
@@ -135,14 +152,15 @@ head, specific failed invariant/check or missing evidence, essential links and
 human action needed; "needs human review" alone is insufficient. Distinguish
 uncertainty from defects. Start with the same AI attribution, use
 `<!-- pr-auto-approve -->`, and verify the comment's ID/author. Reuse the owned
-comment on retries; no per-tick chatter, inline findings, nits or review templates.
-Then stop monitoring.
+comment on retries, not the review queue's preparation comment. No per-tick
+chatter, inline findings, nits or review templates. Then stop monitoring.
 
 **Stop:** persist the terminal reason. For human-review stops, dismiss any active
 owned approvals, including earlier heads. Finish any pending owned escalation
 comment even if the label is already present; do not invent a rationale for a
-label applied by someone else. Cancel only the owned monitoring trigger and
-verify cancellation. Do not poll new commits, checks, label removal or reopening.
+label applied by someone else. Cancel only the trigger bound to this monitor's
+state and verify cancellation; never clear the review queue's automation. Do not
+poll new commits, checks, label removal or reopening.
 
 For an escalation, attempt the label and explanatory comment even if dismissal
 fails; explicitly flag any live approval in the comment. Always attempt trigger
