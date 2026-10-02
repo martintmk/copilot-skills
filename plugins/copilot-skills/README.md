@@ -57,7 +57,7 @@ the entry-point guide.
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
-| [`minimal-local-validation`](skills/minimal-local-validation/SKILL.md) | Runs `cargo check` only for changed Rust crates and leaves comprehensive workspace validation to CI. |
+| [`minimal-local-validation`](skills/minimal-local-validation/SKILL.md) | Runs `cargo check` only for changed Rust crates, leaves comprehensive validation to CI, and continues queued work or prompts without waiting for checks. |
 | [`teams-self-message`](skills/teams-self-message/SKILL.md) | Delivery to the user's own Teams chat. |
 
 ## Large engineering work
