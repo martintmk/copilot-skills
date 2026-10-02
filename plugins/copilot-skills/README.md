@@ -154,6 +154,14 @@ label pause PR writes until reopening. Setup confirms a cadence and verifies a
 durable trigger.
 Installing or editing the skill starts nothing; it never merges.
 
+Run each auto-approve monitor in its own session for one PR, separate from the
+review-queue coordinator and its child sessions. Each monitor keeps its own
+per-session state and trigger. The review queue keeps its own outcomes and
+automation in its dedicated coordinator session. Neither queue clears the
+other's schedule, writes its state or treats its reviews as completed work.
+The `human-review-required` label is a GitHub handoff signal, not shared queue
+state.
+
 ```text
 Use pr-auto-approve to monitor https://github.com/OWNER/REPO/pull/NUMBER
 until merged or labeled human-review-required, checking every 10 minutes.

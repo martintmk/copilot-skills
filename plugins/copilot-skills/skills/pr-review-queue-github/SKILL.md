@@ -5,9 +5,10 @@ description: >
   requested for the target, sequentially using native GitHub Copilot app
   session automation and linked PR sessions. Use for "monitor and review GitHub
   PRs", "review my PR queue" or recurring GitHub reviews. Delegates selection
-  policy to pr-review-eligibility and reviews to review-lens. Not for Azure
-  DevOps, discovery digests or feedback/fix loops. Editing or installing this
-  skill does not start monitoring.
+  policy to pr-review-eligibility and reviews to review-lens. Owns its
+  coordinator state and automation independently of pr-auto-approve. Not for
+  Azure DevOps, discovery digests or feedback/fix loops. Editing or installing
+  this skill does not start monitoring.
 ---
 
 # GitHub PR Review Queue
@@ -20,24 +21,39 @@ GitHub owns PR and submitted-review facts. Do not build queue cache files,
 monitor locks, manual worktrees, provider adapters or an extra review runner.
 Review Lens already owns specialist coordination and final delivery.
 
+The `human-review-required` label admits a PR to this queue; it does not share
+state or automation with [PR Auto-Approve](../pr-auto-approve/SKILL.md).
+
 ## Setup
 
-1. Use one dedicated coordinator session. Confirm explicit `github.com`
-   repositories (`owner/repo`); never infer scope from the checkout or access.
-   Default the target to `martintmk` and resolve its stable identity separately
-   from the authenticated posting actor with `gh`. Never impersonate the target.
-   Reuse confirmed setup from this session on later wakes.
+1. Confirm explicit `github.com` repositories (`owner/repo`); never infer scope
+   from the checkout or access. Default the target to `martintmk` and resolve
+   its stable identity separately from the authenticated posting actor with
+   `gh`. Never impersonate the target. Find and reuse an existing coordinator
+   for this scope using `list_sessions_and_chats`, `get_session` and its history;
+   uncertain ownership blocks a second coordinator for overlapping scope.
+   Never run the queue in an auto-approve monitor or a linked PR review session.
+   If the current session belongs to another task and no coordinator exists,
+   use `create_session` with `detached: true` and the confirmed scope, target
+   and any cadence in its kickoff, or stop if session creation is unavailable.
+   Do not share its automation. Reuse confirmed setup from the coordinator on
+   later wakes.
 2. For recurrence, confirm cadence and whether to scan immediately. Use
-   `get_session_automation`, then `save_session_automation`, and read it back.
-   Its prompt invokes this skill with the confirmed scope/target in **this same
-   coordinator session**, preserving context. Do not use `save_workflow`, which
-   starts a new session each run, or an external scheduler. Never overwrite an
-   unrelated automation or establish a second owner for overlapping queue scope.
-   Scheduled wakes reuse setup; they never register or reschedule themselves.
-   One-shot requests neither ask for cadence nor change a schedule.
-3. Keep setup and concise progress in native session history. An explicitly
-   empty scope clears only this coordinator's automation; scope changes retain
-   earlier outcomes. Missing setup or required app/`gh` capability blocks;
+   coordinator history to record scope and ownership before scheduling. Read
+   `get_session_automation`, then use `save_session_automation` and read it back.
+   If that session already has a non-queue automation, move to a dedicated
+   coordinator or block; never replace or cancel it. The prompt invokes this
+   skill with the confirmed scope/target in **this same coordinator session**,
+   preserving context. Do not use `save_workflow`, which starts a new session
+   each run, or an external scheduler. Never establish a second owner for
+   overlapping queue scope. Scheduled wakes reuse setup; they never register
+   or reschedule themselves. One-shot requests neither ask for cadence nor
+   change a schedule.
+3. Keep setup, finite batches and verified outcomes only in this coordinator's
+   native session history. Do not read or edit auto-approve state or treat its
+   approvals or status comments as queue outcomes. An explicitly empty scope
+   clears only this coordinator's verified queue automation; scope changes
+   retain earlier outcomes. Missing setup or required app/`gh` capability blocks;
    report the specific gap, not a speculative preflight or shell replacement.
 4. When replacing the old `pr-review-queue`, first stop its schedule and settle
    in-flight work with the user's authorization. Retain its audit files and use
@@ -77,8 +93,8 @@ Review Lens already owns specialist coordination and final delivery.
 4. For the next due PR, refresh decisive facts and UTC time; reapply eligibility.
    Find its saved PR session or discover it with `list_sessions_and_chats`;
    confirm the repository/PR and ownership with `get_session`. Never take over
-   an unrelated or busy session. Record the selected snapshot/request in
-   coordinator history before sending work.
+   an unrelated or busy session, including an auto-approve monitor. Record the
+   selected snapshot/request in coordinator history before sending work.
 5. Before dispatching the review, create or update one top-level GitHub issue
    comment owned by this queue using the stable marker
    `<!-- pr-review-queue:preparing -->`. The visible text must state that review
@@ -86,8 +102,8 @@ Review Lens already owns specialist coordination and final delivery.
    and say that the submitted review will contain the result. Reuse the marked
    comment on retries or newer preparations instead of creating duplicate
    status comments. Read the comment back and verify its ID, author and head
-   before continuing; an uncertain comment write blocks dispatch until it is
-   reconciled.
+   before continuing; never edit auto-approve's escalation comment. An
+   uncertain comment write blocks dispatch until it is reconciled.
 6. Use `open_pr_session` for a new linked workspace, with
    `kickoff: { prompt: <handoff below>, mode: "autopilot" }` and top-level
    `notify_on_idle: "always"`, `coordinate_with_creator: true`.
@@ -141,10 +157,11 @@ Use this bounded instruction:
 
 ## Recovery
 
-Recover missing context from the owning sessions' history with
-`session_store_sql` and GitHub read-back, not a second cache. Reuse the original
-child for read-only clarification of an incomplete outcome. An uncertain dispatch or write must be
-reconciled before retrying; never rerun a review merely because its reply was lost.
+Recover missing context from this coordinator's and its review children's history
+with `session_store_sql` and GitHub read-back, not auto-approve state or a second
+cache. Reuse the original child for read-only clarification of an incomplete
+outcome. An uncertain dispatch or write must be reconciled before retrying;
+never rerun a review merely because its reply was lost.
 A proven PR-local, zero-write failure may be recorded and skipped for this batch,
 without marking it reviewed; auth, collection and uncertain-write failures stop
 the batch. For an unrecoverable recurring run, clear only its own automation,
