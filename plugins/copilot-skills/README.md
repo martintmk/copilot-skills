@@ -168,7 +168,7 @@ without tools or side effects. Every queued review requires the exact label
 `human-review-required` **or a current individual review request for the target**.
 An explicit request bypasses the label, not the age or draft limits; team requests,
 assignments and mentions do not qualify. Other eligible reasons are target
-authorship (including drafts), watched follow-ups, and published PRs over 24 hours
+authorship (including drafts), watched follow-ups, and published PRs over 1 hour
 and at most seven days old with at most one distinct human reviewer. Copilot and
 other verified bot/app reviews do not count; repeated submissions by the same
 human count once. All other authors' PRs must be non-draft and no older than seven
