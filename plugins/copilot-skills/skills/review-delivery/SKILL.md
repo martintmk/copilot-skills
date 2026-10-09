@@ -44,9 +44,9 @@ ask the caller. Do not guess, and do not run review passes to fill gaps.
    Then say, in plain words, what was reviewed, what was not and why, and what
    was not run. Name areas by topic ("public API", "tests"), not by skill or
    internal status. Avoid words such as worker, snapshot, manifest, isolated or
-   falsification. Leave evidence in its finding. For Review Lens, include the
-   **Public API changes** and **Integration tests** blocks after the overview,
-   preserving their required result headings and Rust snippets.
+   falsification. Leave evidence in its finding. For Review Lens, follow the
+   [final summary contract](findings-contract.md#area-result-and-final-summary),
+   preserving the mandatory report headings and Rust snippets.
    - Incomplete: follow the attribution with **Warning: Incomplete review**,
      list each topic not reviewed with a one-clause reason, and say no overall
      verdict is given.
