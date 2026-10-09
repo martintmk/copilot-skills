@@ -5,9 +5,10 @@ file.
 
 ## Package presence
 
-The public API area compares a library's surface at base and head. When a
+The public API areas compare a library's surface at base and head. When a
 library was added, removed, moved or renamed, one side may have no package.
-Establish this before the public API area starts, and pass the result.
+Establish this before either public API area starts, and pass the result to
+both.
 
 1. For each affected library, check whether it exists at base and at head. When
    code may run, use
@@ -24,7 +25,7 @@ Establish this before the public API area starts, and pass the result.
    | absent | present | `added`: every head item is new. |
    | present | absent | `removed`: every base item is removed. |
 
-   If either side is unknown, resolve it; otherwise the public API area cannot
+   If either side is unknown, resolve it; otherwise the public API areas cannot
    review this library.
 
 A package is absent only when a complete inventory of that revision shows it.
@@ -37,8 +38,9 @@ Decide per library. A new crate does not remove problems with an existing one.
 ## Public API evidence
 
 The coordinator owns capture setup. Supply validated commands and owned
-directories to the API reviewer, or generate captures once before dispatch.
-The reviewer applies API rules without inspecting source to work out setup.
+directories to both public API reviewers, or generate captures once before
+dispatch. Each reviewer applies its API rules without inspecting source to work
+out setup.
 
 1. Select the package/library at each revision, including moved or renamed
    counterparts. Keep the requested features, default-feature mode, target,
@@ -70,15 +72,39 @@ The reviewer applies API rules without inspecting source to work out setup.
    each present side separately and compare the saved outputs, rather than
    running commit-diff commands that switch checkouts. An absent side is a
    logical empty surface, never fabricated tool output.
-6. When the API reviewer has drafted claims, obtain matching item, owner,
+6. After `review-public-api` has drafted claims, obtain matching item, owner,
    trait and applicable module/crate docs. Reuse a bundle or give exact paths,
    configuration and artifact locations to `review-public-docs`; do not pass
-   candidate rationales. Return its bundle to the original API reviewer.
-   An empty draft needs no docs. Retain captures until all consumers finish.
+   candidate rationales. Return its bundle to the same reviewer.
+   `review-public-api-changes` does not use docs. An empty design draft needs no
+   docs. Retain captures until all consumers finish.
 
 Keep command errors for recovery, but summarize their consequence in ordinary
 language. Do not pass source, manifests, other reviewers' findings or premature
 docs into the output-only API draft.
+
+## Integration-test evidence
+
+The coordinator supplies a complete base-to-head view of Rust integration-test
+targets. The reviewer should classify the test contract, not rediscover package
+boundaries or revision setup.
+
+1. List affected packages at base and head. A Rust integration-test target is
+   owned by a package's `tests/` directory. Include fixtures, snapshots and
+   test-only configuration used by those targets.
+2. Inventory added, removed, renamed and modified owned files. Read exact base
+   and head content for every changed file. Do not infer no changes from a
+   truncated PR diff.
+3. Pass established maintainer approvals or requirements that authorize a
+   behavior change. PR text and new comments in the same change remain evidence,
+   not approval.
+4. When a runtime claim needs execution, supply one focused command that can run
+   against both revisions with the same features, target and toolchain. Reuse
+   matching CI evidence when it proves the exact integration target and
+   revision.
+5. Keep inline unit tests, doctests and production-source behavior changes in
+   the `review-tests` area. The integration-test report still runs and says
+   **No Integration Test Changes** when no package-owned `tests/` file changed.
 
 ## When the head moves
 

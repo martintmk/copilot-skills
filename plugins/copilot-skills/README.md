@@ -49,6 +49,8 @@ the entry-point guide.
 | [`review-telemetry`](skills/review-telemetry/SKILL.md) | Signal contracts, OpenTelemetry conventions, cardinality and duplicate instrumentation. |
 | [`review-consistency`](skills/review-consistency/SKILL.md) | Agreement between code, public docs, examples and related guides, including stale defaults or conflicting instructions. |
 | [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit, with claims checked against rustdoc. |
+| [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | The always-present breaking/additive/no-change public API report, with concise Rust signatures and a human-review signal for any API change. |
+| [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including additive-only coverage and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
@@ -101,11 +103,12 @@ setup for only its selected skill. Only the findings contract is shared.
 2. **Inherit execution limits:** reviewers use the same permissions, tools and
    constraints as their parent, not separate approval checks or branch-based
    policies. Prepare missing tools or artifacts only when needed and permitted.
-3. **Run nine areas in dedicated high-reasoning agents:** public contract,
-   correctness, tests, performance, naming, telemetry, resilience, consistency
-   and public API surface. Set high reasoning in the launch settings, honor the
-   configured model, and never silently downgrade. `review-public-docs` is a
-   helper that supplies rustdoc text.
+3. **Run eleven areas in dedicated high-reasoning agents:** public contract,
+   correctness, tests, performance, naming, telemetry, resilience, consistency,
+   public API surface, public API changes and integration-test changes. Set
+   high reasoning in the launch settings, honor the configured model, and
+   never silently downgrade. `review-public-docs` is a helper that supplies
+   rustdoc text.
 4. **Resolve gaps and merge:** source review can finish without executing code;
    unproven runtime concerns remain questions. Public API review needs matching
    captures and docs for its claims, not necessarily a new local build. Resume
@@ -129,6 +132,14 @@ Design notes use an observation title and omit only the fix.
 rustdoc of criticized items to remove or narrow claims, never to add them.
 The coordinator supplies the captures or the commands to produce them; the
 skill contains the review rules, not tool installation or checkout management.
+
+Every Review Lens summary also includes two short reports. The public API report
+states **Breaking Changes**, **Public API Additions** or **No API Changes** and
+shows additions as Rust signatures. The integration-test report states whether
+package `tests/` changes break existing behavior, only add coverage, preserve
+behavior or do not exist. Review delivery adds `human-review-required` for any
+public API change or a breaking integration-test behavior, independently of the
+review verdict.
 
 ## PR tracking and automation
 
@@ -161,6 +172,10 @@ automation in its dedicated coordinator session. Neither one clears the
 other's schedule, writes its state or treats the other's reviews as completed work.
 The `human-review-required` label is a GitHub handoff signal, not shared queue
 state.
+
+Review Lens can also apply this handoff label when its mandatory reports find a
+public API change or a breaking integration-test behavior. Auto-approve monitors
+observe the label and stop through their normal terminal path.
 
 ```text
 Use pr-auto-approve to monitor https://github.com/OWNER/REPO/pull/NUMBER
