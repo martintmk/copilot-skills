@@ -1,7 +1,7 @@
 # copilot-skills
 
 Personal [GitHub Copilot CLI](https://docs.github.com/copilot/how-tos/use-copilot-agents/use-copilot-cli)
-skills, packaged as a cross-engine Agency-style plugin. The GitHub review queue
+skills, packaged as a cross-engine Agency-style plugin. The Teams review monitor
 uses the GitHub Copilot app's native session capabilities.
 
 ## Install
@@ -53,7 +53,7 @@ the entry-point guide.
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
-| [`pr-review-queue-github`](skills/pr-review-queue-github/SKILL.md) | Sequential GitHub reviews of labeled or individually requested PRs, using native Copilot app automation and linked PR sessions. |
+| [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | Every 15 minutes, finds clear PR review requests in a user-provided Teams channel and runs full Review Lens reviews in linked PR sessions. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
@@ -155,10 +155,10 @@ durable trigger.
 Installing or editing the skill starts nothing; it never merges.
 
 Run each auto-approve monitor in its own session for one PR, separate from the
-review-queue coordinator and its child sessions. Each monitor keeps its own
-per-session state and trigger. The review queue keeps its own outcomes and
-automation in its dedicated coordinator session. Neither queue clears the
-other's schedule, writes its state or treats its reviews as completed work.
+Teams review coordinator and its child sessions. Each monitor keeps its own
+per-session state and trigger. The Teams review coordinator keeps its own outcomes and
+automation in its dedicated coordinator session. Neither one clears the
+other's schedule, writes its state or treats the other's reviews as completed work.
 The `human-review-required` label is a GitHub handoff signal, not shared queue
 state.
 
@@ -187,26 +187,23 @@ history; re-adding the label alone does not repeat a completed review. The polic
 distinguishes new heads/requests from handled work and incomplete coverage, and
 keeps retired PRs retired after reopening.
 
-[`pr-review-queue-github`](skills/pr-review-queue-github/SKILL.md) is the thin
-Copilot app coordinator. It fetches GitHub facts with `gh`, invokes eligibility,
-and runs Review Lens sequentially in linked PR sessions. Native same-session
-automation supplies recurrence; app history, status and child notifications
-supply progress and recovery. There is no separate queue cache, lock, scheduler,
-provider preflight framework or two-stage review runner.
+[`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) is the thin
+Copilot app coordinator for review requests posted in Teams. The user supplies
+the channel link; the skill never hard-codes it, and it infers the repository
+from the project. Native same-session automation checks the channel every 15
+minutes through WorkIQ, starting from the current position without scanning
+history. It reports gaps instead of claiming complete monitoring.
 
-Setup requires explicit GitHub repositories and, for recurrence, a confirmed
-cadence. Installing/editing starts nothing. A one-shot run leaves schedules alone.
-Review Lens still owns full reviews and verified publication; native pending
-review drafts do not count as submitted reviews. The queue never manually removes
-reviewers, replies to discussion or applies fixes. Changed inputs are deferred,
-incomplete coverage is not completion, and uncertain writes are reconciled before
-retrying.
+For each unambiguous request for an open PR in the project repository, it links
+a PR session, posts one preparation reply in the thread, and has the session
+publish a fresh Review Lens review to GitHub. New heads, base retargeting and
+new explicit requests are reviewed again. It never edits code, pushes, merges or
+changes labels or reviewers. It keeps only the state needed to avoid duplicate
+reviews and deletes its own PR sessions once GitHub shows the PR merged or
+closed. Installing/editing starts nothing.
 
-This replaces `pr-review-queue`; there is no ADO queue in this version. Before
-switching an existing monitor, stop its old schedule and settle in-flight work;
-retain its audit history and carry verified outcomes into the coordinator session.
-Other skills' ADO support is unchanged.
-
+This replaces `pr-review-queue-github`; there is no label-based queue in this
+version.
 `feedback-autonomy` independently gates actions by authorship and impact.
 Eligible automation and stable-identity-matched PR-author instructions need no
 manual identity confirmation. Other human/uncertain feedback, major changes

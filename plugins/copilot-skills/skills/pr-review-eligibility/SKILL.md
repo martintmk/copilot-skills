@@ -4,7 +4,7 @@ description: >
   Decide whether one PR labeled human-review-required or individually requested
   for the target should be automatically reviewed now from fetched facts and
   its previous queue outcome. Use for "should this PR be automatically reviewed"
-  or from pr-review-queue-github. Returns review, skip or blocked; does not
+  or from a review coordinator. Returns review, skip or blocked; does not
   discover PRs, schedule work, start agents or post reviews.
 ---
 
