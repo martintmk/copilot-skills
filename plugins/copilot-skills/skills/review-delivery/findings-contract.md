@@ -84,6 +84,12 @@ reviewed with a one-clause reason, and say no overall verdict is given.
 Findings from reviewed areas still count; never imply the other topics were
 checked or clean.
 
+Every Review Lens summary also includes its mandatory **Public API changes**
+and **Integration tests** report blocks. Include both after the overview,
+including in clean, incomplete and refreshed reviews. A report that could not
+finish says **Could not assess** with its reason; it never silently becomes a
+clean result.
+
 Use this summary shape:
 
 ```markdown
@@ -96,6 +102,16 @@ I reviewed <topics>. I could not check:
 - <Topic>: <plain one-clause reason>
 
 No overall verdict is given. The comments below come from the reviewed areas.
+
+### Public API changes
+
+**Could not assess**
+
+The public API capture could not be produced with the required toolchain.
+
+### Integration tests
+
+**No Integration Test Changes**
 ```
 
 Verdicts: `approve`, `approve with non-blocking comments` or
