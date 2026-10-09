@@ -108,12 +108,27 @@ review event must change or new inline comments must be delivered.
 2. Reconcile the fresh review with the existing rolling report. Keep prior
    findings that still apply, add genuinely new findings, update moved evidence,
    and remove findings proven fixed. Do not duplicate a finding because its line
-   moved or wording changed. Preserve the Review Lens mandatory report blocks
-   from the newest complete run.
-3. Replace the marked comment body with the reconciled current report. Include
-   the reviewed head, base, review time, verdict, current unresolved findings,
-   and the marker. Use the issue-comment API to create it once and PATCH that
-   same comment afterward. Read it back and verify the author, marker, body and
+   moved or wording changed. Follow the
+   [Review Delivery](../review-delivery/SKILL.md) final summary contract when
+   deciding which findings belong in the summary. Count applicable findings
+   represented by unresolved inline review threads for the rolling report. Use
+   the mandatory report blocks from the fresh Review Lens result.
+3. Replace the marked comment body with the reconciled current report. After
+   the required attribution, include the reviewed head, base, review time and
+   verdict, then follow the Review Delivery summary shape. Render its findings
+   portion under **Current unresolved findings**:
+   - for one inline finding, write
+     `1 finding is posted as an unresolved inline review thread.`;
+   - for more than one, write
+     `<N> findings are posted as unresolved inline review threads.`;
+   - include full text for applicable findings not represented inline, including
+     findings waiting for the review cooldown;
+   - when there are no inline or non-inline findings, write
+     `No unresolved findings.`;
+   - end the comment with the marker.
+
+   Use the issue-comment API to create the report once and PATCH that same
+   comment afterward. Read it back and verify the author, marker, body and
    comment ID. Reconcile an ambiguous write before retrying.
 4. Determine the GitHub review event with
    [Review Delivery](../review-delivery/SKILL.md). Submit a new review only when:
@@ -126,10 +141,10 @@ review event must change or new inline comments must be delivered.
    pending event or inline findings for the next due run. Never bypass the
    cooldown merely because the head changed again.
 6. When a new review is required and due, post only the new inline findings.
-   Keep the review body short and link to the rolling report for the full current
-   result. Never repost unchanged findings. Follow Review Delivery for event,
-   anchors, head checks and read-back verification. This monitor does not change
-   labels.
+   Keep the review body short and link to the rolling report for the current
+   verdict, mandatory reports and non-inline findings. Never repost unchanged
+   findings. Follow Review Delivery for event, anchors, head checks and read-back
+   verification. This monitor does not change labels.
 
 ## PR session handoff
 
