@@ -55,7 +55,7 @@ the entry-point guide.
 | [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
-| [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | Every 15 minutes, finds clear PR review requests in a user-provided Teams channel and runs full Review Lens reviews in linked PR sessions. |
+| [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | Every 15 minutes, finds clear PR review requests in a user-provided Teams channel, runs full Review Lens reviews in linked PR sessions, refreshes one rolling PR report, and rate-limits new submitted reviews with a configurable four-hour default cooldown. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
