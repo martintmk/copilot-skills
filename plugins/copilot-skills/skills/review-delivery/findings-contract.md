@@ -86,9 +86,10 @@ checked or clean.
 
 Every Review Lens summary also includes its mandatory **Public API changes**
 and **Integration tests** report blocks. Include both after the overview,
-including in clean, incomplete and refreshed reviews. A report that could not
-finish says **Could not assess** with its reason; it never silently becomes a
-clean result.
+in that order, including in clean, incomplete and refreshed reviews. Put
+findings that cannot be delivered inline after both report blocks. Do not repeat
+findings delivered as inline comments. A report that could not finish says
+**Could not assess** with its reason; it never silently becomes a clean result.
 
 Use this summary shape:
 
