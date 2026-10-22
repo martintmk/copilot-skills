@@ -4,10 +4,10 @@ description: >
   Review Rust changes for behavioral defects and prove each one before raising
   it: control-flow and version gates, boundary and representation limits,
   resource and free-list models, cancellation and drop safety, time arithmetic,
-  and round-trip or invariant claims. Uses reproductions, Miri and bounded
-  adversarial inputs when code may run. Use for a focused defect audit, or when
-  review-lens routes behavioral risk here. Not for API design, naming, or
-  formatting.
+  sync/async deadlock risks, and round-trip or invariant claims. Uses
+  reproductions, Miri and bounded adversarial inputs when code may run. Use for
+  a focused defect audit, or when review-lens routes behavioral risk here. Not
+  for API design, naming, or formatting.
 ---
 
 # Review Correctness
@@ -53,8 +53,18 @@ this finding's fix instead of a separate finding.
 - **Cancellation and drop:** What is committed if the future is dropped at each
   `.await`? Are waiters notified on abort? Can dropping a hedge stop a breaker
   from opening? Transports and middleware must handle cancellation.
-- **Concurrency:** Blocking calls in async code? Locks held across `.await`?
-  Thread-affine state moved between threads?
+- **Concurrency and sync/async bridges:** Locks held across `.await`?
+  Thread-affine state moved between threads? Search both synchronous and
+  asynchronous code for executor entry points such as `block_on`, including
+  methods, free functions and local wrappers. Flag every changed `block_on` as
+  a deadlock risk until its callers and executor topology rule that out.
+  Calling it from async code can block the runtime thread that must drive the
+  awaited future, and some runtimes panic when an executor is started from
+  inside another executor. Calling it from synchronous code can still deadlock
+  when the future needs the blocked thread or the same bounded pool to make
+  progress. Raise a finding when the call graph and runtime topology prove the
+  cycle or panic, or when a focused test reproduces it. Otherwise report the
+  unverified risk as a question, not as a proven defect.
 - **Time:** Test `duration_since` and similar at every valid system time.
   Saturate instead of panicking.
 - **Invariants and round-trips:** Does every public path keep a fixed-width or

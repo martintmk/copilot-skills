@@ -123,6 +123,10 @@ requires new eligibility proof.
 
 ## GitHub actions, minimal output
 
+Write the complete approval, dismissal message or escalation comment. Invoke
+`simple-english` once to rewrite the user-facing text immediately before
+posting.
+
 **Approve:** `POST repos/<owner>/<repo>/pulls/<n>/reviews` via `gh api --input`
 with serialized JSON: `event: "APPROVE"`, current `commit_id`, and this body:
 

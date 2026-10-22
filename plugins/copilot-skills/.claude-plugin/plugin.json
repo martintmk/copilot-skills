@@ -1,7 +1,7 @@
 {
   "name": "copilot-skills",
-  "description": "Personal Copilot CLI skills for large engineering plans and agent guidance, Rust reviews, code/docs consistency, lightweight monitored PR approval, PR review automation and tracking, feedback handling, public API docs and change reports, integration-test reports, resilience, testing, and Teams messaging.",
-  "version": "0.21.2",
+  "description": "Personal Copilot CLI skills for large engineering plans and agent guidance, sequential Rust crate changes, Rust reviews, code/docs consistency, lightweight monitored PR approval, PR review automation and tracking, feedback handling, public API docs and change reports, integration-test reports, resilience, testing, and Teams messaging.",
+  "version": "0.21.5",
   "author": {
     "name": "Martin Tomka",
     "email": "martintmk@users.noreply.github.com"
@@ -11,6 +11,8 @@
     "agent-instructions",
     "rewrites",
     "migrations",
+    "crate-change-coordinator",
+    "mechanical-pull-requests",
     "review",
     "rust",
     "code-review",

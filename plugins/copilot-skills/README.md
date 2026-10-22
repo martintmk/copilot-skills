@@ -39,9 +39,10 @@ the entry-point guide.
 | Skill | Use it for |
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
+| [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction to an ordered set of Rust crates through sequential child sessions and pull requests, with inherited model configuration, green CI, Teams review announcements, and merge-gated progress. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Full Rust PR, branch, commit or working-tree reviews that run every review area, with public API as the dominant lens. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
-| [`review-correctness`](skills/review-correctness/SKILL.md) | Reproduced behavioral defects across every changed correctness-sensitive path. |
+| [`review-correctness`](skills/review-correctness/SKILL.md) | Reproduced behavioral defects across every changed correctness-sensitive path, including `block_on` deadlock risks at sync/async boundaries. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
 | [`review-resilience`](skills/review-resilience/SKILL.md) | Recovery classification and version-correct resilience middleware. |
 | [`review-perf`](skills/review-perf/SKILL.md) | Measured cost, allocations, hot paths and injectable clocks. |
@@ -95,6 +96,7 @@ what to look for, what evidence counts and how to report. The coordinator
 supplies context and commands, selects the review model and passes down the
 session's permissions and execution constraints. A focused request needs that
 setup for only its selected skill. Only the findings contract is shared.
+Focused reviews also pass through `review-delivery`.
 
 `review-lens` adds the coordination:
 
@@ -114,6 +116,9 @@ setup for only its selected skill. Only the findings contract is shared.
    captures and docs for its claims, not necessarily a new local build. Resume
    a reviewer once after fixing a concrete setup problem.
 5. **Deliver once** through `review-delivery`, with a plain-language summary.
+
+Every full or focused review uses `simple-english` for its user-facing text.
+Fast-path approval and escalation text uses it too.
 
 | Outcome | Delivery |
 | --- | --- |
@@ -142,6 +147,26 @@ public API change or a breaking integration-test behavior, independently of the
 review verdict.
 
 ## PR tracking and automation
+
+`crate-change-coordinator` applies one bounded instruction to several Rust
+crates. It creates one child session and one pull request for each crate. The
+child inherits the coordinator's model configuration.
+
+The coordinator waits for every check on the current pull request head to pass.
+It then announces the pull request in the supplied Teams review channel. The
+next child starts only after GitHub confirms the merge and the coordinator
+archives the current child.
+
+```text
+Use crate-change-coordinator with these crates:
+recoverable, seatbelt, testing_aids
+
+Review channel:
+https://teams.microsoft.com/l/channel/...
+
+Instruction:
+Replace the deprecated tracing helper with the workspace helper.
+```
 
 `pr-auto-approve` speeds approval of mechanical PRs and minimal, evidence-backed
 fixes for concrete pipeline failures. Small backward-compatible API additions
