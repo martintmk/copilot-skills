@@ -95,6 +95,7 @@ what to look for, what evidence counts and how to report. The coordinator
 supplies context and commands, selects the review model and passes down the
 session's permissions and execution constraints. A focused request needs that
 setup for only its selected skill. Only the findings contract is shared.
+Focused reviews also pass through `review-delivery`.
 
 `review-lens` adds the coordination:
 
@@ -114,6 +115,9 @@ setup for only its selected skill. Only the findings contract is shared.
    captures and docs for its claims, not necessarily a new local build. Resume
    a reviewer once after fixing a concrete setup problem.
 5. **Deliver once** through `review-delivery`, with a plain-language summary.
+
+Every full or focused review uses `simple-english` for its user-facing text.
+Fast-path approval and escalation text uses it too.
 
 | Outcome | Delivery |
 | --- | --- |

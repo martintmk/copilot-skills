@@ -52,9 +52,12 @@ ask the caller. Do not guess, and do not run review passes to fill gaps.
      verdict is given.
    - Refreshed: say full coverage ended at the reviewed commit and later
      commits only had existing findings rechecked.
-3. **Check the head.** Fetch the current head. If it differs from the pinned
+3. Invoke `simple-english` and use it to rewrite all user-facing review text.
+4. Check every rewritten finding against the findings contract again. Reject
+   any rewrite that changed its required structure or technical facts.
+5. **Check the head.** Fetch the current head. If it differs from the pinned
    head, stop and return to the caller. Moving an anchor is not revalidation.
-4. **Check the label decision.** It is `required` when the public API report
+6. **Check the label decision.** It is `required` when the public API report
    has any breaking change or addition, or the integration-test report has a
    breaking behavioral change. It is `not required` only when both reports
    completed without those results. It is `undetermined` when no completed
