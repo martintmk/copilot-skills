@@ -27,7 +27,8 @@ the change and its context, execution constraints, a dedicated agent per area,
 merging and delivery. Details are in the
 [coordinator reference](coordinator-reference.md). For a focused request, the
 calling agent supplies this setup for only the requested area, not the full
-roster.
+roster. It passes the area result through `review-delivery` before it returns
+or posts the review.
 
 ## Review areas
 

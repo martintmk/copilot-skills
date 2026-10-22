@@ -74,6 +74,8 @@ scope and unassessed areas, and a status (`done`, `not applicable` or
 `could not review`, with a reason for the last two). Separate uncertainty/design questions from proven
 findings. For no findings, say so in that line, the whole body after attribution.
 Area workers neither decide the combined verdict nor deliver separately.
+Pass every user-facing review, including a focused review, through
+`review-delivery`.
 
 The coordinator merges root causes and coverage without losing any area. A
 missing area cannot hide behind a clean summary. Lead the final summary with the
