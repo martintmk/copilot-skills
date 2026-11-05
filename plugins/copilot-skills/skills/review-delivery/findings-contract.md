@@ -4,6 +4,8 @@ Read when producing or validating intermediate area findings, filtered API
 reports, standalone reports or posted threads. This is their sole shared shape;
 specialists add evidence, not templates. Do not defer fields until delivery.
 `review-public-docs` returns a bundle, not findings, and is exempt.
+`metabench-compare` returns a measurement report, not findings.
+Its block inherits the final summary's attribution.
 
 ## Attribution and comment shape
 
@@ -89,9 +91,18 @@ checked or clean.
 Every Review Lens summary also includes its mandatory **Public API changes**
 and **Integration tests** report blocks. Include both after the overview,
 in that order, including in clean, incomplete and refreshed reviews. Put
-findings that cannot be delivered inline after both report blocks. Do not repeat
-findings delivered as inline comments. A report that could not finish says
-**Could not assess** with its reason; it never silently becomes a clean result.
+the mandatory **Benchmarks** block next.
+Preserve its selection, measured revisions, status, complete side-by-side results and limits.
+Use the [benchmark report contract](../metabench-compare/run-and-report.md#side-by-side-results)
+for tables and size limits.
+In refreshed reviews, identify old measurements as historical.
+Missing benchmarks limit performance claims, not completed source-review coverage.
+Benchmark status does not independently change the human-review label decision.
+Put findings that cannot be delivered inline after all three report blocks. Do not repeat
+findings delivered as inline comments.
+An unfinished API or integration-test report says **Could not assess** with its reason.
+An unfinished benchmark report keeps its `partial` or `blocked` status and reason.
+Never replace missing evidence with a clean result.
 
 Use this summary shape:
 
@@ -115,6 +126,10 @@ The public API capture could not be produced with the required toolchain.
 ### Integration tests
 
 **No Integration Test Changes**
+
+### Benchmarks
+
+Not applicable: no changed crate uses metabench.
 ```
 
 Verdicts: `approve`, `approve with non-blocking comments` or

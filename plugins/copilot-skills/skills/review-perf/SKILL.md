@@ -28,7 +28,12 @@ cost claim to their own reviews.
 2. **Ask the questions below.**
 3. **Measure claims that something is faster or slower**, using the
    repository's existing benchmark harness and the same benchmark at base and
-   head. Never infer a regression from reading code.
+   head. For metabench targets, use
+   [`metabench-compare`](../metabench-compare/SKILL.md).
+   In Review Lens, reuse its supplied report and artifacts.
+   Do not duplicate the helper's runs or expand its selected crates.
+   For other harnesses, follow the caller's execution limits.
+   Never infer a regression from reading code.
 4. **Without measurements**, finish classifying the paths and ask runtime cost
    concerns as questions. State what was not measured.
 
@@ -55,6 +60,11 @@ cost claim to their own reviews.
 Report benchmark point estimate, range and significance, for example: "~0.21 ns
 (~4%), not significant in Criterion, so not enough to justify the reference."
 Prefer allocation or instruction-count guards over timing where supported.
+
+For Gungraun, report the measured counts, absolute change and percentage change.
+Do not invent confidence intervals or statistical significance for instruction counts.
+Do not describe estimated cycles as measured wall-clock time.
+Keep the full side-by-side benchmark report separate from findings.
 
 State path frequency, the avoidable work or hard-wired source, the evidence,
 the cost or testability impact, and a fix that does not add unjustified

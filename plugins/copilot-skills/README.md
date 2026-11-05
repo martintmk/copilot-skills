@@ -40,12 +40,13 @@ the entry-point guide.
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
 | [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction to an ordered set of Rust crates through sequential child sessions and pull requests, with inherited model configuration, green CI, Teams review announcements, and merge-gated progress. |
-| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust PR, branch, commit or working-tree reviews that run every review area, with public API as the dominant lens. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with every review area, public API priority and Gungraun comparisons for up to three changed, metabench-enabled crates. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Reproduced behavioral defects across every changed correctness-sensitive path, including `block_on` deadlock risks at sync/async boundaries. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
 | [`review-resilience`](skills/review-resilience/SKILL.md) | Recovery classification and version-correct resilience middleware. |
 | [`review-perf`](skills/review-perf/SKILL.md) | Measured cost, allocations, hot paths and injectable clocks. |
+| [`metabench-compare`](skills/metabench-compare/SKILL.md) | Runs existing Gungraun benchmarks before and after a change for up to three changed, metabench-enabled crates. Reports every benchmark and metric side by side. |
 | [`review-naming`](skills/review-naming/SKILL.md) | Sibling naming conventions and unnecessary abstractions. |
 | [`review-telemetry`](skills/review-telemetry/SKILL.md) | Signal contracts, OpenTelemetry conventions, cardinality and duplicate instrumentation. |
 | [`review-consistency`](skills/review-consistency/SKILL.md) | Agreement between code, public docs, examples and related guides, including stale defaults or conflicting instructions. |
@@ -105,6 +106,8 @@ Focused reviews also pass through `review-delivery`.
 2. **Inherit execution limits:** reviewers use the same permissions, tools and
    constraints as their parent, not separate approval checks or branch-based
    policies. Prepare missing tools or artifacts only when needed and permitted.
+   Run `metabench-compare` alongside independent review work.
+   Valgrind instruction counts do not require an idle host.
 3. **Run eleven areas in dedicated high-reasoning agents:** public contract,
    correctness, tests, performance, naming, telemetry, resilience, consistency,
    public API surface, public API changes and integration-test changes. Set
@@ -138,13 +141,33 @@ rustdoc of criticized items to remove or narrow claims, never to add them.
 The coordinator supplies the captures or the commands to produce them; the
 skill contains the review rules, not tool installation or checkout management.
 
-Every Review Lens summary also includes two short reports. The public API report
+Every Review Lens summary also includes three reports. The public API report
 states **Breaking Changes**, **Public API Additions** or **No API Changes** and
 shows additions as Rust signatures. The integration-test report states whether
 package `tests/` changes break existing behavior, only add coverage, preserve
 behavior or do not exist. Review delivery adds `human-review-required` for any
 public API change or a breaking integration-test behavior, independently of the
 review verdict.
+
+The benchmark report compares all Gungraun cases and metrics for up to three
+changed, metabench-enabled crates.
+`metabench-compare` ranks crates by changed Rust and manifest lines.
+It uses the net diff, so staged edits and later edits do not count twice.
+It runs each target at base first, then at head, on the same Linux host.
+It uses metabench's saved JSON baseline and direct comparison.
+It renders complete tables from JSON because built-in Markdown can omit metrics and removed benchmarks.
+
+Independent work can continue during Valgrind instruction-count measurements.
+It reports added, removed, failed and incompatible results instead of inventing missing values.
+It marks incomplete coverage or incompatible comparisons as partial, even when some commands succeed.
+The report keeps its selection reasons and measurement limits when execution is blocked.
+It does not independently require the human-review label.
+
+```text
+Use metabench-compare to compare this branch with its merge base.
+Run the existing Gungraun targets for the three most-changed eligible crates.
+Show every benchmark and metric side by side.
+```
 
 ## PR tracking and automation
 
