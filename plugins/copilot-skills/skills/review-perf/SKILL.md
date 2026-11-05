@@ -1,14 +1,9 @@
 ---
 name: review-perf
 description: >
-  Review Rust changes for avoidable allocations, hot-path cost, and unmockable
-  time or randomness. Covers needless String/clone/round-trip allocation,
-  per-call dispatch that could be decided once, algorithmic growth, contention,
-  hard-wired clocks or entropy where injectable sources exist, and honest
-  benchmark reporting. Use for cost or clock/randomness-injection audits, or
-  when review-lens routes a hot path or claimed optimization here. Not for
-  micro-style preferences or off-path optimizations that add complexity for no
-  measured gain.
+  Review Rust hot-path cost, allocations, contention and controllable clocks or
+  randomness. Require measurements for speed claims and reuse Review Lens
+  benchmark evidence. Not for style preferences or speculative optimizations.
 ---
 
 # Review Perf
@@ -68,7 +63,8 @@ Keep the full side-by-side benchmark report separate from findings.
 
 State path frequency, the avoidable work or hard-wired source, the evidence,
 the cost or testability impact, and a fix that does not add unjustified
-complexity. Off-path or unmeasured findings are `Non-blocking`.
+complexity. Source can prove a testability gap, not a measured cost regression.
+Keep unmeasured cost concerns as questions. Apply the shared severity policy.
 
 ## Report
 

@@ -15,9 +15,9 @@ crate. Change shared workspace files only when this crate directly requires it.
 Do not change another crate to prepare future queue items.
 
 Inspect the repository rules and the crate before editing. Implement the change,
-update directly related tests and documentation, and run the smallest validation
-that proves this crate. Run affected-crate cargo check and cargo test once after
-the edits when repository rules permit them.
+update directly related tests and documentation, and follow minimal-local-validation
+when comprehensive CI covers this crate. Otherwise run the smallest relevant
+repository checks. Batch validation after the edits and honor explicit user limits.
 
 Commit and push the change. Create one ready-for-review pull request against
 <default branch>. Do not create a draft or stacked pull request.
@@ -31,7 +31,8 @@ This is an automated mechanical PR for `<crate>`.
 State the applied change, actual validation, and real merge risk. Do not claim
 that behavior is unchanged unless the evidence proves it.
 
-After every push on a branch that has a pull request, invoke track-pr. Fix
+After every push on a branch that has a pull request, invoke track-pr within the
+caller's scheduling limits. Do not block queued work merely to wait for CI. Fix
 change-caused CI failures in this same session. Apply feedback-autonomy before
 you act on pull request feedback. Do not merge or approve the pull request.
 
@@ -39,4 +40,3 @@ Report the pull request URL and number, current head commit, validation results,
 and any blocker to the coordinator. Stay available until the pull request
 merges and the coordinator archives this session.
 ```
-

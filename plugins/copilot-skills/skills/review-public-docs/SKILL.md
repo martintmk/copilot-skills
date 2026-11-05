@@ -107,9 +107,10 @@ reuse.
   `cargo +<toolchain> --version`. MSRustup and similar tools resolve
   `+toolchain` without listing it in `rustup toolchain list`, so that list is
   not proof a toolchain is missing.
-- Set `RUSTC_BOOTSTRAP=1` only on this command, to allow JSON output on a
-  stable compiler. Never export or persist it. On PowerShell, save and restore
-  any previous value in `finally`. Skip it when the toolchain is nightly.
+- If inherited policy permits bootstrap, set `RUSTC_BOOTSTRAP=1` only for this
+  command to allow JSON output on stable. Never export or persist it.
+  On PowerShell, save and restore the previous value in `finally`.
+  Skip bootstrap on nightly. If prohibited, report the capture limit.
 - Report a missing toolchain to the caller; do not substitute another compiler.
 - Never use `--document-private-items`. `--locked` keeps lockfiles unchanged;
   report missing or outdated locks instead of updating them.

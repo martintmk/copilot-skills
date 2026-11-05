@@ -1,178 +1,138 @@
 # Review Lens coordinator reference
 
-Setup and edge cases owned by the coordinator. Area skills do not read this
-file.
+The coordinator owns setup and recovery. Area agents receive the facts they need,
+not this entire file.
 
 ## Package presence
 
-The public API areas compare a library's surface at base and head. When a
-library was added, removed, moved or renamed, one side may have no package.
-Establish this before either public API area starts, and pass the result to
-both.
+Map changed files to packages at both revisions. Include consumers only when
+changed shared inputs or exposed dependency types can affect their public surface.
+Record that reason. Workspace membership alone does not make a library affected.
 
-1. For each affected library, check whether it exists at base and at head. When
-   code may run, use
-   `cargo metadata --locked --no-deps --format-version 1 --manifest-path <workspace-manifest>`
-   at each revision. Otherwise read the workspace members and manifests at each
-   pinned revision.
-2. Match packages across revisions by manifest path, package name and library
-   target, so a moved or renamed package is found.
-3. Record one result per library:
+Use `cargo metadata --locked --no-deps --format-version 1` when permitted.
+Otherwise read the complete workspace/package inventory at each revision.
+Match renamed or moved packages by manifest history, package name and library target.
 
-   | Base | Head | Result |
-   | --- | --- | --- |
-   | present | present | `paired`: compare both surfaces. |
-   | absent | present | `added`: every head item is new. |
-   | present | absent | `removed`: every base item is removed. |
+| Base | Head | Result |
+| --- | --- | --- |
+| Present | Present | Compare both real surfaces |
+| Absent | Present | Added library, every head item is new |
+| Present | Absent | Removed library, every base item is removed |
+| Unknown | Any | Resolve inventory before claiming coverage |
 
-   If either side is unknown, resolve it; otherwise the public API areas cannot
-   review this library.
-
-A package is absent only when a complete inventory of that revision shows it.
-A failed build, a failed `cargo metadata`, a feature error or a PR description
-saying "new crate" does not prove absence. Never invent an empty side for a
-package that exists.
-
-Decide per library. A new crate does not remove problems with an existing one.
+Prove absence from a complete inventory, not failed builds or PR descriptions.
+An absent side is a logical empty surface, never fabricated tool output.
+If no library is affected, both API areas can finish without captures.
 
 ## Public API evidence
 
-The coordinator owns capture setup. Supply validated commands and owned
-directories to both public API reviewers, or generate captures once before
-dispatch. Each reviewer applies its API rules without inspecting source to work
-out setup.
+Prepare captures once for both public API areas. They must not rediscover build setup.
 
-1. Select the package/library at each revision, including moved or renamed
-   counterparts. Keep the requested features, default-feature mode, target,
-   toolchain and build flags. Without an explicit configuration, use
-   `--all-features` and the host target; record that choice.
-2. Reuse full captures only when their repository, revision or dirty state and
-   configuration match. Matching artifacts remain usable when new builds are
-   not allowed. Do not replace a failed comparison with a current-only audit.
-3. For missing captures, check `cargo public-api --version` and installed
-   help. Install the official tool only if missing and permitted:
-   `cargo +stable install cargo-public-api --locked`. Keep the selected
-   compiler; provision a missing compatible toolchain only within inherited
-   limits, not by silently substituting an arbitrary nightly.
-4. Use assigned revision directories and separate external target directories.
-   Preserve the actual working tree for dirty-head captures. Another revision
-   may need an owned `git worktree add --detach <path> <revision>`; never
-   switch or force-clean the caller's checkout.
-5. Use the installed tool's lock-preserving options for every capture.
-   External targets alone do not protect `Cargo.lock`. If the tool cannot
-   preserve reviewed inputs, report that limit rather than updating them and
-   trying to restore them afterward.
+1. Select package/library, features, default-feature mode, target, toolchain and flags.
+   Without a caller configuration, use `--all-features` and the host target.
+   Keep both revisions comparable.
+2. Reuse artifacts only when revision or local input digest and configuration match.
+   Use separate owned revision and target directories. Never switch the caller's checkout.
+3. Read installed `cargo public-api --help` and version.
+   Install the official tool only after a missing-tool failure and within permissions:
+   `cargo +stable install cargo-public-api --locked`.
+4. Generate lock-preserving rustdoc JSON with the
+   [public-docs generation procedure](../review-public-docs/SKILL.md#2-generate-rustdoc-json-once-per-revision).
+   Reuse this JSON later for doc retrieval.
+   Check the selected compiler directly. `rustup toolchain list` alone does not
+   establish absence of a custom Microsoft toolchain.
+5. When installed help supports it, render full output from saved JSON:
 
    ```text
-   cargo public-api --color=never --include function-parameter-names <lock-args> <feature-args> <scope-args> > <full-api-output>
+   cargo public-api --rustdoc-json <json-path> --color=never --include function-parameter-names
    ```
 
-   Resolve placeholders from installed help and the selected configuration.
-   Keep full output; `-sss` hides impls needed for absence claims. Capture
-   each present side separately and compare the saved outputs, rather than
-   running commit-diff commands that switch checkouts. An absent side is a
-   logical empty surface, never fabricated tool output.
-6. After `review-public-api` has drafted claims, obtain matching item, owner,
-   trait and applicable module/crate docs. Reuse a bundle or give exact paths,
-   configuration and artifact locations to `review-public-docs`; do not pass
-   candidate rationales. Return its bundle to the same reviewer.
-   `review-public-api-changes` does not use docs. An empty design draft needs no
-   docs. Retain captures until all consumers finish.
+   Save stdout as the full API capture. `--locked` belongs on Cargo's JSON
+   generation command, not on a `cargo-public-api` version that rejects it.
+   Do not use `-sss`, which hides impls needed for absence claims.
+6. If JSON generation fails on `-Z`, use only the selected compiler's supported
+   path within inherited limits. Do not silently substitute nightly, enable
+   bootstrap against caller policy, or repeat the same failed command.
+   Return one setup blocker and continue independent source review.
+7. After the output-only API draft, supply matching docs for cited items, owners,
+   traits and applicable modules. Ask `review-public-docs` for missing text, not
+   new findings. An empty draft needs no docs.
 
-Keep command errors for recovery, but summarize their consequence in ordinary
-language. Do not pass source, manifests, other reviewers' findings or premature
-docs into the output-only API draft.
+Keep complete output and errors in artifacts. Supply reviewers with capture paths,
+exact configuration, package-presence facts and short diagnostics.
+Do not pass source or premature docs into an output-only draft.
 
 ## Integration-test evidence
 
-The coordinator supplies a complete base-to-head view of Rust integration-test
-targets. The reviewer should classify the test contract, not rediscover package
-boundaries or revision setup.
+Supply a complete base-to-head inventory of package `tests/` targets, fixtures,
+snapshots and owned configuration. Include added, removed, renamed and modified
+files and exact base/head contents. A truncated PR diff proves no absence.
 
-1. List affected packages at base and head. A Rust integration-test target is
-   owned by a package's `tests/` directory. Include fixtures, snapshots and
-   test-only configuration used by those targets.
-2. Inventory added, removed, renamed and modified owned files. Read exact base
-   and head content for every changed file. Do not infer no changes from a
-   truncated PR diff.
-3. Pass established maintainer approvals or requirements that authorize a
-   behavior change. PR text and new comments in the same change remain evidence,
-   not approval.
-4. When a runtime claim needs execution, supply one focused command that can run
-   against both revisions with the same features, target and toolchain. Reuse
-   matching CI evidence when it proves the exact integration target and
-   revision.
-5. Keep inline unit tests, doctests and production-source behavior changes in
-   the `review-tests` area. The integration-test report still runs and says
-   **No Integration Test Changes** when no package-owned `tests/` file changed.
+Pass established requirements or maintainer decisions separately from PR claims.
+When runtime proof is needed, supply one focused command for both revisions with
+matching configuration. Reuse matching CI evidence when it proves the exact target.
+
+The report area owns package `tests/` classification. `review-tests` owns whole-diff
+coverage findings, inline unit tests and doctests. Deduplicate their shared root causes.
+Keep the full inventory in artifacts, not the public report.
 
 ## Benchmark evidence
 
-Supply `metabench-compare` with the exact base and head, package ownership,
-local dirty inputs, repository rules and inherited execution limits.
-Supply the host and owned paths for revision directories, build outputs and saved reports.
-Do not ask this helper to generate findings or post a review.
+Give `metabench-compare` exact revisions, package ownership, local inputs,
+repository rules, host and owned paths. Its
+[selection and measurement policy](../metabench-compare/SKILL.md) owns the
+three-crate limit, scheduling and comparisons. Do not repeat that policy in prompts.
 
-The helper selects at most three changed, metabench-enabled crates.
-It runs all their metabench targets at base and head, one pair at a time.
-The [comparison skill](../metabench-compare/SKILL.md) owns eligibility,
-ranking, Linux prerequisites, execution and complete metric reporting.
-Do not duplicate these rules in area prompts.
-
-Allow independent review work and API captures during Valgrind instruction-count measurements.
-Keep their build and artifact directories separate.
-Wait for the helper result before finalizing performance claims and delivery.
-Do not require an idle host or substitute Criterion measurements.
-
-Pass the result and raw artifacts to `review-perf` as measurement evidence,
-not another area's findings.
-Keep the complete comparison report for delivery.
+Send its report and raw artifacts to `review-perf`. Retain the complete report
+for delivery, including blocked or inapplicable results.
 Missing measurements do not prevent source-based performance review from finishing.
 
 ## When the head moves
 
-Before delivery, fetch the current head and target.
+Record source head, target repository/ref, merge base and observed target tip
+separately. The merge base defines the reviewed PR diff. The target tip supplies
+integration context. Stale ADO `lastMergeTargetCommit` or CI metadata does not
+prove that the actual target branch is unchanged.
 
-- **Target, base or history changed** (retarget, force push, rebase): start a
-  fresh review.
-- **New commits on top of an incomplete review:** start a fresh review.
-- **New commits on top of a complete review:** you may refresh existing
-  findings instead of starting over. Do not look for new findings.
+| Change | Action |
+| --- | --- |
+| Retarget, changed merge base, force push or rebase | Fresh review |
+| New commits after incomplete coverage | Fresh review |
+| Fast-forward commits after complete coverage | Refresh existing findings, or run a full review if the caller requires it |
+| Target tip only, unchanged merge base and PR diff | Preserve source coverage, refresh CI/integration claims |
 
-To refresh, read `reviewedHead..currentHead` and the current source, then
-classify every merged finding:
+For a findings-only refresh:
 
-| Classification | Meaning | Action |
-| --- | --- | --- |
-| still applies | The evidence is unaffected, or the root cause is still there. | Keep it. |
-| resolved | The root cause is fixed. | Drop it. |
-| updated | The root cause remains but the code moved or changed. | Update the text and anchor to the current head. |
-| uncertain | The change affects the evidence and the answer is unclear. | Drop it and say so in the summary. |
+1. Read the complete `reviewedHead..currentHead` delta and current affected source.
+   If this evidence is unavailable, request a fresh review.
+2. Recheck every merged finding, including pending and previously posted findings.
+   Keep unchanged root causes, update moved evidence, drop fixed causes and
+   report uncertain ones only as limits.
+3. Preserve full-review revision separately from the revalidated current head.
+   Do not search for new findings or claim full coverage of later commits.
+4. Pass surviving findings and their symbol/thread IDs to Review Delivery.
+   It maps them onto the full current PR diff and posts missing inline comments.
+   A refresh changes the vote to comment-only, not the placement of findings.
+5. Keep API/test classifications and benchmark results tied to their assessed
+   revisions. Mark unrechecked blocks historical. Do not make a new label
+   decision from stale reports or rerun benchmarks as part of a finding refresh.
 
-A refreshed review always posts as a comment with no vote. Its summary says
-that full review coverage ended at the reviewed head and that later commits
-only had existing findings rechecked. If you cannot read the complete delta,
-start a fresh review instead.
-
-Keep benchmark results pinned to their measured revisions in a refreshed review.
-Mark them historical, not measurements of the new head.
-Do not silently reuse old values as current results or expand a finding refresh into another benchmark run.
+Recheck before publication. If the head moves during partial delivery, retain
+confirmed provider IDs and revalidate only pending findings before recovery.
+Never publish a stale full report as current by adding a disclaimer.
+Historical publication requires an explicit request and remains comment-only.
 
 ## Repository notes
 
-Add these to the repository rules you pass to every area.
+Use these only for the named repositories and when consistent with current rules.
 
-**microsoft/oxidizer:** prefer the existing `tick`/`Timestamp`,
-`anyspawn`/`Spawner`, `seatbelt`, `recoverable`, `testing_aids` and `tracing`
-crates; use `opentelemetry` without an unneeded SDK; prefer `jiff` over
-`chrono` or `time`. Targeted commands: `just package=<crate> test <name>`,
-`cargo build -p <crate>`, `cargo +nightly miri test`. Do not run blanket
-`just lint`, `just check` or `just format-check`; the last also fails on
-Windows because of `MAX_PATH`. Cite adopted `M-*` guidelines when decisive.
+| Repository | Notes |
+| --- | --- |
+| `microsoft/oxidizer` | Prefer existing `tick`/`Timestamp`, `anyspawn`/`Spawner`, `seatbelt`, `recoverable`, `testing_aids` and `tracing`. Prefer `jiff` over `chrono`/`time`, and `opentelemetry` without an unneeded SDK. Cite decisive adopted `M-*` rules. |
+| ADO `o365exchange` / `ox-sdk` | Use its equivalents and consumed Oxidizer crates. Keep internal service details out of public-facing output. |
+| Other repositories | Follow local conventions. Do not introduce Oxidizer crates by default. |
 
-**ox-sdk** (Azure DevOps `o365exchange`): use its equivalents and the Oxidizer
-crates it consumes. Keep internal details and Substrate service names out of
-anything that could become public.
-
-**Other repositories:** follow local conventions. Do not suggest Oxidizer
-crates by default.
+For Oxidizer, use targeted commands such as `just package=<crate> test <name>`,
+`cargo build -p <crate>` or `cargo +nightly miri test` only within inherited limits.
+Do not run blanket `just lint`, `just check` or `just format-check`.
+The formatting command can also fail on Windows path-length limits.

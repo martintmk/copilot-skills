@@ -1,13 +1,10 @@
 ---
 name: review-correctness
 description: >
-  Review Rust changes for behavioral defects and prove each one before raising
-  it: control-flow and version gates, boundary and representation limits,
-  resource and free-list models, cancellation and drop safety, time arithmetic,
-  sync/async deadlock risks, and round-trip or invariant claims. Uses
-  reproductions, Miri and bounded adversarial inputs when code may run. Use for
-  a focused defect audit, or when review-lens routes behavioral risk here. Not
-  for API design, naming, or formatting.
+  Find behavioral defects in changed Rust code through focused reproductions
+  or complete source proofs. Covers boundaries, resources, cancellation,
+  concurrency, time and invariants. Use for correctness audits or Review Lens.
+  Not for API design, naming or formatting.
 ---
 
 # Review Correctness
@@ -34,10 +31,11 @@ this finding's fix instead of a separate finding.
    - Try to disprove your own finding. Drop it if the check refutes it.
    - Match the configuration: `--all-features` does not test
      `#[cfg(not(feature = "..."))]` code or another target.
-4. **Without a reproduction, there is no correctness finding.** Drop the
-   suspicion or ask it as a question. This includes reviews where you cannot
-   run code or the build fails: finish tracing, raise questions, and list what
-   you could not run.
+4. Without execution, require a complete source proof: reachable trigger,
+   exact-version semantics, causal path and violated contract.
+   Compare the base to establish that the change introduced the defect.
+   Otherwise drop the suspicion or ask a conditional question.
+   Finish source coverage even when builds are unavailable.
 
 ## Questions
 
@@ -56,8 +54,8 @@ this finding's fix instead of a separate finding.
 - **Concurrency and sync/async bridges:** Locks held across `.await`?
   Thread-affine state moved between threads? Search both synchronous and
   asynchronous code for executor entry points such as `block_on`, including
-  methods, free functions and local wrappers. Flag every changed `block_on` as
-  a deadlock risk until its callers and executor topology rule that out.
+  methods, free functions and local wrappers. Trace changed `block_on` calls
+  before deciding whether their callers and executor topology permit progress.
   Calling it from async code can block the runtime thread that must drive the
   awaited future, and some runtimes panic when an executor is started from
   inside another executor. Calling it from synchronous code can still deadlock
@@ -74,10 +72,10 @@ this finding's fix instead of a separate finding.
 
 ## Evidence
 
-Give the triggering input or sequence, the reproduced result, the concrete
-impact and a specific fix, with a focused regression test when useful. Wrong
-output, hangs, leaks, panics or data loss are blocking even in private code.
-Show decisive values; never describe reasoning as if you ran it.
+Give the trigger, causal proof or reproduction, impact and specific fix.
+Include a focused regression test when useful. Show decisive values and
+configuration. Never describe reasoning as execution.
+Use the shared impact-based severity policy, including for private code.
 
 ## Report
 

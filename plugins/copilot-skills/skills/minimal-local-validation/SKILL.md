@@ -1,49 +1,39 @@
 ---
 name: minimal-local-validation
 description: >
-  Keep local Rust validation intentionally narrow when the build pipeline
-  already performs comprehensive workspace checks. Continue queued work without
-  waiting for CI. Use when asked to minimize local validation, avoid long
-  workspace-wide checks, run cargo check only for changed crates, or rely on CI
-  for exhaustive validation and fix only concrete pipeline failures. Not for
-  repositories without comprehensive CI, explicit full-validation requests, or
-  diagnosing an already failing pipeline.
+  Keep Rust implementation validation narrow when comprehensive CI covers the
+  workspace. Batch edits, check affected packages once, and continue queued
+  work without waiting for CI. Not for explicit full-validation requests or
+  repositories without comprehensive CI.
 ---
 
 # Minimal Local Validation
 
-Prefer fast local feedback over duplicating comprehensive CI. Make the requested
-change, identify the directly changed Rust crate or crates, and run only:
+Use fast local feedback instead of repeating comprehensive CI.
+If that CI coverage is absent or uncertain, state the limit and use the smallest
+relevant repository check. Do not claim full validation.
+
+After all edits, run:
 
 ```text
 cargo check -p <changed-package>
 ```
 
-Combine multiple changed packages in one command with repeated `-p`. Use the
-repository's required toolchain and existing feature flags only when the changed
-code needs them.
+Combine affected packages with repeated `-p`. Use the required toolchain.
+Add existing feature flags only when the change needs them.
+Do not run workspace suites, broad feature matrices or unrelated checks unless
+explicitly requested or necessary to validate the change.
+Do not install tools or clear build artifacts merely to widen validation.
 
-Do not run workspace-wide builds, tests, linting, formatting checks, broad
-feature matrices, or unrelated package validation unless the user explicitly
-requests them or the narrow check cannot validate the change. Do not add tools,
-install dependencies, or clean build artifacts merely to expand validation.
+After the narrow check passes, rely on CI for exhaustive coverage.
+Continue queued work instead of starting a blocking watcher or polling checks.
+Report CI as pending until its result is known.
+This does not waive CI-dependent merge or release gates.
 
-After the narrow check passes, stop local validation and rely on the existing
-pipeline for exhaustive coverage.
+For a concrete pipeline failure, inspect its cause and reproduce it with the
+smallest relevant command. Fix it, then rerun that command and the affected
+package check. Targeted diagnostic reproductions can precede the final check.
 
-When more work or user prompts are queued, do not wait for CI checks to finish.
-Do not start a blocking check watcher, poll repeatedly, or sleep just to wait for
-CI. Continue the next actionable task, or end the current turn so the next queued
-prompt can run. Leave CI running and report its result as pending, not passed.
-Revisit CI results after queued work is drained or a concrete failure is reported.
-This changes scheduling, not required CI gates for merging or other dependent
-actions.
-
-If CI reports a failure, inspect that concrete failure, reproduce it with the
-smallest relevant local command when practical, fix its root cause, and rerun only
-that command plus `cargo check` for affected crates. Do not respond to one pipeline
-failure by running every workspace check.
-
-This policy applies only when comprehensive CI is expected to run for the
-change. If that premise is false or uncertain, state the limitation rather than
-claiming the change is fully validated.
+This skill limits implementation validation. It does not replace specifically
+requested review evidence or benchmark measurements. Those tasks still inherit
+the caller's execution limits.

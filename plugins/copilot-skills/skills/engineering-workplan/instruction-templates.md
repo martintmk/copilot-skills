@@ -128,6 +128,7 @@ Owner / integrator: <identities or assigned roles>
 Objective: <observable slice result and contribution to the overall destination>
 Requirements: <IDs plus their actual pass/fail conditions>
 
+User instruction: <verbatim assigned request, separate from coordinator guidance>
 Context: <observed behavior, source locations, relevant callers and conventions>
 Baseline: <repository/ref/configuration; branch/worktree if assigned>
 Prerequisites: <dependency IDs, approved handoff revisions and decisions>

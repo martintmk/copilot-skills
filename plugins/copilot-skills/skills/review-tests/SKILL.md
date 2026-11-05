@@ -1,14 +1,10 @@
 ---
 name: review-tests
 description: >
-  Review Rust changes for deleted or weakened tests and observable behavior
-  deltas, even when test files are untouched. Protects existing behavioral
-  contracts from being rewritten to match an implementation, especially in
-  AI-authored changes, and checks that changed tests are idiomatic and reuse
-  supported test utility features such as test-util. Use when asked to review
-  test preservation, behavior compatibility, or Rust test quality in a PR,
-  branch, commit, working-tree diff, or focused audit. Not for coverage
-  percentages or test-framework formatting.
+  Review Rust test preservation, behavior compatibility and test quality,
+  including changes with no test edits. Find weakened assertions, missing
+  behavior coverage and unused supported test utilities. Not for coverage
+  percentages or framework formatting.
 ---
 
 # Review Tests
@@ -72,18 +68,17 @@ belong here.
 
 ## Evidence
 
-The diff, API and docs are enough to prove lost or weakened assertions and
-explicit behavior changes. A claim about runtime behavior needs a focused
-command run at both base and head, with both results. If you cannot run code,
-ask runtime claims as questions.
+The diff, API and docs can prove lost assertions or changed expectations.
+Runtime claims follow the [correctness proof rules](../review-correctness/SKILL.md#procedure).
+Do not treat an intentional test-contract change as proof of a production defect.
 
 State the baseline contract, the change, the missing approval or coverage, the
 evidence and the impact. Say whether to restore the test, replace it, or cover
 the approved behavior.
 
-Unapproved behavior changes, lost distinct coverage and test bypasses reachable
-from production are blocking. Brittle, non-idiomatic or duplicate test
-infrastructure is `Non-blocking`.
+Use the shared severity policy. A coverage gap or missing approval alone is
+non-blocking. Explain any serious impact rather than treating every test change
+as grounds to block.
 
 ## Report
 

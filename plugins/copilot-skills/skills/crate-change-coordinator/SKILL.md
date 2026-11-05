@@ -7,8 +7,8 @@ description: >
   pull request head to pass CI, announce it in a user-provided Teams review
   channel, then wait for merge before archiving the child and starting the next
   crate. Use for repeated mechanical changes across crates in one repository.
-  Requires the crate list, Teams channel link, and change instruction. Not for
-  parallel changes, stacked pull requests, or automatic merge.
+  Requires a GitHub repository, crate list, Teams channel link and change
+  instruction. Not for parallel changes, stacked PRs, automatic merge or ADO.
 ---
 
 # Crate Change Coordinator
@@ -116,7 +116,8 @@ its change and invokes `track-pr` after every push. The child applies
 that work in the coordinator.
 
 If the fix needs a decision outside the original instruction, pause this crate
-and ask the user. Do not skip the crate.
+and relay the child's exact question to the user. Do not answer a human decision
+or ask it twice. Do not skip the crate.
 
 ### 4. Announce the green pull request
 
@@ -131,12 +132,14 @@ Automated mechanical PR for <crate> is ready for review: <PR URL>
 All checks passed for <short head commit>.
 ```
 
-Read recent channel messages first. If the current user already posted a message
-for the same pull request, save its message ID instead of posting another one.
+Recheck PR lifecycle, head and CI before announcing. If they changed, return to
+the CI gate. Read recent channel messages and reconcile any saved announcement.
+Reuse only this coordinator's confirmed announcement, not another message that
+merely links the same PR.
 
 Otherwise, make one top-level channel-message creation attempt. Save the
-returned message ID and read the message back. If the result is ambiguous, read
-the channel and reconcile by pull request URL. Do not retry an ambiguous write.
+returned message ID and read the message back. If the result is ambiguous,
+reconcile author, PR URL, body and send interval. Do not retry an ambiguous write.
 
 If the pull request gets a new head after announcement, wait for green CI again.
 Then update the same Teams message with the new head. Never create a second
@@ -170,4 +173,3 @@ session open.
 
 Never merge a pull request, approve it, change repository protections, process
 two crates at once, or create the next child before the current merge.
-
