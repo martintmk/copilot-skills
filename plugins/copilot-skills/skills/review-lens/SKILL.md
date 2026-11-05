@@ -5,8 +5,9 @@ description: >
   autonomous AI reviewing agent applying @martintmk's library-maintainer
   priorities. Supplies context and inherited execution limits to a dedicated
   high-reasoning agent for each area, merges findings and delivers one
-  AI-attributed review with mandatory API and integration-test reports and
-  human-review labeling. Use for
+  AI-attributed review with API, integration-test and benchmark reports and
+  human-review labeling. Runs Gungraun for up to three changed,
+  metabench-enabled crates. Use for
   "review this PR", "review my changes" or "review like me". For a focused
   area, invoke its review-* skill directly. Not for formatting-only passes,
   output-only API audits or specialist security reviews.
@@ -55,6 +56,10 @@ authoritative rustdoc text for public items.
 The two report areas always return summary content, even when they find no
 changes. Their human-review signal is independent of the review verdict.
 
+`metabench-compare` is a measurement helper, not a twelfth review area.
+It supplies the benchmark report and evidence for `review-perf`.
+The helper owns crate selection, execution and comparison rules.
+
 ## Procedure
 
 ### 1. Pin the change
@@ -100,7 +105,14 @@ A reviewer may run permitted tools directly. It does not need a second
 permission decision or an execution record. If an action is unavailable,
 report that specific limit and continue work that does not need it.
 
-### 3. Start one dedicated agent per area
+### 3. Start the benchmark helper and review areas
+
+Run the
+[benchmark evidence phase](coordinator-reference.md#benchmark-evidence).
+Run `metabench-compare` once in a dedicated helper with the dispatch rules below.
+Independent reviews and API captures can run alongside Valgrind instruction-count measurements.
+Give every command separate owned build and artifact directories.
+Keep its `### Benchmarks` block even when measurements are blocked or no crate qualifies.
 
 Run each area in its own fresh agent on a model that supports high reasoning.
 With `task`, use `agent_type: "general-purpose"` and
@@ -144,6 +156,12 @@ Prepare the integration-test inputs in
 The area returns its mandatory report and label decision. `review-tests` still
 owns whole-diff test findings.
 
+Give `review-perf` the benchmark report, raw artifacts, exact revisions and configuration.
+If the helper is still running, let `review-perf` finish source inspection first.
+Before it finalizes measured claims, send the completed benchmark result to the same reviewer.
+It interprets measurements without rerunning the helper or expanding its three-crate limit.
+Unmeasured cost concerns remain questions.
+
 Ask finding areas to return findings in the
 [findings contract](../review-delivery/findings-contract.md), including their
 coverage and status. Ask the two report areas for their required report,
@@ -184,6 +202,8 @@ settings and inherited limits. Keep the reason if it still cannot finish.
    [findings contract](../review-delivery/findings-contract.md).
 5. Keep exactly one **Public API changes** report and one **Integration tests**
    report. Do not turn their classification text into duplicate findings.
+   Keep exactly one **Benchmarks** report after them, with every comparison row
+   or an accessible complete artifact. Do not turn its measurements into duplicate findings.
 6. Combine the report decisions for the exact `human-review-required` label:
    - `required` when the API report contains any breaking change or addition,
      or the integration-test report contains a breaking behavioral change;
@@ -209,11 +229,14 @@ settings and inherited limits. Keep the reason if it still cannot finish.
 2. Write the summary facts described below.
 3. Start one dedicated high-reasoning agent for `review-delivery`, inheriting
    the same permissions and execution constraints. Give it the merged findings,
-   both mandatory report blocks, the tri-state human-review label decision and
+   all three report blocks, the tri-state human-review label decision and
    reasons, summary facts, outcome and verdict, the pinned head, the PR and the
    authorized posting or report-only mode.
 4. After all consumers finish, remove only worktrees and temporary files you
    created. Preserve pre-existing edits and caller-owned artifacts.
+   Keep benchmark reports and their referenced raw artifacts outside temporary build directories.
+   For local reviews, make sure that the measured input digest still matches before delivery.
+   If it differs, mark those results historical rather than current.
 
 ## Write the summary for people
 
@@ -224,6 +247,10 @@ The PR author reads the summary. Write it as a reviewer, not as a pipeline.
   API surface: could not build the crate because Rust 1.97 is not installed."
 - Say plainly what was not run: "No benchmarks were run, so performance
   comments are questions."
+- Include `### Benchmarks` after the integration-test report.
+  Preserve the selected crates, side-by-side results, measurement status and limits from `metabench-compare`.
+  Missing measurements limit performance claims, not completed source-review coverage.
+  Benchmark status does not independently change the human-review label decision.
 - Include `### Public API changes` with **Breaking Changes**, **Public API
   Additions** or **No API Changes**. If that area could not finish, say
   **Could not assess** and why instead of making a clean claim.
@@ -258,4 +285,8 @@ The public API capture failed because Rust 1.97 is not installed.
 ### Integration tests
 
 **No Integration Test Changes**
+
+### Benchmarks
+
+Blocked: Gungraun requires a Linux host. No benchmarks were run.
 ```

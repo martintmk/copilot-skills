@@ -22,6 +22,8 @@ You need:
 
 - The merged findings in the [findings contract](findings-contract.md).
 - The mandatory **Public API changes** and **Integration tests** report blocks.
+- The **Benchmarks** block from `metabench-compare`, including its complete
+  comparison tables or an accessible complete artifact and its coverage summary.
 - The `human-review-required` decision (`required`, `not required` or
   `undetermined`) and the exact report reasons supporting it.
 - Summary facts: what was reviewed, what was not and why, and what was not run.
@@ -46,7 +48,11 @@ ask the caller. Do not guess, and do not run review passes to fill gaps.
    internal status. Avoid words such as worker, snapshot, manifest, isolated or
    falsification. Leave evidence in its finding. For Review Lens, follow the
    [final summary contract](findings-contract.md#area-result-and-final-summary),
-   preserving the mandatory report headings and Rust snippets.
+   preserving all three report headings, Rust snippets and benchmark comparisons.
+   Do not drop unchanged, improved, added, removed or failed benchmark rows.
+   Follow the comparison skill's
+   [size-limit rules](../metabench-compare/run-and-report.md#side-by-side-results)
+   when a full table exceeds provider limits.
    - Incomplete: follow the attribution with **Warning: Incomplete review**,
      list each topic not reviewed with a one-clause reason, and say no overall
      verdict is given.
@@ -64,6 +70,8 @@ ask the caller. Do not guess, and do not run review passes to fill gaps.
    report requires it and either report could not finish. Approved or
    intentional changes do not clear a required signal. If the decision and
    reports disagree, stop and return to the caller.
+   Benchmark measurements do not independently require the human-review label.
+   A partial or blocked benchmark report limits measurement claims, not completed source-review coverage.
 
 ## Choose the provider action
 

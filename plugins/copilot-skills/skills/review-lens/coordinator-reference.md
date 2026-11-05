@@ -106,6 +106,29 @@ boundaries or revision setup.
    the `review-tests` area. The integration-test report still runs and says
    **No Integration Test Changes** when no package-owned `tests/` file changed.
 
+## Benchmark evidence
+
+Supply `metabench-compare` with the exact base and head, package ownership,
+local dirty inputs, repository rules and inherited execution limits.
+Supply the host and owned paths for revision directories, build outputs and saved reports.
+Do not ask this helper to generate findings or post a review.
+
+The helper selects at most three changed, metabench-enabled crates.
+It runs all their metabench targets at base and head, one pair at a time.
+The [comparison skill](../metabench-compare/SKILL.md) owns eligibility,
+ranking, Linux prerequisites, execution and complete metric reporting.
+Do not duplicate these rules in area prompts.
+
+Allow independent review work and API captures during Valgrind instruction-count measurements.
+Keep their build and artifact directories separate.
+Wait for the helper result before finalizing performance claims and delivery.
+Do not require an idle host or substitute Criterion measurements.
+
+Pass the result and raw artifacts to `review-perf` as measurement evidence,
+not another area's findings.
+Keep the complete comparison report for delivery.
+Missing measurements do not prevent source-based performance review from finishing.
+
 ## When the head moves
 
 Before delivery, fetch the current head and target.
@@ -130,6 +153,10 @@ A refreshed review always posts as a comment with no vote. Its summary says
 that full review coverage ended at the reviewed head and that later commits
 only had existing findings rechecked. If you cannot read the complete delta,
 start a fresh review instead.
+
+Keep benchmark results pinned to their measured revisions in a refreshed review.
+Mark them historical, not measurements of the new head.
+Do not silently reuse old values as current results or expand a finding refresh into another benchmark run.
 
 ## Repository notes
 
