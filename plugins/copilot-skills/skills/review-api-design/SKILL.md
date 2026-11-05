@@ -1,15 +1,10 @@
 ---
 name: review-api-design
 description: >
-  Review a Rust change's public contract from the diff and source: visibility and
-  layering, semver cascade, constructors, builders and defaults, strong types and
-  enums, trait implementability and sealing, macros as public API, and error
-  type, message and panic conventions, including internal errors. Also owns
-  dependency and feature checks. Use for downstream contracts, manifest or
-  error-policy changes, or review-lens's public-contract area.
-  Complements review-public-api, which audits an existing surface from cargo
-  public-api output without reading source. Not for runtime defects or naming
-  style.
+  Review Rust public contracts from source and diffs: construction, visibility,
+  traits, macros, features, dependencies, errors and compatibility. Use for
+  contract or error-policy changes and Review Lens. Not for runtime defects,
+  naming-only concerns or output-only API audits.
 ---
 
 # Review API Design
@@ -73,14 +68,15 @@ telemetry and code/docs disagreements to their own reviews.
 - **Traits and derives:** Are manual implementations of normally generated
   traits intended as an extension point? Seal the trait if not. Otherwise keep
   requirements small and give defaults so it can evolve. Each derive needs a
-  consumer use. Removing public impls can break users; check coherence and
+  consumer use. Do not recommend `Copy` without a required consumer contract.
+  Removing public impls can break users; check coherence and
   inference before calling an addition non-breaking.
 
 ## Errors, dependencies and evolution
 
-- At public or foundation boundaries prefer one crate-level error struct with
-  `is_*` accessors over many error types. Relax this for internal crates.
-  Classify with typed enums, not formatted text.
+- Follow the crate's established error taxonomy. Prefer a struct with focused
+  classification accessors for each coherent error family, not a catch-all enum.
+  Classify with typed values, not formatted text.
 - Error and `expect(..)` messages are lowercase and say "error", not
   "exception".
 - Challenge new dependencies, especially heavy proc-macro leaves. Prefer std,

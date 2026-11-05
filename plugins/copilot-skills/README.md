@@ -42,7 +42,7 @@ the entry-point guide.
 | [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction to an ordered set of Rust crates through sequential child sessions and pull requests, with inherited model configuration, green CI, Teams review announcements, and merge-gated progress. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with every review area, public API priority and Gungraun comparisons for up to three changed, metabench-enabled crates. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
-| [`review-correctness`](skills/review-correctness/SKILL.md) | Reproduced behavioral defects across every changed correctness-sensitive path, including `block_on` deadlock risks at sync/async boundaries. |
+| [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
 | [`review-resilience`](skills/review-resilience/SKILL.md) | Recovery classification and version-correct resilience middleware. |
 | [`review-perf`](skills/review-perf/SKILL.md) | Measured cost, allocations, hot paths and injectable clocks. |
@@ -54,10 +54,10 @@ the entry-point guide.
 | [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | The always-present breaking/additive/no-change public API report, with concise Rust signatures and a human-review signal for any API change. |
 | [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including additive-only coverage and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
-| [`review-delivery`](skills/review-delivery/SKILL.md) | Final review delivery to GitHub, ADO or chat; not another review pass. |
+| [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery with current inline anchors, thread reconciliation and partial-write recovery. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
-| [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | Every 15 minutes, finds clear PR review requests in a user-provided Teams channel, runs full Review Lens reviews in linked PR sessions, refreshes one rolling PR report, and rate-limits new submitted reviews with a configurable four-hour default cooldown. |
+| [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | GitHub and ADO reviews from Teams requests, with one child per PR, inline findings, one rolling report, 15-minute polling and a four-hour default cooldown. |
 | [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
 | [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
@@ -91,50 +91,37 @@ the complete production outcome rather than code volume or compilation alone.
 
 ## Review pipeline
 
-Ask for "review this PR" or "review my changes" to use `review-lens`, or name a
-focused skill to review only that area. Area skills contain only review rules:
-what to look for, what evidence counts and how to report. The coordinator
-supplies context and commands, selects the review model and passes down the
-session's permissions and execution constraints. A focused request needs that
-setup for only its selected skill. Only the findings contract is shared.
-Focused reviews also pass through `review-delivery`.
+Use `review-lens` for full reviews, or name one area for a focused review.
+Area skills own specialist evidence rules. The coordinator supplies revisions,
+shared artifacts and inherited execution limits.
+The [findings contract](skills/review-delivery/findings-contract.md) owns format,
+severity and summaries. `review-delivery` owns posting for both review modes.
 
 `review-lens` adds the coordination:
 
-1. **Pin the change once:** base and head, repository rules, CI and existing
-   discussion.
-2. **Inherit execution limits:** reviewers use the same permissions, tools and
-   constraints as their parent, not separate approval checks or branch-based
-   policies. Prepare missing tools or artifacts only when needed and permitted.
-   Run `metabench-compare` alongside independent review work.
-   Valgrind instruction counts do not require an idle host.
-3. **Run eleven areas in dedicated high-reasoning agents:** public contract,
-   correctness, tests, performance, naming, telemetry, resilience, consistency,
-   public API surface, public API changes and integration-test changes. Set
-   high reasoning in the launch settings, honor the configured model, and
-   never silently downgrade. `review-public-docs` is a helper that supplies
-   rustdoc text.
-4. **Resolve gaps and merge:** source review can finish without executing code;
-   unproven runtime concerns remain questions. Public API review needs matching
-   captures and docs for its claims, not necessarily a new local build. Resume
-   a reviewer once after fixing a concrete setup problem.
-5. **Deliver once** through `review-delivery`, with a plain-language summary.
+1. Pin head, target ref and merge base. Read rules, CI and discussion once.
+2. Prepare shared API captures and test inventories for affected packages.
+3. Run eleven dedicated review areas within the user's model and execution
+   limits. Helpers supply public docs and benchmark measurements.
+4. Repair setup once, finish available coverage and merge findings by root cause.
+5. Deliver missing inline comments and one concise summary. Recover failed
+   writes without repeating finished analysis.
 
 Every full or focused review uses `simple-english` for its user-facing text.
 Fast-path approval and escalation text uses it too.
 
 | Outcome | Delivery |
 | --- | --- |
-| Complete | Approves when clean or nit-only; otherwise approves with comments or requests changes. |
+| Complete | Approves when clean or non-blocking. Only serious findings can request changes, and never after two distinct approvals. |
 | Incomplete | Comment with a warning that lists unreviewed topics; no verdict or vote. |
-| Refreshed after new commits | Comment rechecking existing findings only. |
+| Refreshed after new commits | Recheck existing findings and keep them inline on current code. Comment-only, with full-coverage and refresh revisions separated. |
 | Requester's or poster's own PR | Comment, no verdict. |
 | Report only | Nothing posted. |
 
-The [findings contract](skills/review-delivery/findings-contract.md) owns the
-format at every handoff: AI attribution, bold title, **Problem** (evidence),
-**Why this matters** (impact), and **Suggested fix** for actionable findings.
-Design notes use an observation title and omit only the fix.
+Each finding has AI attribution, a concrete title, **Problem**, **Why this matters**
+and **Suggested fix**. Design notes omit only the fix.
+The summary has one attribution and links inline threads instead of repeating
+their bodies. Preparation logs, hashes and full file inventories stay in artifacts.
 
 `review-public-api` drafts only from `cargo public-api` output, then reads the
 rustdoc of criticized items to remove or narrow claims, never to add them.
@@ -157,7 +144,8 @@ It runs each target at base first, then at head, on the same Linux host.
 It uses metabench's saved JSON baseline and direct comparison.
 It renders complete tables from JSON because built-in Markdown can omit metrics and removed benchmarks.
 
-Independent work can continue during Valgrind instruction-count measurements.
+Independent work can continue during Valgrind instruction-count measurements
+only when the caller's measurement-isolation rules permit it.
 It reports added, removed, failed and incompatible results instead of inventing missing values.
 It marks incomplete coverage or incompatible comparisons as partial, even when some commands succeed.
 The report keeps its selection reasons and measurement limits when execution is blocked.
@@ -234,36 +222,31 @@ The radars discover and notify, not review or act. Each owns its eligibility
 and notification history; `teams-self-message` owns delivery. Digests use
 `Why review` / `Why respond`, not the code-review finding format.
 
-[`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) owns the decision
-without tools or side effects. Every queued review requires the exact label
-`human-review-required` **or a current individual review request for the target**.
-An explicit request bypasses the label, not the age or draft limits; team requests,
-assignments and mentions do not qualify. Other eligible reasons are target
-authorship (including drafts), watched follow-ups, and published PRs over 1 hour
-and at most seven days old with at most one distinct human reviewer. Copilot and
-other verified bot/app reviews do not count; repeated submissions by the same
-human count once. All other authors' PRs must be non-draft and no older than seven
-days, including requests and watched changes; target-authored PRs remain watched
-until closure or merge while labeled or individually requested.
-Losing both the label and individual request pauses review and publication, not
-history; re-adding the label alone does not repeat a completed review. The policy
-distinguishes new heads/requests from handled work and incomplete coverage, and
-keeps retired PRs retired after reopening.
+[`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) is a separate,
+side-effect-free policy for label/request-based queues.
+It owns their age, draft, reviewer-count and retry rules.
+It does not gate the Teams channel monitor, which uses explicit channel requests.
 
-[`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) is the thin
-Copilot app coordinator for review requests posted in Teams. The user supplies
-the channel link; the skill never hard-codes it, and it infers the repository
-from the project. Native same-session automation checks the channel every 15
-minutes through WorkIQ, starting from the current position without scanning
-history. It reports gaps instead of claiming complete monitoring.
+[`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) watches a
+user-provided channel for the project's GitHub or ADO repository.
+One same-session automation polls every 15 minutes from a saved coverage boundary.
+New replies to old roots count. A recent page alone does not prove complete coverage.
 
-For each unambiguous request for an open PR in the project repository, it links
-a PR session, posts one preparation reply in the thread, and has the session
-publish a fresh Review Lens review to GitHub. New heads, base retargeting and
-new explicit requests are reviewed again. It never edits code, pushes, merges or
-changes labels or reviewers. It keeps only the state needed to avoid duplicate
-reviews and deletes its own PR sessions once GitHub shows the PR merged or
-closed. Installing/editing starts nothing.
+Each PR has one owned child and one rolling report. The child owns PR writes.
+New heads, retargeting, changed merge bases and explicit requests make work due.
+Target-tip advancement alone does not repeat an unchanged review.
+The four-hour default cooldown coalesces updates. Finished analysis survives
+posting failures, and unchanged blockers do not trigger another review each tick.
+
+Findings remain attached to current code blocks after commits.
+Already tracked inline findings are reused. Summary-only findings move inline
+when a valid anchor exists. Stale threads get a linked replacement only when
+provider tracking no longer locates the affected block.
+
+The monitor never edits code, pushes, merges, changes labels or adds reviewers.
+Required label signals remain visible as unapplied.
+Closed PRs retire from monitoring, and eligible finished children are archived,
+not deleted. Editing skills does not start or reconfigure live monitors.
 
 This replaces `pr-review-queue-github`; there is no label-based queue in this
 version.

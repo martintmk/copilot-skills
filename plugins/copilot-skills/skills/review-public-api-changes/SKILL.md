@@ -61,9 +61,9 @@ Set `human-review-required` to **required** when the report contains either
 changes still require the label. Set it to **not required** only for **No API
 Changes**.
 
-If a required capture or package-presence fact is missing, return `could not
-review` and name the missing evidence. Do not claim **No API Changes** and do
-not make a label decision from incomplete output.
+If required evidence is missing, return `could not review` and name the gap.
+Keep any changes already proved. They still require the label.
+Otherwise return `undetermined`, never `not required` or **No API Changes**.
 
 ## Report
 
@@ -91,3 +91,5 @@ target. Status: done.
 Use **No API Changes** as the complete body result when nothing changed. Keep
 the prose short. Exact public paths and signatures are more useful than a
 general explanation.
+
+Keep capture inventories and setup logs outside the public block.

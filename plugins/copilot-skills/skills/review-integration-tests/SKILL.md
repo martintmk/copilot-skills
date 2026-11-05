@@ -57,9 +57,9 @@ Set `human-review-required` to **required** for **Breaking Behavioral Changes**.
 Set it to **not required** for additions-only, behavior-preserving changes and
 no integration-test changes.
 
-If base content, head content or test ownership cannot be established, return
-`could not review` and name the gap. Do not make a clean claim or a label
-decision from an incomplete inventory.
+If content or ownership is missing, return `could not review` and name the gap.
+A proved behavioral break still requires the label.
+Otherwise use `undetermined`, not a clean classification.
 
 ## Report
 
@@ -84,3 +84,7 @@ Coverage: reviewed integration-test targets for `example`. Status: done.
 
 For a behavioral break, name the old expectation and the replacement. For no
 changes, write **No Integration Test Changes** without filler.
+
+Keep complete file inventories and unchanged assertions in artifacts.
+Report only the meaningful contract delta and additions. A required human-review
+signal is not itself a defect finding or grounds for a blocking vote.

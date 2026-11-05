@@ -1,17 +1,22 @@
 # Shared Findings Contract
 
-Read when producing or validating intermediate area findings, filtered API
-reports, standalone reports or posted threads. This is their sole shared shape;
-specialists add evidence, not templates. Do not defer fields until delivery.
-`review-public-docs` returns a bundle, not findings, and is exempt.
-`metabench-compare` returns a measurement report, not findings.
-Its block inherits the final summary's attribution.
+This file owns finding shape, severity and public summaries for full and focused
+reviews. Area skills add evidence rules, not another template.
+`review-public-docs` returns data. `metabench-compare` returns measurements.
+Neither produces findings.
 
 ## Attribution and comment shape
 
-Start every summary, finding, standalone report and PR thread with an exact bold
-attribution below on its own first line, then a blank line. Never imply requester
-authorship. Reject legacy, quoted, backticked, indented or run-in prefixes.
+Every separately posted summary or finding starts with one exact attribution
+on its own first line, followed by a blank line:
+
+- `**Posted by an AI agent**`: summaries and serious findings.
+- `**Posted by an AI agent · Non-blocking**`: issues that do not justify blocking.
+- `**Posted by an AI agent · Nit**`: cosmetic issues.
+- `**Posted by an AI agent · Design note, no change requested**`: observations.
+
+Do not prepend a publication note. Embedded report blocks inherit the summary's
+attribution. Remove their repeated attribution, internal status and handoff fields.
 
 ```markdown
 **Posted by an AI agent · Non-blocking**
@@ -22,106 +27,103 @@ authorship. Reject legacy, quoted, backticked, indented or run-in prefixes.
 <Current defect and decisive evidence.>
 
 **Why this matters**
-<Consumer/runtime impact.>
+<Consumer or runtime impact.>
 
 **Suggested fix**
 <Specific correction.>
 ```
 
-The example's severity is not a default. Allowed first lines:
+Use the exact headings in that order, normally one or two sentences each.
+The title names the defect, not just the topic or proposed fix.
+A Design note uses an observation title and omits only **Suggested fix**.
+Its **Problem** explains the evidenced tradeoff without asserting a defect.
+Clean summaries need no empty finding sections.
 
-- `**Posted by an AI agent**` - summaries, clean reports, blocking findings.
-- `**Posted by an AI agent · Non-blocking**` - real issue that should not gate.
-- `**Posted by an AI agent · Nit**` - cosmetic.
-- `**Posted by an AI agent · Design note, no change requested**` - observation,
-  not a change request.
-
-Every finding, **including Design notes**, requires a concise bold title naming
-the surface without relying on its anchor, then **Problem** and
-**Why this matters**, in order. Actionable findings, including nits/non-blocking issues,
-use a diagnosis title (what is wrong, not topic/fix) and end with **Suggested fix**.
-Design notes use an observation title: **Problem** explains the evidenced
-constraint/trade-off without asserting a defect; **Why this matters** explains
-its significance. They omit **only Suggested fix**.
-
-Use those exact headings, normally one or two sentences each. Explain rather
-than repeat the title. Clean summaries/coverage-only reports need attribution,
-not empty finding sections. Keep questions conditional, not disguised defects.
+One root cause per finding. Name the symbol and keep `path:line` in location
+metadata. Use body line references only for another location.
+Output-only API findings use public paths instead of source lines.
+Use exact-range `suggestion` fences only for a complete replacement of the anchor.
+Include a focused regression test only when useful as permanent coverage.
 Markdown prose and fences start at column zero.
 
-## Evidence, correction and severity
+## Evidence and severity
 
-One root cause per finding. Name the symbol; put exact `path:line` in location
-metadata, using body line references only for another location. Output-only API
-uses exact public paths, never source inspection for line numbers.
+Keep the decisive evidence, impact and correction. Remove investigation
+narration, repeated titles, raw logs, speculative evolution claims and generic advice.
+Separate proven defects from conditional questions.
+Never describe a source trace as an executed test.
+Area-specific proof requirements still apply.
 
-Preserve domain proof and uncertainty: evidence/constraint under **Problem**,
-impact under **Why this matters**, actionable correction under **Suggested fix**.
-Omit routine `Verified:`, investigation narration, redundant code, generic advice
-and speculative API-evolution arguments. Explain intent/trade-offs only when
-they affect the recommendation or constitute a Design note.
+Only serious correctness, security, data-loss, reliability or materially broken
+user-facing behavior can justify a blocking finding.
+Ordinary bugs, test gaps, design/doc drift and maintainability concerns are
+non-blocking unless their concrete impact meets that bar.
+Intentional API or test changes can require a human-review label without being defects.
 
-Put exact-range `suggestion` fences under **Suggested fix**; include a complete
-focused failing test only as useful permanent regression coverage, naming its
-destination. Collapse longer necessary proof under **Problem**.
-
-Severity follows concrete impact: substantial public contract breaks usually
-block; new conversions inheriting old quirks may need only non-blocking doc
-corrections. Preferences are not defects; omit tooling-owned formatting.
+Choose `approve`, `approve with non-blocking comments` or `changes requested`
+from all applicable findings, including existing unresolved threads.
+Clean reviews and Design notes permit approval. All non-blocking issues, not
+only nits, permit approval with comments.
+Incomplete reviews have no overall verdict.
+[Review Delivery](SKILL.md#choose-the-action) owns ownership, refresh, prior-approval
+and report-only restrictions on the actual provider event.
+Never lower a finding's severity or omit it merely to obtain approval.
 
 ## Area result and final summary
 
-Return actionable findings in impact order, then one coverage line: reviewed
-scope and unassessed areas, and a status (`done`, `not applicable` or
-`could not review`, with a reason for the last two). Separate uncertainty/design questions from proven
-findings. For no findings, say so in that line, the whole body after attribution.
-Area workers neither decide the combined verdict nor deliver separately.
-Pass every user-facing review, including a focused review, through
-`review-delivery`.
+Return findings in impact order, followed by one coverage/status line.
+Use `done`, `not applicable` or `could not review`, with a reason for the last two.
+Include reviewed scope and material evidence limits.
+No findings requires only attribution and that line.
+Area agents do not choose the combined verdict or post their own results.
+Route focused reviews through Review Delivery too.
 
-The coordinator merges root causes and coverage without losing any area. A
-missing area cannot hide behind a clean summary. Lead the final summary with the
-outcome, what was reviewed and material limits, in plain words for the PR
-author; leave evidence with its finding. When a Review Lens review is
-incomplete, put a bold warning right after the attribution, list each topic not
-reviewed with a one-clause reason, and say no overall verdict is given.
-Findings from reviewed areas still count; never imply the other topics were
-checked or clean.
+Report areas return their required block, coverage/status and tri-state label
+decision: `required`, `not required` or `undetermined`.
+Keep commands, file inventories, full logs and setup diagnostics in artifacts.
+The public report includes only the evidence needed to understand its classification.
 
-Every Review Lens summary also includes its mandatory **Public API changes**
-and **Integration tests** report blocks. Include both after the overview,
-in that order, including in clean, incomplete and refreshed reviews. Put
-the mandatory **Benchmarks** block next.
-Preserve its selection, measured revisions, status, complete side-by-side results and limits.
-Use the [benchmark report contract](../metabench-compare/run-and-report.md#side-by-side-results)
-for tables and size limits.
-In refreshed reviews, identify old measurements as historical.
-Missing benchmarks limit performance claims, not completed source-review coverage.
-Benchmark status does not independently change the human-review label decision.
-Put findings that cannot be delivered inline after all three report blocks. Do not repeat
-findings delivered as inline comments.
-An unfinished API or integration-test report says **Could not assess** with its reason.
-An unfinished benchmark report keeps its `partial` or `blocked` status and reason.
-Never replace missing evidence with a clean result.
+The public summary is a current report, not a concatenation of area outputs:
 
-Use this summary shape:
+1. Start with one attribution, outcome, reviewed topics and material limits.
+   For incomplete coverage, add **Warning: Incomplete review**, name missing
+   topics with one-clause reasons, and state that no overall verdict is given.
+2. Record full-review and revalidated revisions separately after a findings-only
+   refresh. Say that later commits received no new-finding review.
+3. Include exactly one `### Public API changes`, `### Integration tests` and
+   `### Benchmarks` block, in that order. Keep required classifications, concise
+   Rust signatures, meaningful behavioral deltas and complete benchmark comparisons.
+4. Put findings without confirmed inline delivery after those blocks, with the
+   anchor or delivery limitation. For confirmed inline findings, give a count
+   and thread links, not duplicate bodies.
+
+For unavailable API/test evidence, use **Could not assess** and the reason.
+For benchmarks, retain `partial` or `blocked` and the reason.
+Follow the [benchmark size rules](../metabench-compare/run-and-report.md#side-by-side-results)
+instead of dropping rows or linking inaccessible local paths.
+Old report blocks and measurements remain pinned to their assessed revisions
+until their required evidence is refreshed. Never present them as current.
+
+Remove obsolete preparation claims such as "pending/unposted", "report only" or
+"no provider writes" when publishing. State actual delivery limits separately.
+Do not repair contradictory prose by prepending another disclaimer.
+Internal hashes, agent IDs, permission histories and exhaustive inventories stay
+out of the public summary.
 
 ```markdown
 **Posted by an AI agent**
 
 **Warning: Incomplete review**
 
-I reviewed <topics>. I could not check:
-
-- <Topic>: <plain one-clause reason>
-
-No overall verdict is given. The comments below come from the reviewed areas.
+I reviewed the source-level contract, correctness, tests and documentation.
+Public API output could not be assessed because the required capture failed.
+No overall verdict is given. Tests and benchmarks were not run.
 
 ### Public API changes
 
 **Could not assess**
 
-The public API capture could not be produced with the required toolchain.
+Matching base/head API output is unavailable.
 
 ### Integration tests
 
@@ -129,23 +131,9 @@ The public API capture could not be produced with the required toolchain.
 
 ### Benchmarks
 
-Not applicable: no changed crate uses metabench.
+Blocked: Gungraun requires a Linux host.
 ```
 
-Verdicts: `approve`, `approve with non-blocking comments` or
-`changes requested`. An unfinished review has no verdict. For a complete review, automatically select `approve` when there are no findings and
-`approve with non-blocking comments` when the only actionable findings are
-cosmetic `Nit`s. Design notes requesting no change do not prevent approval.
-Do not ask for an additional approval confirmation.
-
-An incomplete Review Lens result has no public `Verdict:` and posts as
-COMMENT with no vote. The warning and list of unreviewed topics replace the
-verdict; do not suppress supported findings because another area could not
-finish.
-
-Decide from the complete merged result, including still-applicable unresolved
-findings whose duplicate posts were omitted, not the number of comments created.
-Never relabel substantive issues as nits to qualify or approve unassessed areas.
-Delivery's report-only, ownership and finding-refresh restrictions take
-precedence. On requester-owned or authenticated-poster-owned PRs, omit `Verdict:`
-framing; delivery applies COMMENT/no-vote behavior.
+Standalone reviews outside Review Lens do not require the three report blocks.
+Requester-owned or posting-account-owned PRs omit public `Verdict:` framing.
+Missing measurements limit performance claims, not finished source-review coverage.

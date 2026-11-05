@@ -79,11 +79,9 @@ including unchanged callers, configuration and focused tests.
 
 ## Evidence
 
-State the failure flow, the lost or wrong classification or the duplicate
-mechanism, the evidence, the reliability impact and a fix based on the recipe
-for the right version. Code and resolved docs are enough for static findings. A
-claim about runtime behavior needs a focused reproduction with its command and
-result; if you cannot run code, ask it as a question.
+State the failure flow, wrong classification or duplicate mechanism, impact and
+version-correct fix. Code and resolved docs can prove static findings.
+Runtime claims follow the [correctness proof rules](../review-correctness/SKILL.md#procedure).
 
 ## Report
 

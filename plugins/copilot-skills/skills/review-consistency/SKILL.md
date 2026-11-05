@@ -48,10 +48,9 @@ their own reviews.
 
 ## Evidence
 
-Quote both conflicting claims, or the documented claim and the decisive code.
-A claim about runtime behavior needs a reproduction if you can run code;
-otherwise ask it as a question. Recommend the smallest correction that fixes
-every affected place.
+Quote both conflicting claims, or the documented claim and decisive code.
+Runtime claims follow the [correctness proof rules](../review-correctness/SKILL.md#procedure).
+Recommend the smallest correction across every affected place.
 
 ## Report
 

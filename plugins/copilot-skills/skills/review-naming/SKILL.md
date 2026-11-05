@@ -1,13 +1,9 @@
 ---
 name: review-naming
 description: >
-  Review Rust changes for names and shapes that diverge from their siblings, and
-  for abstractions that earn nothing. Covers family and convention alignment,
-  concise non-padded names, units already carried by a type, domain-appropriate
-  terminology, and whether a new trait, wrapper or layer could be replaced by a
-  small change to an existing type. Use for a focused naming or abstraction
-  audit, or when review-lens routes new names here. Not for formatting, import
-  order, or public contract and semver review.
+  Review Rust names against sibling conventions and find unnecessary
+  abstractions. Require a concrete convention or maintenance cost, not personal
+  preference. Not for formatting, import order or public-contract compatibility.
 ---
 
 # Review Naming
@@ -40,8 +36,8 @@ their own reviews.
   `initial_backoff_ms`. Drop subsystem prefixes that siblings omit.
 - Traits that report a property should name the property, not an action.
   Method names should match their return types.
-- A rename recommendation includes affected docs, examples, feature names and
-  the PR title.
+- Include affected docs, examples and feature names in a rename recommendation.
+  Do not widen a code finding into unrelated PR metadata changes.
 
 ## Abstraction questions
 

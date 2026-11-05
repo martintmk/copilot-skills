@@ -1,13 +1,10 @@
 ---
 name: review-public-api
 description: >
-  Audit a Rust library's exported contract using cargo-public-api output only,
-  then check provisional claims against the items' rustdoc. Use for a
-  whole-crate or explicit output-only API audit, or review-lens's public API
-  surface area; small PRs cover changed public items and their immediate
-  family. Applies idiomatic Rust API practices and API-visible Pragmatic Rust
-  Guidelines. Not for source-based findings, implementation correctness, docs
-  quality/consistency, performance or posting.
+  Audit Rust public API design from complete cargo-public-api output, then use
+  rustdoc to remove or narrow claims. Use for whole-crate output-only audits
+  or changed public items in Review Lens. Not for source, runtime, performance
+  or documentation-quality findings.
 ---
 
 # Review Public API
@@ -52,6 +49,8 @@ coverage.
    Missing required output leaves that surface unreviewed; request the
    missing evidence from the caller rather than changing scope or reading
    source.
+   If a complete inventory proves that no library is affected, return
+   `not applicable` without requesting captures.
 3. **List every emitted family before judging:** modules and re-exports, types
    and fields, traits and impls, functions and methods, constants and statics,
    macros, errors, builders and iterators. A standalone audit covers the whole
@@ -112,8 +111,9 @@ require output-demonstrated consumer or compatibility cost.
 
 - Verify every public type's `Debug` in **full** output (`M-PUBLIC-DEBUG`).
   Readable types, especially errors/string wrappers, need `Display`
-  (`M-PUBLIC-DISPLAY`). Consider meaningful `Clone`, `Copy`, `Default`,
-  equality/order/hash, conversions, `Borrow` and formatting traits.
+  (`M-PUBLIC-DISPLAY`). Consider meaningful `Clone`, `Default`, equality/order/hash,
+  conversions, `Borrow` and formatting traits. Recommend `Copy` only for a
+  required consumer contract, not as a routine derive.
 - Heavy service handles usually need shared-ownership `Clone`, but output cannot
   prove clone cost (`M-SERVICES-CLONE`). Full-output `Send`/`Sync` absence is a
   concern only when the apparent role implies cross-thread use (`M-TYPES-SEND`).

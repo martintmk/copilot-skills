@@ -79,11 +79,10 @@ Finish one pair before starting another.
 Run all native cases for each selected target without benchmark-name filters.
 Do not add benchmark declarations or change workload boundaries to obtain comparable results.
 
-Allow independent agent work, builds, tests and background commands during Valgrind instruction-count measurements.
-These counts do not measure elapsed time.
-Keep each base/head pair sequential and its artifact directories separate.
-Do not stop unrelated processes or wait for an idle host.
-If a workload depends on scheduling or external state, report that limit on comparability.
+Honor the caller's measurement isolation first, including any ban on concurrent work.
+Otherwise independent work can continue during Valgrind instruction-count measurements,
+which do not measure elapsed time. Keep each pair sequential and artifacts separate.
+Never stop unrelated processes. Report scheduling or external-state effects on comparability.
 
 For timing or hardware-counter tools, follow their measurement restrictions instead.
 These requested measurements do not authorize broad local validation.
