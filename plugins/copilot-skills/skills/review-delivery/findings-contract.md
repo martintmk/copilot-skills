@@ -92,7 +92,7 @@ The public summary is a current report, not a concatenation of area outputs:
    refresh. Say that later commits received no new-finding review.
 3. Include exactly one `### Public API changes`, `### Integration tests` and
    `### Benchmarks` block, in that order. Keep required classifications, concise
-   Rust signatures, meaningful behavioral deltas and compact metabench results with before/after instruction counts.
+   Rust signatures, meaningful behavioral deltas and compact metabench results with before/after instruction and allocation counts.
 4. Put findings without confirmed inline delivery after those blocks, with the
    anchor or delivery limitation. For confirmed inline findings, give a count
    and thread links, not duplicate bodies.

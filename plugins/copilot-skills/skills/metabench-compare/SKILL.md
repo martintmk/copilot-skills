@@ -3,8 +3,8 @@ name: metabench-compare
 description: >
   Run Gungraun through existing metabench benchmarks before and after a Rust
   change. Select at most three changed, metabench-enabled crates by changed-line
-  count. Show metabench output and before/after instruction counts for every
-  benchmark. Keep full metrics and run details in artifacts. Use for benchmark
+  count. Show metabench output and before/after instruction and allocation
+  counts for every benchmark. Keep full metrics and run details in artifacts. Use for benchmark
   comparisons or when review-lens needs its benchmark report. Not for adding
   benchmarks, changing reviewed code, running Criterion instead, workspace-wide
   benchmarking, posting reviews or claiming wall-clock speed from instruction counts.
@@ -97,7 +97,8 @@ Use `partial` when usable measurements exist but coverage or comparison remains 
 Use `blocked` when no usable measurement exists, including when every attempted run fails.
 An unresolved inventory or stale input prevents `complete` and `not applicable`.
 
-Keep the visible report focused on metabench results and before/after instruction counts.
+Keep the visible report focused on metabench results and before/after instruction and allocation counts.
+Show allocated bytes when reported. State when allocation measurements are unavailable.
 Use the [compact report format](run-and-report.md#side-by-side-results), including every case, not only regressions.
 State the revisions and measured coverage briefly. Include limits that affect interpretation.
 Keep selection tables, host details, tool versions, configuration, commands and full metrics in saved artifacts, not the visible report.

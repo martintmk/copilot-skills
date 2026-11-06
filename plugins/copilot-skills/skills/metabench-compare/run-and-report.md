@@ -109,7 +109,7 @@ For renamed cases, show separate identities unless an explicit mapping proves th
 If inputs, setup, teardown or measurement boundaries change, mark the affected pairs non-comparable.
 An implementation change alone does not invalidate comparison of the same workload.
 
-Use JSON to make sure that the visible results cover every case and use the correct instruction counts.
+Use JSON to make sure that the visible results cover every case and use the correct instruction and allocation counts.
 Metabench's terminal and Markdown tables can omit metric columns to fit their width.
 The head report contains only current identities, so recover removed benchmarks from the base JSON.
 Use metabench's `prior`, `change_percentage` and `status` fields when present and compatible.
@@ -118,29 +118,41 @@ Keep the benchmark's aggregate status separate from each metric's direction of c
 Return one compact `### Benchmarks` block:
 
 1. State status, short base/head revisions and measured case coverage in at most two sentences.
-2. Show metabench's result output with before/after instruction counts.
+2. Show metabench's result output with before/after instruction and allocation counts.
    Reuse its terminal result block in a text fence or its exported Markdown table when it already provides the comparison.
    Omit build logs, progress output and repeated headers.
-3. If native output lacks the instruction comparison or expands each case into many metric rows, use the compact table below instead.
+3. If native output lacks either comparison or expands each case into many metric rows, use the compact tables below instead.
    Read the saved JSON, not a new benchmark run.
    Include removed, failed and missing cases that native output omits.
 4. Add only warnings that affect the comparison and one artifact reference.
    Save the original metabench output and full run evidence there.
    Do not repeat the same results as both native output and a custom table.
 
-Use one row per benchmark case, with package and target labels above each table.
+Use one row per benchmark case in each metric table, with package and target labels above the tables.
 Keep engine or statistic variants distinct when a target reports more than one.
 Use readable benchmark names, not aliases that require a separate lookup table.
 Escape untrusted names as literal Markdown cell content.
 For Gungraun Callgrind, use `Ir` when the installed schema identifies it as the instruction count.
 Do not substitute estimated cycles or another metric when instructions are unavailable.
+Read allocation metric names, units and measurement boundaries from the installed schema.
+Show allocation counts and, when reported, allocated bytes in separate compact tables.
+Do not confuse allocation counts with bytes, peak live memory or memory-access counts.
+Use existing metabench measurements. Do not infer allocations from Callgrind instruction or cache metrics.
+If allocations are absent for every case, replace the allocation table with one sentence: `Allocations: unavailable (not measured by this run).`
+If only some cases lack allocation measurements, retain those cases with `N/A` and a short reason.
+Do not add instrumentation, enable another engine or rerun benchmarks solely to reformat an existing report.
 Keep integer counts and absolute deltas exact. Round displayed percentages to two decimal places.
 
 | Benchmark / case | Instructions before | Instructions after | Change | Change % |
 | --- | --- | --- | --- | --- |
 | parser/checksum/small | 1000 | 1100 | +100 | +10.00% |
 
-This row illustrates the format. It is not measurement evidence.
+| Benchmark / case | Allocations before | Allocations after | Change | Change % |
+| --- | --- | --- | --- | --- |
+| parser/checksum/small | 4 | 3 | -1 | -25.00% |
+
+These rows illustrate the format. They are not measurement evidence.
+Use the same layout for allocated bytes when reported, with explicit byte labels.
 Show all cases, including unchanged results, not only regressions.
 Do not expand the visible report into cache metrics, hit rates, estimated cycles or an all-metric table unless the user requests them.
 Do not add selection tables, environment inventories, hashes, permission history or repeated blank lines to the visible report.
@@ -153,7 +165,7 @@ Distinguish added, removed, failed, unavailable and non-comparable cases or metr
 For non-comparable pairs, show raw values but `N/A` for both change columns.
 Put a shared reason below the table once, rather than repeating it in every row.
 When a package or target is new, state that no before-change baseline exists.
-Show its measured instruction counts, but do not claim improvement or regression.
+Show its measured instruction and allocation counts, but do not claim improvement or regression.
 
 Compare only matching identities, workloads, measurement boundaries, tools, units, metric directions and build configurations.
 Include statistic and tool configuration in the comparison requirements.
