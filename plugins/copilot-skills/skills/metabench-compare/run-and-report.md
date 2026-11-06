@@ -89,11 +89,12 @@ If an explicit baseline is incompatible, retain its error or warning.
 If no usable base report exists, run the head with `--no-baseline` and mark the comparison unavailable.
 If comparison warns but produces a complete head report, reuse it without another measurement.
 If baseline loading prevents report publication, collect the head once with `--no-baseline` in a new output path.
-Keep both attempts and the comparison failure in the report.
+Keep both attempts in the artifacts. State the comparison failure briefly in the visible report.
 
 For a target present on only one side, run that side with `--no-baseline`.
 Prove absence from the complete inventory, not from a failed command.
-Keep a failed target in the report with its command, error and missing measurements.
+Keep a failed target in the report with a short failure reason and missing measurements.
+Save its command and full error in the artifacts.
 After a failure, continue independent targets when the host and inherited limits allow execution.
 Do not retry deterministic workload failures or edit the reviewed code.
 
@@ -108,33 +109,51 @@ For renamed cases, show separate identities unless an explicit mapping proves th
 If inputs, setup, teardown or measurement boundaries change, mark the affected pairs non-comparable.
 An implementation change alone does not invalidate comparison of the same workload.
 
-Use JSON as the complete source, not metabench's terminal or Markdown table.
-Those tables can omit metric columns to fit their width.
+Use JSON to make sure that the visible results cover every case and use the correct instruction counts.
+Metabench's terminal and Markdown tables can omit metric columns to fit their width.
 The head report contains only current identities, so recover removed benchmarks from the base JSON.
 Use metabench's `prior`, `change_percentage` and `status` fields when present and compatible.
 Keep the benchmark's aggregate status separate from each metric's direction of change.
 
-Render the requested table from these results without rerunning benchmarks.
-Supplement missing rows and absolute deltas from the two saved reports.
+Return one compact `### Benchmarks` block:
 
-Use one row per package, target, canonical identity, engine/tool and metric.
-Preserve metric names, units, direction and full numeric values from JSON.
-Escape benchmark names and other untrusted text as literal Markdown cell content.
-Keep integer counts exact when calculating absolute deltas.
-Use the complete metric union, including instruction counts, cache metrics and estimated cycles when reported.
-For each target, use this table:
+1. State status, short base/head revisions and measured case coverage in at most two sentences.
+2. Show metabench's result output with before/after instruction counts.
+   Reuse its terminal result block in a text fence or its exported Markdown table when it already provides the comparison.
+   Omit build logs, progress output and repeated headers.
+3. If native output lacks the instruction comparison or expands each case into many metric rows, use the compact table below instead.
+   Read the saved JSON, not a new benchmark run.
+   Include removed, failed and missing cases that native output omits.
+4. Add only warnings that affect the comparison and one artifact reference.
+   Save the original metabench output and full run evidence there.
+   Do not repeat the same results as both native output and a custom table.
 
-| Benchmark / case | Engine / metric | Unit | Base | Head | Change | Change % | Result |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| parser/checksum/small | gungraun.callgrind / instructions | count | 1000 | 1100 | +100 | +10% | Increased cost |
+Use one row per benchmark case, with package and target labels above each table.
+Keep engine or statistic variants distinct when a target reports more than one.
+Use readable benchmark names, not aliases that require a separate lookup table.
+Escape untrusted names as literal Markdown cell content.
+For Gungraun Callgrind, use `Ir` when the installed schema identifies it as the instruction count.
+Do not substitute estimated cycles or another metric when instructions are unavailable.
+Keep integer counts and absolute deltas exact. Round displayed percentages to two decimal places.
 
-The row is an example, not measurement evidence.
+| Benchmark / case | Instructions before | Instructions after | Change | Change % |
+| --- | --- | --- | --- | --- |
+| parser/checksum/small | 1000 | 1100 | +100 | +10.00% |
+
+This row illustrates the format. It is not measurement evidence.
+Show all cases, including unchanged results, not only regressions.
+Do not expand the visible report into cache metrics, hit rates, estimated cycles or an all-metric table unless the user requests them.
+Do not add selection tables, environment inventories, hashes, permission history or repeated blank lines to the visible report.
+
 For compatible numeric pairs, calculate `Change = Head - Base`.
 Use metabench's percentage when available, otherwise calculate `Change % = 100 * (Head - Base) / Base`.
 For a zero base, show the absolute change and `N/A` for the percentage.
 For missing values, show `N/A` and the reason, never zero or an unchanged result.
 Distinguish added, removed, failed, unavailable and non-comparable cases or metrics.
 For non-comparable pairs, show raw values but `N/A` for both change columns.
+Put a shared reason below the table once, rather than repeating it in every row.
+When a package or target is new, state that no before-change baseline exists.
+Show its measured instruction counts, but do not claim improvement or regression.
 
 Compare only matching identities, workloads, measurement boundaries, tools, units, metric directions and build configurations.
 Include statistic and tool configuration in the comparison requirements.
@@ -144,16 +163,22 @@ For unknown directions, report the numeric change without a performance judgment
 If metabench skips comparison or warns about incompatible metadata, preserve the warning and do not assign improvement or regression.
 If its report schema differs, show separately decoded values without bypassing a rejected baseline.
 
-Report the repository's configured regression threshold when one exists.
+Record the repository's configured regression threshold in the artifacts when one exists.
 Otherwise retain the installed metabench default and record its value.
 Do not confuse a percentage threshold with statistical significance.
 Instruction counts and estimated cycles do not prove wall-clock speed or throughput.
 Do not invent timing ranges or confidence intervals for Gungraun counts.
 
-Keep every row in the saved Markdown report.
-If provider size limits prevent inline delivery, link the complete report through an authorized artifact location.
-Include the revisions, selection, coverage and limits beside that link.
-If no accessible attachment or link is available, return the complete local report and flag provider delivery as blocked.
+Save the compact report, original metabench output and complete, unrounded JSON for both revisions.
+Keep every metric in JSON, including cache metrics and estimated cycles. Do not generate a second all-metric Markdown table by default.
+Save selection reasons, full revisions, inventories, host, tool versions, configuration, commands, digests and failure details with those artifacts.
+The compact report does not reduce measurement coverage or compatibility requirements.
+
+If the compact results exceed provider size limits, link the complete compact report through an authorized artifact location.
+Include the revisions, coverage and material limits beside that link.
+If no accessible attachment or link is available, return the complete compact report locally and flag provider delivery as blocked.
+When the compact results fit inline, unavailable artifact hosting does not block their delivery.
+Give local artifact paths only to a caller who can access them, not as provider links.
 Do not split it into extra provider comments without permission.
 Never silently truncate rows or expose private artifacts through a public upload.
 
