@@ -38,6 +38,8 @@ The title names the defect, not just the topic or proposed fix.
 A Design note uses an observation title and omits only **Suggested fix**.
 Its **Problem** explains the evidenced tradeoff without asserting a defect.
 Clean summaries need no empty finding sections.
+Design notes request no change. Non-blocking issues and nits remain actionable.
+[Review Delivery](SKILL.md#close-owned-non-actionable-threads) owns their thread status.
 
 One root cause per finding. Name the symbol and keep `path:line` in location
 metadata. Use body line references only for another location.

@@ -54,7 +54,7 @@ the entry-point guide.
 | [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | The always-present breaking/additive/no-change public API report, with concise Rust signatures and a human-review signal for any API change. |
 | [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including additive-only coverage and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
-| [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery with current inline anchors, thread reconciliation and partial-write recovery. |
+| [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery with current inline anchors, thread reconciliation, closure of owned non-actionable threads and partial-write recovery. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
 | [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | GitHub and ADO reviews from Teams requests, with one child per PR, inline findings, one rolling report, 15-minute polling and a four-hour default cooldown. |
@@ -122,6 +122,10 @@ Each finding has AI attribution, a concrete title, **Problem**, **Why this matte
 and **Suggested fix**. Design notes omit only the fix.
 The summary has one attribution and links inline threads instead of repeating
 their bodies. Preparation logs, hashes and full file inventories stay in artifacts.
+When resolution is permitted, delivery closes its own informational summary and design-note threads after reading their full discussion.
+It keeps comments visible and leaves unresolved defects, nits, questions and requested decisions open.
+GitHub top-level comments and review bodies have no resolved state.
+The [thread procedure](skills/review-delivery/SKILL.md#close-owned-non-actionable-threads) defines ownership, provider status and recovery rules.
 
 `review-public-api` drafts only from `cargo public-api` output, then reads the
 rustdoc of criticized items to remove or narrow claims, never to add them.
