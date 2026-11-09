@@ -3,7 +3,8 @@ name: review-delivery
 description: >
   Deliver merged review findings to GitHub, Azure DevOps or a local report.
   Keep findings inline on current code after new commits, reconcile prior
-  threads, and recover partial writes without duplicates. Owns review events,
+  threads, close owned non-actionable threads, and recover partial writes without
+  duplicates. Owns review events,
   AI attribution and required human-review labels. Not for generating findings
   or formatting intermediate area output.
 ---
@@ -72,6 +73,34 @@ Do not attach it to unrelated code merely to obtain an inline comment.
 Public-API reviewers supply symbols, not source anchors. Delivery can map those
 symbols to the diff without feeding source back into their output-only review.
 
+## Close owned non-actionable threads
+
+A non-actionable comment reports information without asking for a change, answer or decision.
+Keep summaries and design notes visible, but do not leave their threads open as unfinished review work.
+Non-blocking defects and nits still request changes. Keep their unresolved threads open.
+
+1. Require thread-resolution permission within the caller's write scope.
+   Permission to post or edit comments alone does not grant it.
+   Use the [ownership rules](#ownership-and-recovery) to prove that this delivery owns the thread's root comment.
+   AI attribution alone does not prove ownership.
+2. Read the whole current thread, including replies and status.
+   Close an owned summary or design-note thread only when it contains no unresolved finding, question or requested decision.
+   A summary that only links separate finding threads can close. Leave those finding threads open.
+   Keep summaries with unanchored findings, pending finding delivery or requests for human action open.
+   Do not close another person's thread or a thread with an unanswered actionable reply.
+3. After confirming publication, resolve eligible GitHub review threads through a supported thread-resolution operation.
+   GitHub review bodies and top-level issue comments have no resolved state. Leave them visible without a resolution write.
+   For ADO, discover the supported status operation and mark eligible threads `Closed`, not `Fixed`.
+   Do not delete comments or change the review vote to close a thread.
+4. Apply this rule to new comments and owned prior output during reconciliation.
+   Recheck lifecycle and discussion before each status write. Skip already resolved threads.
+   Read back the resolved or closed state before recording completion.
+   If permission, ownership or the operation is unavailable, record the specific delivery limit.
+   Recover uncertain status writes through [write recovery](#ownership-and-recovery), not by reposting comments.
+
+This procedure manages the review's own informational output.
+For actions on received feedback, use [Feedback Autonomy](../feedback-autonomy/SKILL.md), including its separate resolution gate.
+
 ## Choose the action
 
 Use the [shared severity policy](findings-contract.md#evidence-and-severity).
@@ -135,6 +164,7 @@ organization fields. Use `!<id>` or the canonical PR URL, never `#<id>`.
    as inline. If fields are omitted, use a supported detail read.
    If association cannot be confirmed, retain delivery as unverified, not unanchored success.
 5. Write one unanchored summary or update the caller's owned rolling summary.
+   Apply the [non-actionable thread procedure](#close-owned-non-actionable-threads) after confirming its contents.
    Vote only after required comments are confirmed and the action table permits it.
    Do not add a reviewer to obtain voting access without separate authorization.
 
@@ -172,6 +202,7 @@ Never remove the label. For `undetermined`, make no label change.
 If writes are prohibited or unavailable, state that the required label remains unapplied.
 
 Report-only returns the complete public report without provider writes.
-After posting, return the report/review URL, finding-to-thread map, confirmed
+After posting, apply the [non-actionable thread procedure](#close-owned-non-actionable-threads).
+Return the report/review URL, finding-to-thread map, confirmed resolution states,
 revision and remaining delivery limits. Do not echo the full posted report.
 Remove owned payload scripts, but retain results needed for recovery.
