@@ -53,6 +53,7 @@ Keep this state in the coordinator session:
 - The current child session ID.
 - The current pull request number, URL, and head commit.
 - The Teams announcement ID and announced head.
+- The CI failures and feedback revisions already sent to the child.
 - The completed crate and pull request pairs.
 
 Do not store coordinator state in the repository. Before each action, reconcile
@@ -91,8 +92,8 @@ Accept the child's pull request only when all these facts are true:
 - Its base is the project default branch.
 - Its changes belong to the assigned crate or directly required shared files.
 - Its description says that it is an automated mechanical pull request.
-- The child used `pr-description`, then `simple-english`, before it created or
-  updated the description.
+- Its description contains Summary, Evidence, and Merge Danger sections.
+- The child used `simple-english` before it created or updated the description.
 
 Read the pull request and current head from GitHub. Do not rely only on the
 child report.
@@ -110,10 +111,15 @@ skipped, neutral, stale, or unknown results are not green.
 If the head changes, discard the prior green result. Read every check again for
 the new head.
 
-Send current CI failures to the same child. The child fixes failures caused by
-its change and invokes `track-pr` after every push. The child applies
-`feedback-autonomy` before it acts on pull request feedback. Do not duplicate
-that work in the coordinator.
+On each wake-up, read current CI results and pull request feedback, including
+review threads, review summaries, and conversation comments. Continue after green
+CI and the Teams announcement while the pull request remains open.
+
+Send new or changed failures and feedback to the same child with their links
+and current head. Save the sent signal identities and revisions after delivery
+succeeds. Do not send unchanged signals again or treat pending checks as failures.
+The child fixes failures caused by its change and applies `feedback-autonomy`
+before it acts on feedback. Do not duplicate that work in the coordinator.
 
 If the fix needs a decision outside the original instruction, pause this crate
 and relay the child's exact question to the user. Do not answer a human decision
@@ -150,11 +156,13 @@ failure and keep the child session open.
 
 ### 5. Wait for merge
 
-Keep the child session open after the announcement. It continues to own CI and
-authorized feedback changes through `track-pr`.
+Keep the child session open after the announcement. The coordinator continues
+scheduled checks and sends work through step 3. The child owns CI fixes and
+authorized feedback changes.
 
-Read the pull request on each coordinator wake-up. If it remains open, keep
-waiting. If it closes without merge, stop the queue and ask the user what to do.
+Read the pull request on each coordinator wake-up. If it remains open, repeat
+step 3 and keep waiting. If it closes without merge, stop the queue and ask the
+user what to do.
 Do not treat closure as completion.
 
 When GitHub confirms the merge, record the merge commit and pull request URL.
