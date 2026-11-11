@@ -176,6 +176,11 @@ It then announces the pull request in the supplied Teams review channel. The
 next child starts only after GitHub confirms the merge and the coordinator
 archives the current child.
 
+The child writes the Summary, Evidence, and Merge Danger sections with
+`simple-english`. The coordinator monitors CI and feedback until merge and sends
+new failures or feedback to the same child. The child applies `feedback-autonomy`
+before acting on feedback. No separate child watcher is required.
+
 ```text
 Use crate-change-coordinator with these crates:
 recoverable, seatbelt, testing_aids

@@ -22,19 +22,20 @@ repository checks. Batch validation after the edits and honor explicit user limi
 Commit and push the change. Create one ready-for-review pull request against
 <default branch>. Do not create a draft or stacked pull request.
 
-Before writing the pull request description, invoke pr-description. Then invoke
-simple-english on the final text. Keep the Summary, Evidence, and Merge Danger
-sections concise. The Summary must contain this exact sentence:
+Before writing or updating the pull request description, invoke simple-english.
+Keep the Summary, Evidence, and Merge Danger sections concise.
+The Summary must contain this exact sentence:
 
 This is an automated mechanical PR for `<crate>`.
 
 State the applied change, actual validation, and real merge risk. Do not claim
 that behavior is unchanged unless the evidence proves it.
 
-After every push on a branch that has a pull request, invoke track-pr within the
-caller's scheduling limits. Do not block queued work merely to wait for CI. Fix
-change-caused CI failures in this same session. Apply feedback-autonomy before
-you act on pull request feedback. Do not merge or approve the pull request.
+After every push on a branch that has a pull request, report the new head to
+the coordinator. The coordinator monitors CI and feedback and sends new work
+to this session. Do not start a separate watcher or block queued work to wait
+for CI. Fix change-caused CI failures in this same session. Apply feedback-autonomy
+before you act on pull request feedback. Do not merge or approve the pull request.
 
 Report the pull request URL and number, current head commit, validation results,
 and any blocker to the coordinator. Stay available until the pull request
