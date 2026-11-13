@@ -76,6 +76,7 @@ Use the [routing procedure](coordinator-reference.md#evidence-led-routing) to ch
 Review small connected source changes directly. Delegate substantial independent evidence bundles, not one agent per area name.
 Compatible source areas can share a reviewer, but each area returns distinct coverage.
 Load every assigned area skill and keep its proof rules unchanged.
+Use [bounded handoffs](coordinator-reference.md#bound-handoffs-and-follow-ups) without withholding evidence needed for complete traces.
 Use the [combined test handoff](coordinator-reference.md#combine-test-review) for the two test areas.
 Every test reviewer must follow the test-first order, not only the coordinator.
 
@@ -101,8 +102,7 @@ API review requires matching captures and docs for its claims. API classificatio
 requires matching captures. Integration-test classification requires a complete inventory.
 
 Use the [single shared repair](coordinator-reference.md#repair-shared-setup-once) for fixable setup gaps.
-Resume only affected unfinished work with changed facts or missing artifacts.
-Do not repeat completed areas.
+Use [bounded follow-ups](coordinator-reference.md#bound-handoffs-and-follow-ups) for unfinished work or contradictions.
 If a gap remains, publish supported findings under incomplete coverage with its exact cause.
 
 Keep coverage status separate from posting status. A failed comment write does

@@ -117,6 +117,10 @@ Routing accounts for all eleven areas. It does not replace deep review or lower
 the proof required for findings. Unknown relevance requires review, not exclusion.
 Compatible source areas can share a reviewer, but each returns distinct coverage.
 Specialist risks still require the relevant expertise.
+Keep [handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups) short while preserving access to complete evidence for each assigned scope.
+Separate shared facts from reviewer conclusions.
+Keep each continuous trace with one owner.
+Resume blocked work only when its input or blocker changes, without repeating completed review.
 
 One suitable owner can handle both test areas through the [test-first handoff](skills/review-lens/coordinator-reference.md#combine-test-review).
 Each test reviewer reads baseline tests and changed expectations before implementation explanations.

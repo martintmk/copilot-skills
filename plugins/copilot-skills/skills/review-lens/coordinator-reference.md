@@ -84,12 +84,13 @@ Area skills own proof rules and classifications. Routing cannot replace them.
    Give each bundle a bounded objective and a clear completion condition.
    Compatible source areas can share a reviewer when they use the same paths and context.
    Require a separate result and coverage record for each assigned area.
-4. Escalate complex risks to a reviewer with the relevant expertise.
-   Examples include unsafe invariants, concurrency, cross-package contracts and version-specific recovery behavior.
-   Separate independent specialist work when combined context obscures its proof.
-   Do not add a second reviewer solely to repeat a completed trace.
+4. If new evidence reveals independent complexity or an evidence boundary, split only the affected unfinished scope.
+   Name its connection, remaining question and owner.
+   If a continuous trace needs different expertise, transfer its unfinished work rather than adding a second owner.
+   Do not escalate to seek agreement or repeat completed review.
 5. Select reviewer count from evidence scope, required isolation and inherited runtime limits.
-   Do not impose an arbitrary agent cap or promise a numerical speedup.
+   Bound context by relevant evidence, not arbitrary agent or token caps.
+   Do not promise a numerical speedup.
    If a required specialist is unavailable, retain supported work and report the uncovered scope.
 
 Grouping changes ownership, not the proof threshold.
@@ -167,26 +168,40 @@ Never substitute source-based API inference.
 
 Give each reviewer only the material needed for its assigned scopes:
 
-- The assigned skills, bounded objective and required [per-area result](../review-delivery/findings-contract.md#area-result-and-final-summary).
-- Exact revisions or local input digest, packages, configuration and owned paths.
+- The assigned skills, bounded objective, completion condition and required [per-area result](../review-delivery/findings-contract.md#area-result-and-final-summary).
+- Exact revisions or local input digest, packages, configuration, owned paths and connected contracts.
 - Applicable repository rules, execution limits and relevant CI or discussion facts.
-- Existing thread IDs, matching artifacts and supplied commands.
+- Known findings with their evidence and thread IDs, matching artifacts and supplied commands.
 
 Apply the [test-first](#combine-test-review) and [API context](#protect-api-contexts) restrictions before sending any handoff.
+These restrictions do not require a fresh context for every source area.
+Separate shared facts from reviewer conclusions and unresolved questions.
+Use known findings to avoid duplicate reports, not as proof for another area's claims.
 Reuse relevant fields from the [coverage record](#record-coverage) and [artifact identities](#shared-setup-and-reuse), not separate copies for each handoff.
-Keep full evidence and logs in referenced artifacts.
-Send paths and short diagnostics, not transcripts, full artifact imports or unrelated reviewers' reasoning.
-Read artifacts required by the assigned procedure or a named gap, contradiction or changed input.
+Provide access to complete evidence permitted by the phase, including every assigned change and the context needed to trace it.
+Short prompts and summaries do not replace that evidence.
+Keep full logs in referenced artifacts.
+Send paths and short diagnostics, not whole histories, raw log dumps, speculative reasoning chains or unrelated skill instructions.
+Read the evidence required by the assigned procedure, then expand only for a named connection, gap or contradiction.
 Do not independently re-hash unchanged evidence at each handoff.
 Keep producer freshness checks and the final local-input digest check.
 Reviewers return results without posting, restarting shared setup or launching more reviewers.
 
-Use a retained reviewer ID for a bounded follow-up when supported.
-Send only changed facts or missing evidence for that same task.
+Return the area result with decisive evidence paths and reviewed scope.
+Name unfinished traces, their exact blockers and the missing evidence or capability needed to continue.
+The coordinator updates the existing coverage record, not a separate handoff report.
+A reviewer exit, empty reply or unsupported operation does not establish completed coverage.
+
+Use a retained reviewer ID for a bounded question or unfinished work on the same task when supported.
+Send only the relevant result, changed facts or missing evidence and the exact question or completion condition.
+For a contradiction, include the conflicting claims and their evidence, not another reviewer's full reasoning.
+Resume blocked work only when its input or blocker changes.
+Do not retry an unchanged failure or repeat completed coverage.
 For a one-shot reviewer, collect its phase's permitted inputs before launch.
-If follow-up is still needed, use one replacement for the missing part.
+If follow-up is still needed, use one replacement for only the unfinished part with saved valid results and matching evidence.
 The [phased API handoff](#protect-api-contexts) governs output-only reviewers.
-Do not repeatedly message a finished one-shot reviewer or repeat completed coverage.
+Do not repeatedly message a finished one-shot reviewer or chain replacements after the same failure.
+If required runtime support is unavailable, retain valid results and mark the unfinished scope `could not review`.
 
 ### Schedule evidence by dependency
 
@@ -257,6 +272,9 @@ Keep each setup result with its host, input identity, toolchain, configuration, 
 The coordinator owns one bounded repair attempt for a shared blocker.
 Consumers reuse that result instead of repeating missing-tool probes, installation or failed builds.
 Share prerequisite results across packages only when their required setup matches.
+Repair only a diagnosed cause within inherited permissions.
+Before rerunning a failed command, identify the changed input or prerequisite that addresses its failure.
+If nothing changed, retain the blocker without retrying.
 Install only a required missing tool after command evidence and within inherited permissions.
 Do not fetch all dependencies, substitute tools or alter reviewed inputs to clear a blocker.
 After a repair, regenerate affected evidence before launching its waiting consumers.
