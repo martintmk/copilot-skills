@@ -97,41 +97,23 @@ shared artifacts and inherited execution limits.
 The [findings contract](skills/review-delivery/findings-contract.md) owns format,
 severity and summaries. `review-delivery` owns posting for both review modes.
 
-`review-lens` adds the coordination:
+The [Review Lens procedure](skills/review-lens/SKILL.md) accounts for all eleven
+areas without requiring eleven agents. It keeps connected source changes with
+one owner and delegates substantial independent work.
+Shared discovery and matching artifacts avoid repeated setup.
+Unknown relevance remains an open question, not an exclusion.
 
-1. Pin head, target ref and merge base. Read rules, CI and discussion once.
-2. Read baseline tests and changed expectations before implementation, then the remaining complete diff and relevant context.
-   Map affected packages and record evidence, scope, owner and open questions for every area.
-3. Review small connected source changes directly.
-   Delegate substantial independent evidence bundles, not one agent per area name.
-   Prepare discovery once and reuse artifacts only with matching input, configuration and tool evidence.
-   Start ready source work without waiting for API builds.
-   Launch reviewers only when their phase's required inputs are ready.
-4. Repair setup once, finish available coverage and merge findings by root cause.
-5. Invoke Review Delivery from the owning session for missing inline comments and one concise summary.
-   Reuse retained results and evidence paths without another reviewer or approval of the analysis.
-   Review Delivery owns live provider checks and write readback.
-   Recover failed writes without repeating finished analysis.
+The coordinator uses [bounded handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups)
+with access to complete evidence. Each test reviewer follows the
+[test-first order](skills/review-lens/coordinator-reference.md#combine-test-review).
+Both output-only API areas can share one source-free reviewer through the
+[phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
+The benchmark helper owns [measurement isolation](skills/metabench-compare/SKILL.md#2-prepare-and-run-the-comparison).
 
-Routing accounts for all eleven areas. It does not replace deep review or lower
-the proof required for findings. Unknown relevance requires review, not exclusion.
-Compatible source areas can share a reviewer, but each returns distinct coverage.
-Specialist risks still require the relevant expertise.
-Keep [handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups) short while preserving access to complete evidence for each assigned scope.
-Separate shared facts from reviewer conclusions.
-Keep each continuous trace with one owner.
-Resume blocked work only when its input or blocker changes, without repeating completed review.
-
-One suitable owner can handle both test areas through the [test-first handoff](skills/review-lens/coordinator-reference.md#combine-test-review).
-Each test reviewer reads baseline tests and changed expectations before implementation explanations.
-The areas keep separate statuses, and the integration report keeps its human-review decision.
-Complete inventory can support a no-change report without another agent.
-
-Output-only API contexts remain separate from source reviewers.
-Prefer one clean reviewer for both API areas through the [phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
-Classification and the design draft are fixed before docs arrive.
-Benchmark work follows the caller's measurement-isolation rules.
-When concurrent work is forbidden, the isolated period excludes API builds, source agents and other owned background work.
+The owning session invokes Review Delivery directly from the saved results.
+Delivery checks current provider state and reads back writes.
+Its [recovery procedure](skills/review-delivery/SKILL.md#ownership-and-recovery)
+retries missing writes without repeating completed analysis.
 
 Every full or focused review uses `simple-english` for its user-facing text.
 Fast-path approval and escalation text uses it too.
@@ -153,11 +135,6 @@ It keeps comments visible and leaves unresolved defects, nits, questions and req
 GitHub top-level comments and review bodies have no resolved state.
 The [thread procedure](skills/review-delivery/SKILL.md#close-owned-non-actionable-threads) defines ownership, provider status and recovery rules.
 
-`review-public-api` drafts only from `cargo public-api` output, then reads the
-rustdoc of criticized items to remove or narrow claims, never to add them.
-The coordinator supplies the captures or the commands to produce them; the
-skill contains the review rules, not tool installation or checkout management.
-
 Every Review Lens summary also includes three reports. The public API report
 states **Breaking Changes**, **Public API Additions** or **No API Changes** and
 shows additions as Rust signatures.
@@ -168,24 +145,11 @@ Review delivery adds `human-review-required` for any
 public API change or a breaking integration-test behavior, independently of the
 review verdict.
 
-The benchmark report shows metabench results and before/after instruction and allocation counts.
-It covers all Gungraun cases in up to three changed, metabench-enabled crates.
-`metabench-compare` ranks crates by changed Rust and manifest lines.
-It uses the net diff, so staged edits and later edits do not count twice.
-It runs each target at base first, then at head, on the same Linux host.
-It uses metabench's saved JSON baseline and direct comparison.
-It reuses metabench output when that output shows both comparisons.
-Otherwise it shows compact instruction and allocation tables from saved JSON.
-It includes allocated bytes when reported and states when allocation measurements are unavailable.
-It includes removed and missing cases that native output omits.
-Full metrics, selection reasons and run details stay in artifacts.
-
-Independent work can continue during Valgrind instruction-count measurements
-only when the caller's measurement-isolation rules permit it.
-It reports added, removed, failed and incompatible results instead of inventing missing values.
-It marks incomplete coverage or incompatible comparisons as partial, even when some commands succeed.
-When execution is blocked, the visible report gives the exact blocker without a setup narrative.
-It does not independently require the human-review label.
+The benchmark report shows metabench results and before/after instruction and allocation counts for every selected Gungraun case.
+It includes allocated bytes when measured, unavailable measurements and comparison limits.
+[Metabench Compare](skills/metabench-compare/SKILL.md) defines crate selection and execution.
+Its [report contract](skills/metabench-compare/run-and-report.md#side-by-side-results) defines the compact tables and saved artifacts.
+Benchmark results do not independently require the human-review label.
 
 ```text
 Use metabench-compare to compare this branch with its merge base.
