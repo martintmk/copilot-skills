@@ -52,18 +52,18 @@ not another finding area. The report areas return blocks even when nothing chang
    Include added, removed, renamed and local untracked paths. Do not rely on a truncated provider diff.
 4. Read current CI and existing discussion once. Record already-raised root
    causes and thread IDs so the review does not duplicate them.
-5. Map changed files to affected packages at both revisions. Establish
-   [package presence](coordinator-reference.md#package-presence) and configuration.
+5. Prepare [shared discovery](coordinator-reference.md#shared-setup-and-reuse) once.
+   Map changed files to affected packages at both revisions.
+   Establish [package presence](coordinator-reference.md#package-presence) and configuration.
    Do not expand a leaf change to every workspace library without dependency evidence.
 6. Establish direct and indirect relevance through
    [evidence-led routing](coordinator-reference.md#evidence-led-routing).
    Record per-area applicability, evidence, scope, owner and unresolved questions.
    This initial pass selects work. It does not complete deep review.
-7. Prepare shared [API evidence](coordinator-reference.md#public-api-evidence),
-   the [integration-test inventory](coordinator-reference.md#integration-test-evidence)
-   and [benchmark inputs](coordinator-reference.md#benchmark-evidence).
-   Reuse matching artifacts. Do not delay independent source inspection while artifacts build.
-   Report setup failures once with an actionable cause.
+7. Schedule [API captures, test evidence and benchmark work](coordinator-reference.md#schedule-evidence-by-dependency)
+   by their dependencies, not as one blocking setup stage.
+   Start ready source work without waiting for unrelated artifacts.
+   Launch each reviewer only when its phase's required inputs are ready.
 
 Inherit the session's permissions and execution limits. A child or worktree is
 not a sandbox. Prepare only required tools after a command proves they are
@@ -98,10 +98,10 @@ coverage. Missing source or unfinished traces remain unreviewed.
 API review requires matching captures and docs for its claims. API classification
 requires matching captures. Integration-test classification requires a complete inventory.
 
-For a fixable gap, repair setup centrally and resume the affected area once.
-Supply only changed facts or missing artifacts. Do not repeat completed areas.
-If it remains blocked, retain the exact cause and publish supported findings
-under incomplete coverage.
+Use the [single shared repair](coordinator-reference.md#repair-shared-setup-once) for fixable setup gaps.
+Resume only affected unfinished work with changed facts or missing artifacts.
+Do not repeat completed areas.
+If a gap remains, publish supported findings under incomplete coverage with its exact cause.
 
 Keep coverage status separate from posting status. A failed comment write does
 not invalidate analysis. Retry analysis only when its input or blocker changes.

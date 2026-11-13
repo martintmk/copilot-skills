@@ -165,16 +165,77 @@ Do not repeatedly message a finished one-shot reviewer or repeat completed cover
 
 ### Schedule evidence by dependency
 
-Start independent source inspection without waiting for API captures or benchmark results.
-Only the areas that need a missing artifact wait for it.
+Prepare the [shared discovery record](#shared-setup-and-reuse) before assigning dependent work.
+Start independent source inspection without waiting for API builds or benchmark results.
+Launch a reviewer only when all required inputs for its assigned phase are ready:
+
+| Work | Required inputs |
+| --- | --- |
+| Source inspection | Pinned source, scope, rules and shared discovery relevant to the assigned trace |
+| Output-only API phases | Matching complete captures and package-presence facts under the [phased handoff](#protect-api-contexts) |
+| Integration-test classification | The complete [owned test inventory](#integration-test-evidence) and required base/head contents |
+| Benchmark comparison | Shared package and benchmark discovery, followed by the helper's [run prerequisites](../metabench-compare/run-and-report.md#revision-directories-and-prerequisites) |
+| Measured performance conclusions | The helper's report and artifacts, including explicit blocked or partial results |
+
+Keep source-based performance review separate from measured conclusions.
+Use a retained reviewer for the later measurement follow-up.
+For a one-shot reviewer, wait for the benchmark report or keep source inspection with the coordinator.
+Do not launch it with missing required inputs and plan a replacement.
+Known blockers produce coverage limits, not repeated waiting reviewers.
 Keep build and artifact directories separate.
 Run independent bundles in parallel only within inherited execution limits.
 
 The [benchmark measurement policy](../metabench-compare/SKILL.md#2-prepare-and-run-the-comparison) controls measurement isolation.
-If it forbids concurrent work, finish or pause owned work before measurement.
-Resume source inspection after the isolated measurement period.
+If concurrent work is forbidden, finish or pause owned agents, builds, tests and background commands before measurement.
+API capture and benchmark preparation commands are not exceptions.
+Make sure that no other owned agents or commands remain active before measurement.
+If work cannot pause safely, wait for it to finish.
+Resume other work only after the isolated measurement period ends.
 Do not stop unrelated processes to make room.
 Artifact preparation does not waive isolation or authorize extra builds.
+
+## Shared setup and reuse
+
+The coordinator collects package metadata, changed-path ownership and test/benchmark ownership once for both revisions.
+Native-case listing and other benchmark commands remain with the helper, not a prerequisite for independent source review.
+Keep the complete inventories separate from selected review scopes.
+Supply matching records to consumers instead of repeating package or target discovery per area.
+Use [package presence](#package-presence), [integration-test evidence](#integration-test-evidence)
+and [benchmark evidence](#benchmark-evidence) for their scope and ownership rules.
+
+Record each artifact's identity beside its path:
+
+| Identity | Required evidence |
+| --- | --- |
+| Inputs | Exact revision, plus the input digest for local changes |
+| Scope | Package, manifest, library or target, and inventory coverage |
+| Configuration | Features, default-feature mode, target, flags and relevant environment |
+| Tools | Resolved compiler and Cargo versions, plus generator or measurement tool versions |
+| Result | Producing command, completion status and known gaps |
+
+Reuse an artifact only when every applicable identity field matches the requested work.
+A filename, toolchain alias or unchanged `HEAD` alone does not establish a match.
+For local inputs, include staged, unstaged and untracked changes rather than substituting committed files.
+If inputs change during production, mark the artifact stale and rebuild only dependent evidence.
+Missing identity evidence prevents reuse.
+Unknown package presence remains unknown, not an empty side.
+
+Each evidence owner still controls completeness, freshness and comparability.
+Follow [Public Docs](../review-public-docs/SKILL.md#2-generate-rustdoc-json-once-per-revision) for JSON reuse.
+Follow the [benchmark run contract](../metabench-compare/run-and-report.md) for digests, configuration and measurement reuse.
+Do not apply API feature defaults to benchmarks or treat partial output as complete.
+
+### Repair shared setup once
+
+Keep each setup result with its host, input identity, toolchain, configuration, command, error and affected consumers.
+The coordinator owns one bounded repair attempt for a shared blocker.
+Consumers reuse that result instead of repeating missing-tool probes, installation or failed builds.
+Share prerequisite results across packages only when their required setup matches.
+Install only a required missing tool after command evidence and within inherited permissions.
+Do not fetch all dependencies, substitute tools or alter reviewed inputs to clear a blocker.
+After a repair, regenerate affected evidence before launching its waiting consumers.
+If repair fails, retain the exact cause and continue independent work.
+Do not restart the repair budget per area.
 
 ## Package presence
 
@@ -216,9 +277,9 @@ Otherwise, prepare captures once for both public API areas. They must not redisc
 1. Select package/library, features, default-feature mode, target, toolchain and flags.
    Without a caller configuration, use `--all-features` and the host target.
    Keep both revisions comparable.
-2. Reuse artifacts only when revision or local input digest and configuration match.
+2. Apply the [shared identity rules](#shared-setup-and-reuse) before reusing captures or JSON.
    Use separate owned revision and target directories. Never switch the caller's checkout.
-3. Read installed `cargo public-api --help` and version.
+3. Read installed `cargo public-api --help` and version once for the selected setup.
    Install the official tool only after a missing-tool failure and within permissions:
    `cargo +stable install cargo-public-api --locked`.
 4. Generate lock-preserving rustdoc JSON with the
@@ -238,7 +299,7 @@ Otherwise, prepare captures once for both public API areas. They must not redisc
 6. If JSON generation fails on `-Z`, use only the selected compiler's supported
    path within inherited limits. Do not silently substitute nightly, enable
    bootstrap against caller policy, or repeat the same failed command.
-   Return one setup blocker and continue independent source review.
+   Record the failure under [shared setup recovery](#repair-shared-setup-once) and continue independent source review.
 7. After saving the output-only design draft, request the draft's required docs from
    [Review Public Docs](../review-public-docs/SKILL.md#3-extract-the-requested-docs).
    Return its scoped bundle through the [phased API handoff](#protect-api-contexts).
@@ -251,9 +312,10 @@ Do not pass source or premature docs into an output-only draft.
 
 ## Integration-test evidence
 
-Supply a complete base-to-head inventory of package `tests/` targets, fixtures,
+Prepare one complete base-to-head inventory of package `tests/` targets, fixtures,
 snapshots and owned configuration. Include added, removed, renamed and modified
 files and exact base/head contents. A truncated PR diff proves no absence.
+Share it with `review-tests` and the classification owner without repeating discovery.
 
 Pass established requirements or maintainer decisions separately from PR claims.
 When runtime proof is needed, supply one focused command for both revisions with
@@ -265,9 +327,10 @@ Keep the full inventory in artifacts, not the public report.
 
 ## Benchmark evidence
 
-Give `metabench-compare` exact revisions, package ownership, local inputs,
-repository rules, host and owned paths. Its
-[selection and measurement policy](../metabench-compare/SKILL.md) owns the
+Give `metabench-compare` exact revisions, shared package metadata, benchmark ownership,
+local inputs, repository rules, host and owned paths. Include completed discovery and its gaps.
+Let the helper complete selection and native-case discovery once from these inputs.
+Its [selection and measurement policy](../metabench-compare/SKILL.md) owns the
 three-crate limit, scheduling and comparisons. Do not repeat that policy in prompts.
 
 Send its report and raw artifacts to `review-perf`. Retain the complete report

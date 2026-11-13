@@ -6,11 +6,15 @@ If installed help lacks these flags, use its documented equivalents or report th
 
 ## Revision directories and prerequisites
 
-Read package metadata at each revision with
+Reuse supplied metadata and discovery only when input identity, package, configuration and resolved tool versions match.
+Input identity includes the exact revision and any local input digest.
+Read missing package metadata at each revision with
 `cargo metadata --locked --no-deps --format-version 1`.
+Fill discovery gaps without repeating completed matching work.
+Reuse matching prerequisite results from the caller instead of repeating probes or setup repairs.
 Read the lockfile to resolve the Gungraun version for each selected target.
 If metadata cannot run, use manifests for discovery and record the execution limit.
-Use `gungraun-runner --version` and `valgrind --version` on the Linux host.
+For missing version evidence, use `gungraun-runner --version` and `valgrind --version` on the Linux host.
 If the revisions require incompatible runner versions, report that limit rather than comparing different measurement tools.
 
 Use separate, owned revision directories and external Cargo target directories.

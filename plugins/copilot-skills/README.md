@@ -40,7 +40,7 @@ the entry-point guide.
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
 | [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction to an ordered set of Rust crates through sequential child sessions and pull requests, with inherited model configuration, green CI, Teams review announcements, and merge-gated progress. |
-| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with evidence-led routing across eleven areas, isolated public API reviews and mandatory API, integration-test and benchmark reports. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with shared setup, evidence-led routing across eleven areas, isolated API reviews and mandatory API, integration-test and benchmark reports. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
@@ -104,7 +104,9 @@ severity and summaries. `review-delivery` owns posting for both review modes.
    Map affected packages and record evidence, scope, owner and open questions for every area.
 3. Review small connected source changes directly.
    Delegate substantial independent evidence bundles, not one agent per area name.
-   Reuse shared captures and inventories without delaying independent source inspection.
+   Prepare discovery once and reuse artifacts only with matching input, configuration and tool evidence.
+   Start ready source work without waiting for API builds.
+   Launch reviewers only when their phase's required inputs are ready.
 4. Repair setup once, finish available coverage and merge findings by root cause.
 5. Invoke Review Delivery from the owning session for missing inline comments and one concise summary.
    Recover failed writes without repeating finished analysis.
@@ -118,6 +120,7 @@ Output-only API contexts remain separate from source reviewers.
 Prefer one clean reviewer for both API areas through the [phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
 Classification and the design draft are fixed before docs arrive.
 Benchmark work follows the caller's measurement-isolation rules.
+When concurrent work is forbidden, the isolated period excludes API builds, source agents and other owned background work.
 
 Every full or focused review uses `simple-english` for its user-facing text.
 Fast-path approval and escalation text uses it too.
