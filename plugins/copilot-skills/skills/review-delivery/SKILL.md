@@ -18,9 +18,11 @@ write permissions.
 ## Inputs and preparation
 
 Require merged [findings](findings-contract.md), coverage/outcome, full-review
-revision, current revalidated revision, target ref, merge base, PR identity and
-post/report-only mode. Accept prior report/review/thread IDs and pending writes.
-For local reviews, use the caller's exact input identity, including its recorded input digest.
+revision, current revalidated revision and post/report-only mode.
+For PR reviews, also require PR identity, target ref and merge base.
+Accept prior report/review/thread IDs and pending writes.
+Without a PR target, use report-only mode and skip provider checks.
+For local inputs, use the caller's exact input identity, including its recorded input digest.
 For Review Lens, also require the three report blocks and the combined
 `human-review-required` decision with reasons.
 Use the retained result and evidence paths, not a second review or approval of the analysis.
@@ -33,7 +35,7 @@ These limits do not replace the live provider checks below or required write rea
    Do not paste internal area reports, delivery logs or historical proposals.
 2. Invoke `simple-english` for prose. Preserve the contract's exact attribution,
    headings, code and technical facts. Check serialized bodies after rewriting.
-3. Read current lifecycle, head, target ref, merge base and submitted reviews.
+3. For PR reviews, read current lifecycle, head, target ref, merge base and submitted reviews.
    If the PR is closed or merged, stop PR writes and return its terminal state.
    If scope changed, return to the caller's
    [head-movement procedure](../review-lens/coordinator-reference.md#when-the-head-moves).
