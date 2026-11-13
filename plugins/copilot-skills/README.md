@@ -40,10 +40,10 @@ the entry-point guide.
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
 | [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction to an ordered set of Rust crates through sequential child sessions and pull requests, with inherited model configuration, green CI, Teams review announcements, and merge-gated progress. |
-| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with every review area, public API priority and Gungraun comparisons for up to three changed, metabench-enabled crates. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Lightweight approval for proven mechanical PRs with no API changes, or evidence-led full reviews across eleven areas with compact reports and separate benchmarks. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
-| [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
+| [`review-tests`](skills/review-tests/SKILL.md) | Test-first review of lost coverage, behavior changes even without test edits, test style and supported test utilities. |
 | [`review-resilience`](skills/review-resilience/SKILL.md) | Recovery classification and version-correct resilience middleware. |
 | [`review-perf`](skills/review-perf/SKILL.md) | Measured cost, allocations, hot paths and injectable clocks. |
 | [`metabench-compare`](skills/metabench-compare/SKILL.md) | Runs existing Gungraun benchmarks before and after a change for up to three changed, metabench-enabled crates. Shows metabench results and before/after instruction and allocation counts. Keeps full metrics in artifacts. |
@@ -52,9 +52,9 @@ the entry-point guide.
 | [`review-consistency`](skills/review-consistency/SKILL.md) | Agreement between code, public docs, examples and related guides, including stale defaults or conflicting instructions. |
 | [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit, with claims checked against rustdoc. |
 | [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | The always-present breaking/additive/no-change public API report, with concise Rust signatures and a human-review signal for any API change. |
-| [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including additive-only coverage and a human-review signal for breaking behavioral changes. |
+| [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including shared inputs, target discovery and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
-| [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery with current inline anchors, thread reconciliation, closure of owned non-actionable threads and partial-write recovery. |
+| [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery for full reviews, mechanical approvals and benchmark follow-ups, with current inline anchors and partial-write recovery. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
 | [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | GitHub and ADO reviews from Teams requests, with one child per PR, inline findings, one rolling report, 15-minute polling and a four-hour default cooldown. |
@@ -92,26 +92,52 @@ the complete production outcome rather than code volume or compilation alone.
 ## Review pipeline
 
 Use `review-lens` for full reviews, or name one area for a focused review.
+For a PR without an explicit full-review request, it first tries
+[lightweight mechanical approval](skills/review-lens/mechanical-approval.md).
+This covers behavior-preserving docs and private edits, additive tests, proven regression repairs and narrow pipeline repairs.
+Every changed path must qualify. No public API change is allowed, including additions.
+
+Lightweight approval requires complete API/test evidence, preserved coverage and every current check to pass.
+Absent, pending, failed or unknown checks withhold approval without starting a monitor.
+Other changes or incomplete classification evidence continue through the full review with reusable evidence.
+Skipped specialist areas and benchmarks are not claimed as reviewed.
+Explicit full-review and benchmark requests retain their scope. The Teams coordinator continues to request full reviews.
+This one-time route does not change `pr-auto-approve`, which owns its separate GitHub monitoring lifecycle.
+
 Area skills own specialist evidence rules. The coordinator supplies revisions,
 shared artifacts and inherited execution limits.
 The [findings contract](skills/review-delivery/findings-contract.md) owns format,
 severity and summaries. `review-delivery` owns posting for both review modes.
 
-`review-lens` adds the coordination:
+The [full Review Lens procedure](skills/review-lens/SKILL.md) accounts for all eleven
+areas without requiring eleven agents. It keeps connected source changes with
+one owner and delegates substantial independent work.
+Shared discovery and matching artifacts avoid repeated setup.
+Unknown relevance remains an open question, not an exclusion.
+Initial routing uses the complete path inventory. Each owner then reads its tests and full source diff without duplicated coordinator reads.
 
-1. Pin head, target ref and merge base. Read rules, CI and discussion once.
-2. Prepare shared API captures and test inventories for affected packages.
-3. Run eleven dedicated review areas within the user's model and execution
-   limits. Helpers supply public docs and benchmark measurements.
-4. Repair setup once, finish available coverage and merge findings by root cause.
-5. Deliver missing inline comments and one concise summary. Recover failed
-   writes without repeating finished analysis.
+The coordinator uses [bounded handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups)
+with access to complete evidence. Ready review results and required follow-ups take priority over optional preparation.
+It assembles the report as results arrive, while raw evidence and path inventories stay in artifacts.
+Each test reviewer follows the
+[test-first order](skills/review-lens/coordinator-reference.md#combine-test-review).
+Both output-only API areas can share one source-free reviewer through the
+[phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
+The benchmark helper owns [measurement isolation](skills/metabench-compare/SKILL.md#2-prepare-and-run-the-comparison).
+Pending benchmarks do not delay a ready review.
+The review records their state, and [separate delivery](skills/review-delivery/SKILL.md#benchmark-follow-up) carries the later measurements.
+
+The owning session invokes Review Delivery directly from the saved results.
+Delivery checks current provider state and reads back writes.
+Its [recovery procedure](skills/review-delivery/SKILL.md#ownership-and-recovery)
+retries missing writes without repeating completed analysis.
 
 Every full or focused review uses `simple-english` for its user-facing text.
 Fast-path approval and escalation text uses it too.
 
 | Outcome | Delivery |
 | --- | --- |
+| Eligible mechanical PR | Lightweight approval with evidence, unchanged API, preserved tests and successful current checks. No full-review claim or benchmark report. |
 | Complete | Approves when clean or non-blocking. Only serious findings can request changes, and never after two distinct approvals. |
 | Incomplete | Comment with a warning that lists unreviewed topics; no verdict or vote. |
 | Refreshed after new commits | Recheck existing findings and keep them inline on current code. Comment-only, with full-coverage and refresh revisions separated. |
@@ -127,37 +153,24 @@ It keeps comments visible and leaves unresolved defects, nits, questions and req
 GitHub top-level comments and review bodies have no resolved state.
 The [thread procedure](skills/review-delivery/SKILL.md#close-owned-non-actionable-threads) defines ownership, provider status and recovery rules.
 
-`review-public-api` drafts only from `cargo public-api` output, then reads the
-rustdoc of criticized items to remove or narrow claims, never to add them.
-The coordinator supplies the captures or the commands to produce them; the
-skill contains the review rules, not tool installation or checkout management.
-
-Every Review Lens summary also includes three reports. The public API report
+Every full Review Lens summary also includes three reports. The public API report
 states **Breaking Changes**, **Public API Additions** or **No API Changes** and
-shows additions as Rust signatures. The integration-test report states whether
-package `tests/` changes break existing behavior, only add coverage, preserve
-behavior or do not exist. Review delivery adds `human-review-required` for any
+groups additions by public family with concise callable signatures.
+The [compact API report](skills/review-public-api-changes/SKILL.md#report) preserves every distinct break without copying whole declarations or repeated impl lists.
+The integration-test report covers package `tests/` targets and their shared inputs.
+It reports breaking, additive-only, behavior-preserving or no changes.
+Missing inventory cannot establish no changes.
+An omitted generic default in API output does not prove a breaking change.
+The [renderer limits](skills/review-public-api/SKILL.md#renderer-limits) define that evidence boundary.
+Review delivery adds `human-review-required` for any
 public API change or a breaking integration-test behavior, independently of the
 review verdict.
 
-The benchmark report shows metabench results and before/after instruction and allocation counts.
-It covers all Gungraun cases in up to three changed, metabench-enabled crates.
-`metabench-compare` ranks crates by changed Rust and manifest lines.
-It uses the net diff, so staged edits and later edits do not count twice.
-It runs each target at base first, then at head, on the same Linux host.
-It uses metabench's saved JSON baseline and direct comparison.
-It reuses metabench output when that output shows both comparisons.
-Otherwise it shows compact instruction and allocation tables from saved JSON.
-It includes allocated bytes when reported and states when allocation measurements are unavailable.
-It includes removed and missing cases that native output omits.
-Full metrics, selection reasons and run details stay in artifacts.
-
-Independent work can continue during Valgrind instruction-count measurements
-only when the caller's measurement-isolation rules permit it.
-It reports added, removed, failed and incompatible results instead of inventing missing values.
-It marks incomplete coverage or incompatible comparisons as partial, even when some commands succeed.
-When execution is blocked, the visible report gives the exact blocker without a setup narrative.
-It does not independently require the human-review label.
+The benchmark report shows metabench results and before/after instruction and allocation counts for every selected Gungraun case.
+It includes allocated bytes when measured, unavailable measurements and comparison limits.
+[Metabench Compare](skills/metabench-compare/SKILL.md) defines crate selection and execution.
+Its [report contract](skills/metabench-compare/run-and-report.md#side-by-side-results) defines the compact tables and saved artifacts.
+Benchmark results do not independently require the human-review label.
 
 ```text
 Use metabench-compare to compare this branch with its merge base.

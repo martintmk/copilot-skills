@@ -89,7 +89,7 @@ Relay human decisions from a blocked child instead of answering on the user's be
 
 Pass one compact assignment:
 
-> Review `<PR>` at `<head, target ref, merge base>` with `review-lens`.
+> Run a full review of `<PR>` at `<head, target ref, merge base>` with `review-lens`.
 > Resume `<saved result>` if this is delivery recovery, not a new review.
 > Apply `pr-review-teams-channel` reconciliation and `review-delivery`.
 > Allowed writes: review comments, the owned rolling report and eligible votes.
@@ -103,9 +103,17 @@ Pass one compact assignment:
 
 Supply facts, not placeholders. Keep full bodies and logs in child-owned artifacts.
 Do not add PR creation instructions to a review assignment.
+Match the child's receipt to the assigned revisions and pending writes.
+If receipt fields are missing, request those fields or write recovery from the same child.
+Do not import its full evidence or require another approval of its analysis.
+Retain any pending benchmark owner and state without delaying completed review reconciliation.
+Handle its later report under [benchmark follow-up](../review-delivery/SKILL.md#benchmark-follow-up), within this monitor's write scope and cooldown.
+Do not start a new review or reset its completion cooldown for benchmark-only delivery.
 
 ## Reconcile the rolling report
 
+The child performs this procedure through Review Delivery.
+The coordinator records the confirmed receipt in scheduling state.
 Use one editable top-level GitHub issue comment or unanchored ADO summary thread.
 Identify its comment with the expected provider author and this exact marker:
 `<!-- pr-review-teams-channel:rolling-review -->`.
@@ -148,6 +156,7 @@ database. Do not write scheduler or cache files in the repository.
 - Request IDs and preparation-reply IDs.
 - Per PR: owned child ID, active assignment, reviewed revisions, outcome and blockers.
 - Report/review IDs, finding-to-thread map, confirmed/pending writes and last reconciled time.
+- Pending benchmark owner, pinned revisions, state and follow-up report ID.
 - Latest pending revision and requests, plus the last reported blocker.
 
 Restore state instead of replaying the transcript. Report new blockers, changed

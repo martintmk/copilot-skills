@@ -26,6 +26,8 @@ cost claim to their own reviews.
    head. For metabench targets, use
    [`metabench-compare`](../metabench-compare/SKILL.md).
    In Review Lens, reuse its supplied report and artifacts.
+   If measurements are pending, finish source review and state that measured conclusions remain pending.
+   Interpret the later report without repeating completed source work.
    Do not duplicate the helper's runs or expand its selected crates.
    For other harnesses, follow the caller's execution limits.
    Never infer a regression from reading code.

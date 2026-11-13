@@ -106,6 +106,8 @@ Do not describe unmeasured code as unchanged.
 
 Return the block and artifact paths to the caller.
 When Review Lens calls this skill, let `review-perf` interpret the measurements.
+The caller can deliver its review first and deliver this report through the [benchmark follow-up](../review-delivery/SKILL.md#benchmark-follow-up).
+Keep measurement isolation unchanged. Review delivery does not cancel the assigned comparison.
 Do not generate duplicate findings, post provider comments, change labels or decide the review verdict.
 Keep saved reports and referenced raw artifacts available after final delivery.
 After copying the required artifacts, remove only temporary worktrees and build directories that this run owns.

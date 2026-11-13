@@ -6,12 +6,21 @@ If installed help lacks these flags, use its documented equivalents or report th
 
 ## Revision directories and prerequisites
 
-Read package metadata at each revision with
+Reuse supplied metadata and discovery only when input identity, package, configuration and resolved tool versions match.
+Input identity includes the exact revision and any local input digest.
+Read missing package metadata at each revision with
 `cargo metadata --locked --no-deps --format-version 1`.
+Fill discovery gaps without repeating completed matching work.
+Reuse matching prerequisite results from the caller instead of repeating probes or setup repairs.
 Read the lockfile to resolve the Gungraun version for each selected target.
 If metadata cannot run, use manifests for discovery and record the execution limit.
-Use `gungraun-runner --version` and `valgrind --version` on the Linux host.
+For missing version evidence, use `gungraun-runner --version` and `valgrind --version` on the Linux host.
 If the revisions require incompatible runner versions, report that limit rather than comparing different measurement tools.
+
+Use the same shell and environment for prerequisite probes, preparation and measurement commands.
+For Windows-to-WSL scripts, write LF line endings and use the verified login shell or explicitly resolved tool paths.
+A tool found in a login shell is not proven available in a non-login shell.
+Recheck prerequisites when the execution environment changes.
 
 Use separate, owned revision directories and external Cargo target directories.
 For a committed revision, use `git worktree add --detach <owned-path> <revision>`.
@@ -32,6 +41,9 @@ If no common configuration can run both revisions, mark the pair non-comparable.
 Use each revision's own committed dependencies and record lockfile differences.
 Do not rewrite lockfiles, dependencies, benchmark inputs or generated registrations to make the pair run.
 Set a separate external `CARGO_TARGET_DIR` for each revision.
+If preparation and measurement use separate tool calls, choose owned target directories that persist across those calls.
+Do not assume the host's temporary directory survives.
+If persistence is uncertain, keep preparation and measurement in the same execution context.
 Set `GUNGRAUN_HOME` to an owned directory for each run.
 Clear inherited engine filters and baseline overrides in the child process only.
 

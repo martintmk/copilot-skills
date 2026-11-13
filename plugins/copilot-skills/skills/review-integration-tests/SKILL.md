@@ -2,8 +2,8 @@
 name: review-integration-tests
 description: >
   Produce the mandatory Review Lens report for Rust integration tests in each
-  package's tests directory. Detects removed, weakened or changed expectations
-  that introduce a breaking behavioral contract, distinguishes additive-only
+  package's tests directory, including shared inputs and discovery configuration.
+  Detects removed, weakened or changed expectations, distinguishes additive-only
   coverage, and requires human-review-required for confirmed behavioral
   breaks. Use for Review Lens or a focused integration-test change report. Not
   for inline unit tests, general coverage review, production correctness or
@@ -16,16 +16,19 @@ Report how package integration tests changed and whether their established
 behavioral contract was broken. Run this area for every Review Lens review,
 including changes that do not touch integration tests.
 
-A Rust integration test is a target below a package's `tests/` directory.
-Include fixtures, snapshots and test-only configuration owned by those targets.
+This area covers targets below a package's `tests/` directory at either revision.
+Include their fixtures, snapshots, helpers and test-only configuration, even when those inputs live outside `tests/`.
 Leave inline unit tests, doctests and whole-diff behavior review to
 [`review-tests`](../review-tests/SKILL.md).
 
 ## Procedure
 
-1. Inventory base-to-head changes below every affected package's `tests/`
-   directory. Include added, removed, renamed and modified test cases,
-   assertions, snapshots, fixtures and discovery configuration.
+1. Inventory the covered targets and their owned inputs at base and head for every affected package.
+   Include added, removed, renamed and modified paths.
+   Trace changed shared inputs to their consuming tests, including unchanged test files.
+   Inspect target discovery and execution configuration, including `autotests`, `[[test]]`, target paths, `required-features` and `cfg`.
+   Compare both revisions before treating a deleted or moved target as absent.
+   Read baseline tests and changed expectations before implementation explanations under the [test-first procedure](../review-tests/SKILL.md#procedure).
 2. Compare existing expectations before counting additions. Look for:
    - deleted cases or assertions without equivalent coverage;
    - exact values or errors replaced by broader matches;
@@ -37,10 +40,10 @@ Leave inline unit tests, doctests and whole-diff behavior review to
 
    | Result | Meaning |
    | --- | --- |
-   | **Breaking Behavioral Changes** | An established integration-test expectation was removed, weakened or changed. This classification applies even when the change is intentional or approved. |
+   | **Breaking Behavioral Changes** | An established expectation was removed, weakened or changed, or its execution coverage was reduced. Intent or approval does not change this classification. |
    | **Integration Test Additions Only** | New tests, cases, assertions or fixtures were added and no existing expectation or execution path changed. |
    | **No Breaking Behavioral Changes** | Existing integration tests changed, but their observable expectations and execution coverage were preserved. |
-   | **No Integration Test Changes** | No affected package changed files owned by its `tests/` targets. |
+   | **No Integration Test Changes** | Complete inventory proves that no covered test inputs or discovery/execution configuration changed. |
 
 When additions and breaking changes coexist, report the break first and
 summarize the additions separately. A rename or fixture refactor is not
@@ -57,7 +60,7 @@ Set `human-review-required` to **required** for **Breaking Behavioral Changes**.
 Set it to **not required** for additions-only, behavior-preserving changes and
 no integration-test changes.
 
-If content or ownership is missing, return `could not review` and name the gap.
+If inventory, content or ownership is incomplete, return `could not review` and name the gap.
 A proved behavioral break still requires the label.
 Otherwise use `undetermined`, not a clean classification.
 

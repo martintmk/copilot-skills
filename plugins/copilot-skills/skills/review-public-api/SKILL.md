@@ -28,6 +28,14 @@ coverage.
   They never add findings, raise severity or prove runtime behavior.
 - **Report only.** Never edit, post or vote.
 
+## Renderer limits
+
+Full output can still omit Rust syntax. For example, cargo-public-api can hide default generic arguments.
+`Type<T>` without `= DefaultType` does not prove that the default was removed or that callers must supply `T`.
+Require version-specific rendering evidence before treating an omitted property as an API removal.
+If output cannot establish a material changed contract, report that specific limit rather than inventing a break or a clean classification.
+Keep the evidence boundary. Do not inspect source or raw rustdoc JSON to fill the gap.
+
 ## Review rules
 
 1. **Use complete, matching output.** The public surface must match the
@@ -57,6 +65,9 @@ coverage.
    surface. A change review covers changed items and signatures, using
    unchanged neighbors only as context. Separate existing concerns from new
    ones. A crate that emits only its root module is valid output.
+   For change reviews, reuse the [complete comparison](../review-public-api-changes/SKILL.md#classify-the-change) across both output-only areas.
+   Retain full captures, but inspect unchanged items only when a changed contract or absence claim needs them.
+   This does not narrow a standalone whole-surface audit.
 4. **Draft, then check against docs.** Draft findings with the smallest
    decisive output excerpts. Request matching rustdoc text for each item the
    draft depends on, its owner and trait, and applicable module or crate docs.
