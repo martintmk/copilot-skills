@@ -7,9 +7,11 @@ Give reviewers the required facts, not this entire file.
 ## Evidence-led routing
 
 Route work by its required evidence, not by area names.
-Use the complete initial pass from [Review Lens](SKILL.md#1-pin-facts-and-prepare-shared-evidence).
+Use the complete inventory from [Review Lens](SKILL.md#1-pin-facts-and-prepare-shared-evidence).
 An evidence bundle contains related paths, contracts and unresolved questions.
 Routing assigns work. It does not complete the area's review procedure.
+Initial routing can remain provisional until each source owner finishes its test-first pass and complete diff.
+The coordinator does not repeat delegated source reads. It reconciles returned evidence and path coverage instead.
 
 ### Record coverage
 
@@ -51,9 +53,9 @@ Use `could not review` for required work that cannot finish.
 Start from the complete changed-path inventory at the pinned revisions.
 For removals and renames, inspect both old and new ownership, references and discovery paths.
 Do not treat a missing head file or a path-only rename as proof that no contract changed.
-Use filenames and keyword searches to locate evidence, never to prove absence.
+Use filenames and keyword searches to locate evidence or assign provisional scope, never to prove absence.
 
-Follow connections from changed definitions, values and shared inputs.
+Each source owner follows connections from changed definitions, values and shared inputs.
 Use these connections to find indirect effects, not as another area checklist:
 
 | Changed input | Connection to inspect |
@@ -114,7 +116,9 @@ A one-shot reviewer cannot accept follow-up messages.
 1. Supply both skills and the [integration-test evidence](#integration-test-evidence).
    Include the baseline tests and changed expectations required by [Review Tests, step 1](../review-tests/SKILL.md#procedure).
 2. Enforce that step for each reviewer, regardless of the coordinator's earlier reading.
-   Withhold implementation code, explanations and other reviewers' conclusions until the reviewer records baseline expectations and open questions.
+   Withhold implementation code and explanations until the reviewer records baseline expectations and open questions.
+   This includes PR bodies, review bodies, discussion and other reviewers' conclusions.
+   Include inline tests and indented or fenced doctests. A source hunk can mix test and implementation text.
    For one-shot reviewers, provide artifact paths and the required reading order rather than an implementation summary.
    If inherited context prevents this order, use a compliant context.
    If none is available, mark affected coverage `could not review`.
@@ -169,6 +173,12 @@ Instructions to ignore prior input do not restore isolation.
 If a clean context is unavailable, mark the affected coverage `could not review` and retain valid completed results.
 Never substitute source-based API inference.
 
+At merge, independent source evidence or a consumer probe can disprove an output-only claim.
+Keep the original result unchanged and record the refuting evidence separately.
+Remove or narrow the delivered claim without feeding that evidence back into the output-only phase.
+Do not add output-only claims or declare missing capture coverage complete from source evidence.
+Retain any material unresolved classification gap and derive the human-review decision from the surviving supported changes.
+
 ### Bound handoffs and follow-ups
 
 Give each reviewer only the material needed for its scope:
@@ -213,11 +223,12 @@ Launch a reviewer only when all required inputs for its assigned phase are ready
 | Output-only API phases | Matching complete captures and package-presence facts under the [phased handoff](#protect-api-contexts) |
 | Integration-test classification | The complete [owned test inventory](#integration-test-evidence) and required base/head contents |
 | Benchmark comparison | Shared package and benchmark discovery, followed by the helper's [run prerequisites](../metabench-compare/run-and-report.md#revision-directories-and-prerequisites) |
-| Measured performance conclusions | The helper's report and artifacts, including explicit blocked or partial results |
+| Benchmark follow-up | The helper's report and artifacts, including explicit blocked or partial results |
 
 Keep source-based performance review separate from measured conclusions.
-For a one-shot performance reviewer, wait for the benchmark report or keep source inspection with the coordinator.
-Otherwise, use a retained reviewer for the measurement follow-up.
+Finish source performance coverage without waiting for measurements.
+Use a retained reviewer or the coordinator for later measurement interpretation under `review-perf`.
+Do not repeat source review or delay a one-shot source reviewer for the helper's report.
 Known blockers produce coverage limits, not repeated waiting reviewers.
 Keep build and artifact directories separate.
 Run independent bundles in parallel only within inherited execution limits.
@@ -329,7 +340,8 @@ Otherwise, prepare captures once for both public API areas.
    Reuse this JSON later for doc retrieval.
    Make sure that the selected compiler resolves directly.
    `rustup toolchain list` alone does not establish absence of a custom Microsoft toolchain.
-5. When installed help supports it, render full output from saved JSON:
+5. Render full output from saved JSON with the command below.
+   Help can omit supported flags. If support is unclear, try this documented command once against matching saved JSON.
 
    ```text
    cargo public-api --rustdoc-json <json-path> --color=never --include function-parameter-names
@@ -338,6 +350,8 @@ Otherwise, prepare captures once for both public API areas.
    Save stdout as the full API capture. `--locked` belongs on Cargo's JSON
    generation command, not on a `cargo-public-api` version that rejects it.
    Do not use `-sss`, which hides impls needed for absence claims.
+   Record the installed version, exit status and output.
+   An unrecognized flag is a capability limit. Use a documented compatible path or report the blocker, not repeated flag guesses.
 6. If JSON generation fails on `-Z`, use only the selected compiler's supported
    path within inherited limits. Do not silently substitute nightly, enable
    bootstrap against caller policy, or repeat the same failed command.
@@ -372,6 +386,22 @@ Send its report and paths to raw artifacts to `review-perf`. Retain the complete
 for delivery, including blocked or inapplicable results.
 The performance reviewer interprets the supplied results without rerunning benchmarks or expanding crate selection.
 Keep unmeasured cost concerns conditional.
+
+Deliver the supported review before pending benchmark preparation or isolated execution.
+Keep its `### Benchmarks` block as a [pending or separate-result notice](../review-delivery/findings-contract.md#area-result-and-final-summary).
+Record the benchmark owner, pinned inputs, queued/running state and next action in the existing review record.
+Pending means work remains assigned, not that it was completed or silently dropped.
+Use `blocked` for a known execution blocker and `not applicable` only with the helper's absence evidence.
+Pending measurements alone do not make finished source coverage incomplete or prevent its verdict.
+They cannot support a performance claim.
+
+If measurements already run under an isolation rule, finish the active command or reach a safe pause before delivery.
+Do not overlap delivery work with isolated measurements or stop unrelated processes.
+After delivery, continue the queued comparison under the same measurement policy.
+Do not remove its inputs or artifacts before consumers finish.
+Send the pending owner and state with the review receipt so a coordinating session does not drop the follow-up.
+Use [Review Delivery's benchmark follow-up](../review-delivery/SKILL.md#benchmark-follow-up) for the later report and any supported performance findings.
+Benchmark completion does not trigger a new full review or an automatic vote or label change.
 
 ## When the head moves
 

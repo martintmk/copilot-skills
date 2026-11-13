@@ -94,21 +94,27 @@ The public summary is a current report, not a concatenation of area outputs:
    refresh. Say that later commits received no new-finding review.
 3. Include exactly one `### Public API changes`, `### Integration tests` and
    `### Benchmarks` block, in that order. Keep required classifications, concise
-   Rust signatures, meaningful behavioral deltas and compact metabench results with before/after instruction and allocation counts.
+   Rust signatures and meaningful behavioral deltas.
+   If benchmarks are ready, include compact results or link the separately delivered report with its revisions and limits.
+   While an assigned comparison is queued or running, state `Pending`, that state and the pinned revisions.
 4. Put findings without confirmed inline delivery after those blocks, with the
    anchor or delivery limitation. For confirmed inline findings, give a count
    and thread links, not duplicate bodies.
 
 For unavailable API/test evidence, use **Could not assess** and the reason.
-For benchmarks, retain `partial` or `blocked` and the reason.
+For benchmarks, retain `partial`, `blocked` or `not applicable` with the reason.
+`Pending` is a delivery state, not a completed benchmark result.
+It does not make finished source performance coverage incomplete or prevent an otherwise supported verdict.
+Do not claim measured performance while it is pending.
 Follow the [benchmark report format](../metabench-compare/run-and-report.md#side-by-side-results).
+The later [benchmark follow-up](SKILL.md#benchmark-follow-up) contains the complete compact results without repeating the full review.
 Keep full metrics and run details in artifacts, not the public summary.
 Do not expand the compact report, drop benchmark cases or link inaccessible local paths.
 Old report blocks and measurements remain pinned to their assessed revisions
 until their required evidence is refreshed. Never present them as current.
 
 Remove obsolete preparation claims such as "pending/unposted", "report only" or
-"no provider writes" when publishing. State actual delivery limits separately.
+"no provider writes" when publishing. Keep a current pending-benchmark notice and actual delivery limits.
 Do not repair contradictory prose by prepending another disclaimer.
 Internal hashes, agent IDs, permission histories and exhaustive inventories stay
 out of the public summary.

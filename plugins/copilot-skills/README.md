@@ -102,6 +102,7 @@ areas without requiring eleven agents. It keeps connected source changes with
 one owner and delegates substantial independent work.
 Shared discovery and matching artifacts avoid repeated setup.
 Unknown relevance remains an open question, not an exclusion.
+Initial routing uses the complete path inventory. Each owner then reads its tests and full source diff without duplicated coordinator reads.
 
 The coordinator uses [bounded handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups)
 with access to complete evidence. Each test reviewer follows the
@@ -109,6 +110,8 @@ with access to complete evidence. Each test reviewer follows the
 Both output-only API areas can share one source-free reviewer through the
 [phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
 The benchmark helper owns [measurement isolation](skills/metabench-compare/SKILL.md#2-prepare-and-run-the-comparison).
+Pending benchmarks do not delay a ready review.
+The review records their state, and [separate delivery](skills/review-delivery/SKILL.md#benchmark-follow-up) carries the later measurements.
 
 The owning session invokes Review Delivery directly from the saved results.
 Delivery checks current provider state and reads back writes.
@@ -141,6 +144,8 @@ shows additions as Rust signatures.
 The integration-test report covers package `tests/` targets and their shared inputs.
 It reports breaking, additive-only, behavior-preserving or no changes.
 Missing inventory cannot establish no changes.
+An omitted generic default in API output does not prove a breaking change.
+The [renderer limits](skills/review-public-api/SKILL.md#renderer-limits) define that evidence boundary.
 Review delivery adds `human-review-required` for any
 public API change or a breaking integration-test behavior, independently of the
 review verdict.

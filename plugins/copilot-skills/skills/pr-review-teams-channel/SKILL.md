@@ -106,6 +106,9 @@ Do not add PR creation instructions to a review assignment.
 Match the child's receipt to the assigned revisions and pending writes.
 If receipt fields are missing, request those fields or write recovery from the same child.
 Do not import its full evidence or require another approval of its analysis.
+Retain any pending benchmark owner and state without delaying completed review reconciliation.
+Handle its later report under [benchmark follow-up](../review-delivery/SKILL.md#benchmark-follow-up), within this monitor's write scope and cooldown.
+Do not start a new review or reset its completion cooldown for benchmark-only delivery.
 
 ## Reconcile the rolling report
 
@@ -153,6 +156,7 @@ database. Do not write scheduler or cache files in the repository.
 - Request IDs and preparation-reply IDs.
 - Per PR: owned child ID, active assignment, reviewed revisions, outcome and blockers.
 - Report/review IDs, finding-to-thread map, confirmed/pending writes and last reconciled time.
+- Pending benchmark owner, pinned revisions, state and follow-up report ID.
 - Latest pending revision and requests, plus the last reported blocker.
 
 Restore state instead of replaying the transcript. Report new blockers, changed

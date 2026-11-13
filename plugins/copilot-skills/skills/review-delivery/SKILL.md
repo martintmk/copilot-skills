@@ -4,7 +4,7 @@ description: >
   Deliver merged review findings to GitHub, Azure DevOps or a local report.
   Keep findings inline on current code after new commits, reconcile prior
   threads, close owned non-actionable threads, and recover partial writes without
-  duplicates. Owns review events,
+  duplicates. Deliver benchmark follow-ups without repeating the review. Owns review events,
   AI attribution and required human-review labels. Not for generating findings
   or formatting intermediate area output.
 ---
@@ -25,6 +25,8 @@ Without a PR target, use report-only mode and skip provider checks.
 For local inputs, use the caller's exact input identity, including its recorded input digest.
 For Review Lens, also require the three report blocks and the combined
 `human-review-required` decision with reasons.
+The benchmark block can state pending under the [summary contract](findings-contract.md#area-result-and-final-summary).
+Do not wait for measurements to deliver otherwise supported review results.
 Use the retained result and evidence paths, not a second review or approval of the analysis.
 Resolve missing delivery inputs with the caller without importing all artifacts or repeating completed areas.
 Keep long logs in referenced artifacts.
@@ -49,6 +51,30 @@ These limits do not replace the live provider checks below or required write rea
 
 For a findings-only refresh with historical reports, retain their prior decision
 as historical and make no new label write from it.
+
+## Benchmark follow-up
+
+Accept the helper's pinned report, `review-perf` interpretation, prior delivery IDs and the existing write scope.
+This follow-up does not require the other area reports or another full review.
+
+1. Recheck lifecycle, head, target and merge base, or the local input digest.
+   Stop provider writes for a closed or merged PR.
+   If the assessed head, merge base, target ref or local inputs changed, retain the results locally as historical.
+   Do not present them as current or publish historical results without explicit permission.
+   A target-tip change alone follows the existing [head-movement rules](../review-lens/coordinator-reference.md#when-the-head-moves).
+2. Deliver the complete compact benchmark report separately, under its [report contract](../metabench-compare/run-and-report.md#side-by-side-results).
+   In report-only mode, return the artifact without provider writes.
+   Otherwise use one owned benchmark comment or an authorized report location. Reuse its saved ID on recovery.
+   Permission for a fixed comment set or summary edits alone does not authorize an extra comment.
+   If no follow-up location is permitted, retain the artifact and report the delivery limit.
+3. Keep the existing review outcome and API/test label decision.
+   Measurements do not automatically change the verdict, vote or label.
+   If `review-perf` supplies a new supported finding, deliver it through the normal evidence, anchor and permission gates.
+   Reconsider the verdict only from current findings and sufficient coverage, not from benchmark status alone.
+4. Read back writes and retain their IDs under [write recovery](#ownership-and-recovery).
+   If authorized, replace the original pending notice with the report link and assessed revisions.
+   Leave unrelated report content unchanged. Apply the existing non-actionable thread rules.
+   Never insert a new benchmark result into a newer or otherwise mismatched review summary.
 
 ## Reconcile inline findings
 

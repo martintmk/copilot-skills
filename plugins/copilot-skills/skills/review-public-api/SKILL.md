@@ -28,6 +28,14 @@ coverage.
   They never add findings, raise severity or prove runtime behavior.
 - **Report only.** Never edit, post or vote.
 
+## Renderer limits
+
+Full output can still omit Rust syntax. For example, cargo-public-api can hide default generic arguments.
+`Type<T>` without `= DefaultType` does not prove that the default was removed or that callers must supply `T`.
+Require version-specific rendering evidence before treating an omitted property as an API removal.
+If output cannot establish a material changed contract, report that specific limit rather than inventing a break or a clean classification.
+Keep the evidence boundary. Do not inspect source or raw rustdoc JSON to fill the gap.
+
 ## Review rules
 
 1. **Use complete, matching output.** The public surface must match the

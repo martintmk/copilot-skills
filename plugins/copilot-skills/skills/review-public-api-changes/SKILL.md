@@ -35,6 +35,7 @@ setup inside this skill.
 ## Classify the change
 
 1. Diff the complete public surfaces.
+   Apply the [renderer limits](../review-public-api/SKILL.md#renderer-limits) before interpreting omissions as removed contracts.
 2. Group related lines into consumer-visible items. Do not dump unchanged
    blanket or auto-trait impls.
 3. Classify each changed item:
