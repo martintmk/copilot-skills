@@ -4,7 +4,8 @@ description: >
   Deliver merged review findings to GitHub, Azure DevOps or a local report.
   Keep findings inline on current code after new commits, reconcile prior
   threads, close owned non-actionable threads, and recover partial writes without
-  duplicates. Deliver benchmark follow-ups without repeating the review. Owns review events,
+  duplicates. Deliver eligible mechanical approvals without claiming full coverage,
+  and benchmark follow-ups without repeating the review. Owns review events,
   AI attribution and required human-review labels. Not for generating findings
   or formatting intermediate area output.
 ---
@@ -17,15 +18,19 @@ write permissions.
 
 ## Inputs and preparation
 
-Require merged [findings](findings-contract.md), coverage/outcome, full-review
-revision, current revalidated revision and post/report-only mode.
+Require review mode, merged [findings](findings-contract.md), coverage/outcome,
+assessed revision, current revalidated revision and post/report-only mode.
+For full and focused reviews, retain the full-review revision separately from later revalidated revisions.
 For PR reviews, also require PR identity, target ref and merge base.
 Accept prior report/review/thread IDs and pending writes.
 Without a PR target, use report-only mode and skip provider checks.
 For local inputs, use the caller's exact input identity, including its recorded input digest.
-For Review Lens, also require the three report blocks and the combined
+For full Review Lens reviews, also require the three report blocks and the combined
 `human-review-required` decision with reasons.
-The benchmark block can state pending under the [summary contract](findings-contract.md#area-result-and-final-summary).
+For `mechanical` mode, require the [lightweight evidence package](../review-lens/mechanical-approval.md#5-deliver-and-retain-evidence)
+instead of a full-review revision, eleven-area coverage and a benchmark report.
+Keep its assessed revision separate from any prior full-review revision.
+In a full review, the benchmark block can state pending under the [summary contract](findings-contract.md#area-result-and-final-summary).
 Do not wait for measurements to deliver otherwise supported review results.
 Use the retained result and evidence paths, not a second review or approval of the analysis.
 Resolve missing delivery inputs with the caller without importing all artifacts or repeating completed areas.
@@ -34,6 +39,7 @@ These limits do not replace the live provider checks below or required write rea
 
 1. Finish the retained delivery draft using the
    [summary contract](findings-contract.md#area-result-and-final-summary).
+   For mechanical mode, use the [lightweight summary](findings-contract.md#lightweight-mechanical-summary) instead.
    If no draft exists, compose it from the compact area results.
    Reuse supported finding text and required report blocks rather than rewriting the whole review.
    Do not paste internal area narratives, delivery logs or historical proposals.
@@ -57,6 +63,23 @@ Keep cleanup assigned, preserve referenced evidence and report any cleanup failu
 
 For a findings-only refresh with historical reports, retain their prior decision
 as historical and make no new label write from it.
+
+## Lightweight mechanical approval
+
+Accept this mode only from the [Review Lens mechanical procedure](../review-lens/mechanical-approval.md).
+Require its complete eligibility proof, not an incomplete full review renamed as mechanical.
+Both classification reports must be current and complete, with a combined `not required` label decision.
+If evidence fails these conditions, return to the caller without voting.
+
+Use the [lightweight summary](findings-contract.md#lightweight-mechanical-summary).
+Keep API/test reports as supporting evidence rather than posting the full-review blocks.
+Reconcile existing discussion before voting. A substantive unresolved finding blocks this path.
+Apply every restriction in the action table and the caller's narrower write scope.
+
+Immediately before submission, refresh all lightweight prerequisites, including CI, labels and active review holds.
+If eligibility or revisions changed, return to the caller without a pending approval write.
+Use the normal provider write and read-back procedure, including recovery of uncertain writes.
+Do not start a monitor, dismiss reviews or add a human-review label through this path.
 
 ## Benchmark follow-up
 
@@ -149,6 +172,7 @@ For ADO, count individual positive reviewer votes, not assumed group membership.
 
 | Situation | GitHub event | ADO vote |
 | --- | --- | --- |
+| Proven eligible mechanical path | `APPROVE` | Approved |
 | Complete, clean or only non-blocking findings | `APPROVE` | Approved, or Approved with suggestions |
 | Complete, serious findings, fewer than two distinct approvals | `REQUEST_CHANGES` | Waiting for author |
 | Serious findings with two or more distinct approvals | `COMMENT` | No vote |
@@ -157,6 +181,8 @@ For ADO, count individual positive reviewer votes, not assumed group membership.
 | Requester's or posting account's own PR | `COMMENT`, no `Verdict:` | No vote |
 | Report only | No provider writes | No provider writes |
 
+The mechanical row does not claim complete eleven-area coverage.
+Its required evidence must be complete. Missing eligibility proof means no lightweight approval.
 The most restrictive row wins. Preserve serious findings when voting restrictions
 prevent a blocking action. Do not call the review clean or discard those findings.
 An approval sentence does not replace a confirmed provider vote.

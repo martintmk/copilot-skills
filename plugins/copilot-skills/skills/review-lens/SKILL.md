@@ -1,25 +1,37 @@
 ---
 name: review-lens
 description: >
-  Review a Rust PR, branch, commit or working-tree diff across eleven specialist
-  areas. Route work from evidence, review connected source changes directly,
-  and delegate substantial independent scopes. Deliver the review with API and
-  integration-test reports. Deliver benchmarks separately when pending.
-  Use for full reviews or "review like me".
-  Focused requests use one area skill. Not for formatting-only passes, output-only
-  API audits or specialist security reviews.
+  Review a Rust PR, branch, commit or working-tree diff. Approve eligible
+  mechanical PRs through a lightweight path with no public API changes.
+  Otherwise route eleven specialist areas from evidence, with shared setup and
+  compact reports. Deliver pending benchmarks separately. Use for PR reviews,
+  full reviews or "review like me". Explicit full reviews retain all areas.
+  Focused requests use one area skill. Not for local formatting passes,
+  output-only API audits, specialist security reviews, monitoring or merging.
 ---
 
 # Review Lens
 
-Coordinate a complete review with public API compatibility as the first priority.
+Choose a lightweight approval or a complete review, with public API compatibility first.
 Area skills own evidence and review rules. This skill owns setup, routing,
 coverage and merging findings. [Review Delivery](../review-delivery/SKILL.md) owns public output and writes.
 For a focused request, prepare only that area and still use Review Delivery.
 
+## Choose the review path
+
+For a PR without an explicit full-review request, first apply [mechanical approval](mechanical-approval.md).
+An eligible PR gets a lightweight approval instead of the eleven-area review, within the caller's write permissions.
+The complete PR must qualify. A small diff or reassuring title is not proof.
+
+An explicit full-review request from the user or caller skips this path.
+Focused reviews, branches, commits and working-tree reviews keep their existing scope.
+Explicit benchmark requests retain their requested scope. Report-only mode never authorizes a vote.
+The lightweight path starts no monitor and does not invoke `pr-auto-approve`.
+The procedure below describes the full review path.
+
 ## Review areas
 
-Account for all eleven areas, including small or docs-only changes.
+Every full review accounts for all eleven areas, including small or docs-only changes.
 Risk changes attention, not coverage.
 
 | Area | Skill | Owns |
@@ -104,6 +116,7 @@ Retain confirmed and pending provider write IDs there.
 Before delivery, apply the [input-movement rules](coordinator-reference.md#when-the-head-moves), including the local input digest comparison.
 
 Invoke [Review Delivery](../review-delivery/SKILL.md#inputs-and-preparation) directly with these results and the authorized write scope.
+Pass the review mode explicitly. Do not present lightweight coverage as a full review.
 It owns fresh provider checks, public output and [write recovery](../review-delivery/SKILL.md#ownership-and-recovery).
 A failed write does not invalidate completed analysis.
 Return its [delivery result](../review-delivery/SKILL.md#human-review-label-and-completion).

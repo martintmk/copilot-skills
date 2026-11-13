@@ -420,6 +420,10 @@ Benchmark completion does not trigger a new full review or an automatic vote or 
 
 ## When the head moves
 
+Findings-only refresh requires a completed full-review baseline.
+After a lightweight approval, use the [mechanical procedure](mechanical-approval.md#5-deliver-and-retain-evidence) to reassess the complete PR.
+Skipped areas are not previous full coverage.
+
 Record source head, target repository/ref, merge base and observed target tip
 separately. The merge base defines the reviewed PR diff. The target tip supplies
 integration context. Stale ADO `lastMergeTargetCommit` or CI metadata does not

@@ -66,7 +66,7 @@ Choose `approve`, `approve with non-blocking comments` or `changes requested`
 from all applicable findings, including existing unresolved threads.
 Clean reviews and Design notes permit approval. All non-blocking issues, not
 only nits, permit approval with comments.
-Incomplete reviews have no overall verdict.
+Incomplete full or focused reviews have no overall verdict.
 [Review Delivery](SKILL.md#choose-the-action) owns ownership, refresh, prior-approval
 and report-only restrictions on the actual provider event.
 Never lower a finding's severity or omit it merely to obtain approval.
@@ -89,6 +89,8 @@ decision: `required`, `not required` or `undetermined`.
 Keep commands, file inventories, full logs and setup diagnostics in artifacts.
 The public report includes only the evidence needed to understand its classification.
 
+Full Review Lens reviews use the summary below.
+The [lightweight mechanical summary](#lightweight-mechanical-summary) is a separate mode, not a claim of full coverage.
 The public summary is a current report, not a concatenation of area outputs.
 Keep its length proportional to findings and changed contracts, not the number of reviewed paths.
 Do not remove findings, lower severity or hide material limits to meet a length target.
@@ -155,3 +157,25 @@ Blocked: Gungraun requires a Linux host.
 Standalone reviews outside Review Lens do not require the three report blocks.
 Requester-owned or posting-account-owned PRs omit public `Verdict:` framing.
 Missing measurements limit performance claims, not finished source-review coverage.
+
+## Lightweight mechanical summary
+
+Use this shape only after the [mechanical eligibility procedure](../review-lens/mechanical-approval.md) succeeds.
+Preserve the exact AI attribution. Name the category, decisive evidence and assessed head.
+Use accessible evidence links, not local artifact paths.
+State that this is not a full review and that benchmarks were not run.
+Keep full API/test evidence in artifacts rather than adding the three full-review blocks.
+
+```markdown
+**Posted by an AI agent**
+
+Lightweight mechanical approval at <head>: <category and concise evidence>.
+No public API changes. Existing test expectations and coverage are preserved.
+All current checks passed. This is not a full eleven-area review. Benchmarks were not run.
+```
+
+In report-only mode, use "Eligible for lightweight mechanical approval. No vote submitted." instead of claiming approval.
+If delivery is blocked, state eligibility and the delivery limit without claiming an approval.
+If eligibility is blocked, return the exact unmet gate locally instead of using the approval template.
+Reuse an authorized rolling report when the caller provides one. Do not create a second summary.
+Review Delivery owns the actual provider event and confirmation.

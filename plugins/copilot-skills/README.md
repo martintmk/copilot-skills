@@ -40,7 +40,7 @@ the entry-point guide.
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
 | [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction to an ordered set of Rust crates through sequential child sessions and pull requests, with inherited model configuration, green CI, Teams review announcements, and merge-gated progress. |
-| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with shared setup, evidence-led routing across eleven areas, isolated API reviews and mandatory API, integration-test and benchmark reports. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Lightweight approval for proven mechanical PRs with no API changes, or evidence-led full reviews across eleven areas with compact reports and separate benchmarks. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Test-first review of lost coverage, behavior changes even without test edits, test style and supported test utilities. |
@@ -54,7 +54,7 @@ the entry-point guide.
 | [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | The always-present breaking/additive/no-change public API report, with concise Rust signatures and a human-review signal for any API change. |
 | [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including shared inputs, target discovery and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
-| [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery with current inline anchors, thread reconciliation, closure of owned non-actionable threads and partial-write recovery. |
+| [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery for full reviews, mechanical approvals and benchmark follow-ups, with current inline anchors and partial-write recovery. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
 | [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
 | [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | GitHub and ADO reviews from Teams requests, with one child per PR, inline findings, one rolling report, 15-minute polling and a four-hour default cooldown. |
@@ -92,12 +92,24 @@ the complete production outcome rather than code volume or compilation alone.
 ## Review pipeline
 
 Use `review-lens` for full reviews, or name one area for a focused review.
+For a PR without an explicit full-review request, it first tries
+[lightweight mechanical approval](skills/review-lens/mechanical-approval.md).
+This covers behavior-preserving docs and private edits, additive tests, proven regression repairs and narrow pipeline repairs.
+Every changed path must qualify. No public API change is allowed, including additions.
+
+Lightweight approval requires complete API/test evidence, preserved coverage and every current check to pass.
+Absent, pending, failed or unknown checks withhold approval without starting a monitor.
+Other changes or incomplete classification evidence continue through the full review with reusable evidence.
+Skipped specialist areas and benchmarks are not claimed as reviewed.
+Explicit full-review and benchmark requests retain their scope. The Teams coordinator continues to request full reviews.
+This one-time route does not change `pr-auto-approve`, which owns its separate GitHub monitoring lifecycle.
+
 Area skills own specialist evidence rules. The coordinator supplies revisions,
 shared artifacts and inherited execution limits.
 The [findings contract](skills/review-delivery/findings-contract.md) owns format,
 severity and summaries. `review-delivery` owns posting for both review modes.
 
-The [Review Lens procedure](skills/review-lens/SKILL.md) accounts for all eleven
+The [full Review Lens procedure](skills/review-lens/SKILL.md) accounts for all eleven
 areas without requiring eleven agents. It keeps connected source changes with
 one owner and delegates substantial independent work.
 Shared discovery and matching artifacts avoid repeated setup.
@@ -125,6 +137,7 @@ Fast-path approval and escalation text uses it too.
 
 | Outcome | Delivery |
 | --- | --- |
+| Eligible mechanical PR | Lightweight approval with evidence, unchanged API, preserved tests and successful current checks. No full-review claim or benchmark report. |
 | Complete | Approves when clean or non-blocking. Only serious findings can request changes, and never after two distinct approvals. |
 | Incomplete | Comment with a warning that lists unreviewed topics; no verdict or vote. |
 | Refreshed after new commits | Recheck existing findings and keep them inline on current code. Comment-only, with full-coverage and refresh revisions separated. |
@@ -140,7 +153,7 @@ It keeps comments visible and leaves unresolved defects, nits, questions and req
 GitHub top-level comments and review bodies have no resolved state.
 The [thread procedure](skills/review-delivery/SKILL.md#close-owned-non-actionable-threads) defines ownership, provider status and recovery rules.
 
-Every Review Lens summary also includes three reports. The public API report
+Every full Review Lens summary also includes three reports. The public API report
 states **Breaking Changes**, **Public API Additions** or **No API Changes** and
 groups additions by public family with concise callable signatures.
 The [compact API report](skills/review-public-api-changes/SKILL.md#report) preserves every distinct break without copying whole declarations or repeated impl lists.

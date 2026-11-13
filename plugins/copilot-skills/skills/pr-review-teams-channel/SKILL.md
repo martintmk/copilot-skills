@@ -89,7 +89,7 @@ Relay human decisions from a blocked child instead of answering on the user's be
 
 Pass one compact assignment:
 
-> Review `<PR>` at `<head, target ref, merge base>` with `review-lens`.
+> Run a full review of `<PR>` at `<head, target ref, merge base>` with `review-lens`.
 > Resume `<saved result>` if this is delivery recovery, not a new review.
 > Apply `pr-review-teams-channel` reconciliation and `review-delivery`.
 > Allowed writes: review comments, the owned rolling report and eligible votes.
