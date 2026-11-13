@@ -32,9 +32,11 @@ Resolve missing delivery inputs with the caller without importing all artifacts 
 Keep long logs in referenced artifacts.
 These limits do not replace the live provider checks below or required write readback.
 
-1. Build the public summary from the current result using the
+1. Finish the retained delivery draft using the
    [summary contract](findings-contract.md#area-result-and-final-summary).
-   Do not paste internal area reports, delivery logs or historical proposals.
+   If no draft exists, compose it from the compact area results.
+   Reuse supported finding text and required report blocks rather than rewriting the whole review.
+   Do not paste internal area narratives, delivery logs or historical proposals.
 2. Invoke `simple-english` for prose. Preserve the contract's exact attribution,
    headings, code and technical facts. Check serialized bodies after rewriting.
 3. For PR reviews, read current lifecycle, head, target ref, merge base and submitted reviews.
@@ -48,6 +50,10 @@ These limits do not replace the live provider checks below or required write rea
    Missing evidence means `undetermined` unless a proved change already requires
    human review. Historical reports cannot supply a new current-head decision.
    Benchmarks do not decide this signal.
+
+Return the ready report or confirmed receipt after the required evidence and publication checks.
+Do not delay it for cleanup of owned temporary build directories.
+Keep cleanup assigned, preserve referenced evidence and report any cleanup failure separately.
 
 For a findings-only refresh with historical reports, retain their prior decision
 as historical and make no new label write from it.

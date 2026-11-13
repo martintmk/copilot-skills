@@ -80,12 +80,18 @@ No findings requires only attribution and that line.
 Area agents do not choose the combined verdict or post their own results.
 Route focused reviews through Review Delivery too.
 
+For a bundled review, return each finding once and one compact scope/status entry per assigned area.
+Reuse evidence references across entries. Keep the complete path inventory and trace details in artifacts.
+Do not add clean-area essays, execution diaries or another copy of the same findings.
+
 Report areas return their required block, coverage/status and tri-state label
 decision: `required`, `not required` or `undetermined`.
 Keep commands, file inventories, full logs and setup diagnostics in artifacts.
 The public report includes only the evidence needed to understand its classification.
 
-The public summary is a current report, not a concatenation of area outputs:
+The public summary is a current report, not a concatenation of area outputs.
+Keep its length proportional to findings and changed contracts, not the number of reviewed paths.
+Do not remove findings, lower severity or hide material limits to meet a length target.
 
 1. Start with one attribution, outcome, reviewed topics and material limits.
    For incomplete coverage, add **Warning: Incomplete review**, name missing
@@ -97,6 +103,7 @@ The public summary is a current report, not a concatenation of area outputs:
    Rust signatures and meaningful behavioral deltas.
    If benchmarks are ready, include compact results or link the separately delivered report with its revisions and limits.
    While an assigned comparison is queued or running, state `Pending`, that state and the pinned revisions.
+   Use the [compact API report](../review-public-api-changes/SKILL.md#report), not the full capture inventory.
 4. Put findings without confirmed inline delivery after those blocks, with the
    anchor or delivery limitation. For confirmed inline findings, give a count
    and thread links, not duplicate bodies.
@@ -109,6 +116,8 @@ Do not claim measured performance while it is pending.
 Follow the [benchmark report format](../metabench-compare/run-and-report.md#side-by-side-results).
 The later [benchmark follow-up](SKILL.md#benchmark-follow-up) contains the complete compact results without repeating the full review.
 Keep full metrics and run details in artifacts, not the public summary.
+Unless requested, keep the eleven-area ledger internal.
+Public coverage names the reviewed scope and every material gap without listing every clean area.
 Do not expand the compact report, drop benchmark cases or link inaccessible local paths.
 Old report blocks and measurements remain pinned to their assessed revisions
 until their required evidence is refreshed. Never present them as current.

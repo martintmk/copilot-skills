@@ -17,6 +17,7 @@ The coordinator does not repeat delegated source reads. It reconciles returned e
 
 Keep one internal review record with an entry for each of the eleven areas.
 Use artifact references and short reasons rather than copied source or transcripts.
+Map areas to the shared path inventory. Do not write a separate path-by-path narrative for every area.
 An input digest identifies reviewed local file contents.
 Record these fields:
 
@@ -191,16 +192,22 @@ Give each reviewer only the material needed for its scope:
 Apply the [test-first](#combine-test-review) and [API context](#protect-api-contexts) restrictions before sending any handoff.
 Separate shared facts from reviewer conclusions and unresolved questions.
 Use known findings to avoid duplicate reports, not as proof for another area's claims.
-Reuse fields from the [coverage record](#record-coverage) and [artifact identities](#shared-setup-and-reuse), not separate handoff reports.
-Provide access to every assigned change and the context needed to trace it, within the phase's evidence boundary.
-Send artifact paths and short diagnostics, not transcripts, raw logs, speculative reasoning or unrelated skill instructions.
-Do not re-hash unchanged evidence at each handoff.
-Keep the producer's freshness checks and the [final input comparison](#when-the-head-moves).
+Reuse the [coverage record](#record-coverage) and [artifact identities](#shared-setup-and-reuse), not separate handoff records.
+Keep full evidence in artifacts. Return the [compact area result](../review-delivery/findings-contract.md#area-result-and-final-summary), not another narrative.
+The coordinator reads that result and referenced coverage evidence, not all captured source again.
+Request a decisive excerpt or missing trace only for a specific gap or contradiction.
 
-Reviewers return area results with decisive evidence paths, reviewed scope and exact blockers for unfinished traces.
-They do not post, repeat shared setup or launch reviewers.
-The coordinator updates the existing coverage record.
-A reviewer exit, empty reply or unsupported operation does not establish completed coverage.
+Batch independent reads for the same question. Use bounded, non-overlapping ranges for large files and logs.
+Read every assigned change, then follow connected context. Do not reload whole files for another area using the same evidence.
+A truncated result is a gap: continue from the missing range, not from the beginning.
+Keep raw logs, speculative reasoning and unrelated skill instructions out of handoffs.
+Use runtime timestamps for timing analysis. Avoid clock-only calls, repeated fingerprints and custom scripts just to assemble short Markdown results.
+Keep required producer freshness checks and the [final input comparison](#when-the-head-moves).
+
+Reviewers do not post, repeat shared setup or launch reviewers.
+Merge each ready result into the existing coverage record and internal delivery draft.
+Retain findings and report blocks in their final format so delivery does not repeat the assembly.
+A reviewer exit, empty reply or unsupported operation does not establish completion.
 
 If the runtime supports follow-ups, reuse the reviewer ID for the same task.
 Send only changed facts, missing evidence and the exact question or completion condition.
@@ -232,6 +239,14 @@ Do not repeat source review or delay a one-shot source reviewer for the helper's
 Known blockers produce coverage limits, not repeated waiting reviewers.
 Keep build and artifact directories separate.
 Run independent bundles in parallel only within inherited execution limits.
+
+When a dependency becomes ready, continue that review phase before unrelated preparation.
+Launch API review when captures are ready. Retrieve its scoped docs when the saved draft returns.
+Do not wait for all source reviewers before handling an independent completed result.
+Prefer completion notifications. Never poll for progress merely to fill a wait.
+Do not block on benchmark preparation while a review result or required follow-up is ready.
+Complete review reconciliation and delivery before starting pending benchmarks.
+If an isolated measurement is already active, its isolation rule takes precedence.
 
 The [benchmark measurement policy](../metabench-compare/SKILL.md#2-prepare-and-run-the-comparison) controls measurement isolation.
 If concurrent work is forbidden, finish or pause owned agents, builds, tests and background commands before measurement.

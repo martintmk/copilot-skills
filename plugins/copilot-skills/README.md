@@ -105,7 +105,9 @@ Unknown relevance remains an open question, not an exclusion.
 Initial routing uses the complete path inventory. Each owner then reads its tests and full source diff without duplicated coordinator reads.
 
 The coordinator uses [bounded handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups)
-with access to complete evidence. Each test reviewer follows the
+with access to complete evidence. Ready review results and required follow-ups take priority over optional preparation.
+It assembles the report as results arrive, while raw evidence and path inventories stay in artifacts.
+Each test reviewer follows the
 [test-first order](skills/review-lens/coordinator-reference.md#combine-test-review).
 Both output-only API areas can share one source-free reviewer through the
 [phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
@@ -140,7 +142,8 @@ The [thread procedure](skills/review-delivery/SKILL.md#close-owned-non-actionabl
 
 Every Review Lens summary also includes three reports. The public API report
 states **Breaking Changes**, **Public API Additions** or **No API Changes** and
-shows additions as Rust signatures.
+groups additions by public family with concise callable signatures.
+The [compact API report](skills/review-public-api-changes/SKILL.md#report) preserves every distinct break without copying whole declarations or repeated impl lists.
 The integration-test report covers package `tests/` targets and their shared inputs.
 It reports breaking, additive-only, behavior-preserving or no changes.
 Missing inventory cannot establish no changes.

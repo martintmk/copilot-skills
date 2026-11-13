@@ -65,6 +65,9 @@ Keep the evidence boundary. Do not inspect source or raw rustdoc JSON to fill th
    surface. A change review covers changed items and signatures, using
    unchanged neighbors only as context. Separate existing concerns from new
    ones. A crate that emits only its root module is valid output.
+   For change reviews, reuse the [complete comparison](../review-public-api-changes/SKILL.md#classify-the-change) across both output-only areas.
+   Retain full captures, but inspect unchanged items only when a changed contract or absence claim needs them.
+   This does not narrow a standalone whole-surface audit.
 4. **Draft, then check against docs.** Draft findings with the smallest
    decisive output excerpts. Request matching rustdoc text for each item the
    draft depends on, its owner and trait, and applicable module or crate docs.

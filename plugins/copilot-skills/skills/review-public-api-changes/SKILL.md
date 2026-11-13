@@ -3,7 +3,7 @@ name: review-public-api-changes
 description: >
   Produce the mandatory Review Lens report that classifies a Rust library
   change as breaking public API changes, public API additions, or no API
-  changes. Uses matching cargo-public-api captures and shows additions as
+  changes. Uses matching cargo-public-api captures and shows callable additions as
   concise Rust signatures. Requires human-review-required for every public API
   change. Use for Review Lens or a focused public API change report. Not for
   API design advice, source review, docs quality, runtime behavior or posting.
@@ -36,6 +36,11 @@ setup inside this skill.
 
 1. Diff the complete public surfaces.
    Apply the [renderer limits](../review-public-api/SKILL.md#renderer-limits) before interpreting omissions as removed contracts.
+   Retain both full captures and the complete delta once. Do not filter impls or collapse distinct signatures.
+   A successful exact comparison can establish that a capture is unchanged in the selected configuration.
+   It does not resolve known renderer gaps.
+   Read every changed item and the unchanged context needed to interpret it, not every unchanged declaration twice.
+   An unsuccessful or incomplete comparison cannot establish absence.
 2. Group related lines into consumer-visible items. Do not dump unchanged
    blanket or auto-trait impls.
 3. Classify each changed item:
@@ -50,10 +55,7 @@ Breaking changes take priority, but a report may contain both **Breaking
 Changes** and **Public API Additions**. Do not describe a changed signature as
 an addition merely because the new signature appears as an added line.
 
-For additions, use valid Rust-shaped snippets copied from the public API
-output. Group related methods or fields in one small block. Include every
-meaningful addition or family, but omit generated impl noise that does not give
-consumers a new operation.
+Use the [compact report rules](#report) after classifying the complete delta.
 
 ## Human review decision
 
@@ -93,4 +95,19 @@ Use **No API Changes** as the complete body result when nothing changed. Keep
 the prose short. Exact public paths and signatures are more useful than a
 general explanation.
 
-Keep capture inventories and setup logs outside the public block.
+Preserve every distinct break and meaningful addition or family without copying the complete API listing:
+
+| Change | Visible detail |
+| --- | --- |
+| Removal or compatibility break | Exact public path, consumer effect and the smallest decisive before/after signature or member. Do not repeat unchanged fields. |
+| Added callables | Concise signatures from the capture, grouped by public type or module. |
+| Added related data types | Name each type and summarize its fields or variants as a family. Keep exact declarations in the retained delta. |
+| Impl changes | Show changed bounds or traits when they affect compatibility or add an operation. Do not enumerate identical derived impls for every type. |
+| Unchanged packages | One grouped no-change statement for the reviewed configuration. |
+
+Use prose for abbreviated families. Never present an incomplete declaration as a complete Rust snippet.
+Keep distinct contracts separate when grouping would hide a break, bound or consumer choice.
+Record classifications against the retained delta, not another copy of its declarations.
+Every changed item must have a disposition, even when its visible family is short.
+Link details only through an authorized location the reader can access. Do not replace required classification or decisive evidence with an inaccessible link.
+Keep inventories, rejected hypotheses and setup logs outside the public block.

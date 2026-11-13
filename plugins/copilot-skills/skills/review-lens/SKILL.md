@@ -68,12 +68,13 @@ Pending measurements do not delay a ready review. Source performance coverage st
    Follow the [test-first handoff](coordinator-reference.md#combine-test-review) for each test reviewer.
    Keep both output-only API areas in a source-free context through the [phased API handoff](coordinator-reference.md#protect-api-contexts).
 3. [Schedule evidence by dependency](coordinator-reference.md#schedule-evidence-by-dependency).
-   Start ready source work without waiting for unrelated captures or measurements.
+   Handle ready review results and required follow-ups before optional preparation.
    Queue `metabench-compare` once under [independent benchmark delivery](coordinator-reference.md#benchmark-evidence).
 
 ## 3. Complete coverage and recover once
 
-Reconcile returned scope and evidence with the [coverage record](coordinator-reference.md#record-coverage).
+Merge each ready result into the internal draft and [coverage record](coordinator-reference.md#record-coverage).
+Before delivery, reconcile all scopes and evidence. Do not rebuild the report from raw artifacts at the end.
 Use [one shared repair](coordinator-reference.md#repair-shared-setup-once) for a diagnosed setup blocker.
 Use [bounded follow-ups](coordinator-reference.md#bound-handoffs-and-follow-ups) for unfinished work or contradictions.
 
