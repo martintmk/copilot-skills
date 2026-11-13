@@ -20,10 +20,12 @@ belong here.
 
 ## Procedure
 
-1. **List test changes before reading the implementation.** Check test files
-   and functions, inline `mod tests`, doctests, test examples, snapshots,
-   fixtures, property cases and test-only manifests. Look for deletion and
-   weakening:
+1. Read baseline tests and changed expectations before implementation code or explanations.
+   Each reviewer must do this, even when the coordinator already inspected the tests.
+   Include test files and functions, inline `mod tests`, doctests, test examples, snapshots, fixtures, property cases and test-only manifests.
+   Read unchanged tests connected to changed production behavior or shared test inputs.
+   Save the baseline expectations and open questions before continuing.
+   Look for deletion and weakening:
    - removed cases or assertions;
    - a specific error becoming `is_err()`, or an exact value becoming
      `contains`;
@@ -32,7 +34,7 @@ belong here.
      failure;
    - narrower property ranges or less feature or target coverage.
 
-   **Continue to step 3 even when no test changed.**
+   If no test changed, record the relevant baseline coverage and continue to step 3.
 2. **Keep every distinct baseline behavior covered.** A renamed, moved or
    replaced test needs an equivalent assertion through the same reachable
    surface. Public integration coverage replaced by private unit tests, or
@@ -86,3 +88,6 @@ Write each finding in the
 [findings contract](../review-delivery/findings-contract.md).
 Coverage names tests deleted or changed, behavior changes checked and test
 utility features reviewed.
+When also assigned [Review Integration Tests](../review-integration-tests/SKILL.md), reuse the evidence but return both area statuses.
+Keep its classification and human-review decision separate from coverage findings.
+Do not repeat a finding for the same root cause.

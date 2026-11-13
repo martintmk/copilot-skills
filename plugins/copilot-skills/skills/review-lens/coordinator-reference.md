@@ -96,6 +96,27 @@ Grouping changes ownership, not the proof threshold.
 Use each [area skill](SKILL.md#review-areas) for its evidence rules.
 Keep severity and output shape in the [findings contract](../review-delivery/findings-contract.md).
 
+### Combine test review
+
+Prefer one suitable owner for `review-tests` and `review-integration-tests` when they share evidence.
+Small connected scopes stay with the coordinator.
+Keep whole-diff coverage and integration classification as distinct results.
+
+1. Supply both skills, matching baseline tests, changed expectations and the [owned inventory](#integration-test-evidence).
+   Include unchanged tests connected to changed behavior or shared inputs.
+2. Require each owner to complete step 1 of [Review Tests](../review-tests/SKILL.md#procedure) before implementation code or explanations.
+   The coordinator's earlier pass does not satisfy this requirement for another reviewer.
+   Do not preload implementation explanations, inherited source context or other reviewers' conclusions.
+3. Withhold implementation explanations until the owner records baseline expectations and open questions.
+   For one-shot reviewers, provide artifact paths and the required reading order rather than an implementation summary.
+   If inherited context prevents this order, use a compliant context.
+   If none is available, mark affected coverage `could not review`.
+4. Return separate scopes and statuses for both areas, plus the integration report and its human-review decision.
+   Merge shared findings by root cause under the [findings contract](../review-delivery/findings-contract.md).
+
+When complete inventory proves no integration-test changes, the coordinator can return that report without another agent.
+Missing inventory is a coverage gap, not a no-change result.
+
 ### Protect API contexts
 
 The source-reading coordinator cannot perform either output-only API review.
@@ -151,7 +172,7 @@ Give each reviewer only the material needed for its assigned scopes:
 - Applicable repository rules, execution limits and relevant CI or discussion facts.
 - Existing thread IDs, matching artifacts and supplied commands.
 
-Apply the API context restrictions before sending any handoff.
+Apply the [test-first](#combine-test-review) and [API context](#protect-api-contexts) restrictions before sending any handoff.
 Do not send full transcripts, raw logs or unrelated reviewers' reasoning.
 Keep full evidence in artifacts and send paths with short diagnostics.
 Reviewers return results without posting, restarting shared setup or launching more reviewers.
@@ -172,6 +193,7 @@ Launch a reviewer only when all required inputs for its assigned phase are ready
 | Work | Required inputs |
 | --- | --- |
 | Source inspection | Pinned source, scope, rules and shared discovery relevant to the assigned trace |
+| Test review | Baseline tests and changed expectations under the [test-first handoff](#combine-test-review) |
 | Output-only API phases | Matching complete captures and package-presence facts under the [phased handoff](#protect-api-contexts) |
 | Integration-test classification | The complete [owned test inventory](#integration-test-evidence) and required base/head contents |
 | Benchmark comparison | Shared package and benchmark discovery, followed by the helper's [run prerequisites](../metabench-compare/run-and-report.md#revision-directories-and-prerequisites) |
@@ -312,17 +334,14 @@ Do not pass source or premature docs into an output-only draft.
 
 ## Integration-test evidence
 
-Prepare one complete base-to-head inventory of package `tests/` targets, fixtures,
-snapshots and owned configuration. Include added, removed, renamed and modified
-files and exact base/head contents. A truncated PR diff proves no absence.
-Share it with `review-tests` and the classification owner without repeating discovery.
+Prepare the complete inventory defined by [Review Integration Tests](../review-integration-tests/SKILL.md#procedure) once at both revisions.
+Retain ownership links and exact base/head contents, including unchanged tests affected by changed inputs.
+Share it with both test areas through the [test-first handoff](#combine-test-review), without repeating discovery.
 
 Pass established requirements or maintainer decisions separately from PR claims.
-When runtime proof is needed, supply one focused command for both revisions with
-matching configuration. Reuse matching CI evidence when it proves the exact target.
+Supply focused commands or matching CI evidence within inherited execution limits.
+Follow the [test evidence rules](../review-tests/SKILL.md#evidence) and [integration classification rules](../review-integration-tests/SKILL.md#procedure).
 
-The report area owns package `tests/` classification. `review-tests` owns whole-diff
-coverage findings, inline unit tests and doctests. Deduplicate their shared root causes.
 Keep the full inventory in artifacts, not the public report.
 
 ## Benchmark evidence

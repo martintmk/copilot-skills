@@ -43,7 +43,7 @@ the entry-point guide.
 | [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with shared setup, evidence-led routing across eleven areas, isolated API reviews and mandatory API, integration-test and benchmark reports. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
-| [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
+| [`review-tests`](skills/review-tests/SKILL.md) | Test-first review of lost coverage, behavior changes even without test edits, test style and supported test utilities. |
 | [`review-resilience`](skills/review-resilience/SKILL.md) | Recovery classification and version-correct resilience middleware. |
 | [`review-perf`](skills/review-perf/SKILL.md) | Measured cost, allocations, hot paths and injectable clocks. |
 | [`metabench-compare`](skills/metabench-compare/SKILL.md) | Runs existing Gungraun benchmarks before and after a change for up to three changed, metabench-enabled crates. Shows metabench results and before/after instruction and allocation counts. Keeps full metrics in artifacts. |
@@ -52,7 +52,7 @@ the entry-point guide.
 | [`review-consistency`](skills/review-consistency/SKILL.md) | Agreement between code, public docs, examples and related guides, including stale defaults or conflicting instructions. |
 | [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit, with claims checked against rustdoc. |
 | [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | The always-present breaking/additive/no-change public API report, with concise Rust signatures and a human-review signal for any API change. |
-| [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including additive-only coverage and a human-review signal for breaking behavioral changes. |
+| [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including shared inputs, target discovery and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery with current inline anchors, thread reconciliation, closure of owned non-actionable threads and partial-write recovery. |
 | [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
@@ -100,7 +100,7 @@ severity and summaries. `review-delivery` owns posting for both review modes.
 `review-lens` adds the coordination:
 
 1. Pin head, target ref and merge base. Read rules, CI and discussion once.
-2. Read changed tests before implementation, then the remaining complete diff and relevant context.
+2. Read baseline tests and changed expectations before implementation, then the remaining complete diff and relevant context.
    Map affected packages and record evidence, scope, owner and open questions for every area.
 3. Review small connected source changes directly.
    Delegate substantial independent evidence bundles, not one agent per area name.
@@ -115,6 +115,11 @@ Routing accounts for all eleven areas. It does not replace deep review or lower
 the proof required for findings. Unknown relevance requires review, not exclusion.
 Compatible source areas can share a reviewer, but each returns distinct coverage.
 Specialist risks still require the relevant expertise.
+
+One suitable owner can handle both test areas through the [test-first handoff](skills/review-lens/coordinator-reference.md#combine-test-review).
+Each test reviewer reads baseline tests and changed expectations before implementation explanations.
+The areas keep separate statuses, and the integration report keeps its human-review decision.
+Complete inventory can support a no-change report without another agent.
 
 Output-only API contexts remain separate from source reviewers.
 Prefer one clean reviewer for both API areas through the [phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
@@ -149,9 +154,11 @@ skill contains the review rules, not tool installation or checkout management.
 
 Every Review Lens summary also includes three reports. The public API report
 states **Breaking Changes**, **Public API Additions** or **No API Changes** and
-shows additions as Rust signatures. The integration-test report states whether
-package `tests/` changes break existing behavior, only add coverage, preserve
-behavior or do not exist. Review delivery adds `human-review-required` for any
+shows additions as Rust signatures.
+The integration-test report covers package `tests/` targets and their shared inputs.
+It reports breaking, additive-only, behavior-preserving or no changes.
+Missing inventory cannot establish no changes.
+Review delivery adds `human-review-required` for any
 public API change or a breaking integration-test behavior, independently of the
 review verdict.
 
