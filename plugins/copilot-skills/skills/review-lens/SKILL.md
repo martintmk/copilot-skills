@@ -83,7 +83,8 @@ If required expertise or context isolation is unavailable, report the affected c
 Do not treat direct review or fewer agents as reduced evidence requirements.
 
 Keep output-only API reviewers separate from source-reading contexts.
-The [API context boundaries](coordinator-reference.md#protect-api-contexts) preserve classification without docs and design drafts before docs.
+Prefer one clean reviewer for both API areas under the [phased API handoff](coordinator-reference.md#protect-api-contexts).
+Finalize classification and save the design draft before supplying docs.
 Run the benchmark helper once under its [measurement policy](../metabench-compare/SKILL.md).
 Wait for measurements before finalizing measured performance claims, not before independent source inspection.
 

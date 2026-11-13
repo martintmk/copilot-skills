@@ -99,20 +99,48 @@ Keep severity and output shape in the [findings contract](../review-delivery/fin
 ### Protect API contexts
 
 The source-reading coordinator cannot perform either output-only API review.
-Use separate source-free contexts for `review-public-api` and `review-public-api-changes`.
-Do not reuse a source reviewer or a transcript that contains source.
-Instructing that reviewer to ignore prior source does not restore isolation.
+Prefer one source-free reviewer for `review-public-api-changes` and `review-public-api`, using the same captures.
+Do not include source-level `review-api-design` in this bundle.
 
-Supply package-presence facts, selected configuration and matching captures.
-Do not pass source excerpts, source diffs, source-derived findings or source-reading discussions.
-The classification context never receives docs.
-The design context receives docs only after its output-only draft, through the
-[API evidence procedure](#public-api-evidence).
+Before launch, make sure that the runtime excludes inherited source, source-derived reasoning and premature docs.
+A new reviewer ID alone does not establish a clean context.
+Do not reuse a source reviewer or pass the coordinator's source/diff reasoning.
+The [classification](../review-public-api-changes/SKILL.md#evidence-boundary) and [design](../review-public-api/SKILL.md#evidence-boundary) owners define permitted evidence.
 
 If [package presence](#package-presence) proves that no library is affected, record the area-defined results without launching output reviewers.
 The mandatory API report still states the proved result.
-If captures are required but clean contexts are unavailable, mark the affected areas `could not review`.
-Do not substitute source-based API inference.
+Otherwise, use this phased handoff:
+
+1. Supply the owner skills, package-presence facts, selected configuration and matching captures.
+   Finalize and save the classification report and its human-review decision without docs.
+2. Draft the design findings from the same captures.
+   Save the output-only draft, its evidence and requested doc paths before supplying any docs.
+   Keep this original draft unchanged for comparison and recovery.
+   An empty draft needs no docs, but does not excuse missing captures.
+3. Retrieve matching docs through [Public API evidence](#public-api-evidence).
+   Resume only the design phase under its owner's doc rules.
+   Docs can only remove or narrow draft claims, never reopen classification.
+4. Return a distinct result and coverage record for each area under the [findings contract](../review-delivery/findings-contract.md#area-result-and-final-summary).
+   Keep the mandatory API report even when one reviewer handles both areas.
+   A completed classification does not establish completed design coverage.
+
+If the runtime cannot resume a one-shot reviewer, use one clean replacement for the doc phase.
+Supply the design skill, saved draft, matching captures and facts, and scoped docs bundle.
+Do not repeat classification or draft new findings.
+Do not supply docs early merely to fit both phases into one call.
+Do not reuse a docs-exposed context for later output-only work.
+
+If docs remain unavailable, retain the draft internally and report the incomplete design coverage under its owner's rules.
+Do not present an unchecked draft as completed findings.
+
+If forbidden input reaches a reviewer, stop the affected phase and discard results produced after exposure.
+Retain only results saved before exposure with an established evidence boundary.
+Treat uncertain context history as contaminated.
+Restart only unfinished work in a clean context, within the single recovery attempt.
+Instructing a reviewer to ignore prior input does not restore isolation.
+
+If a clean context is unavailable, mark the affected coverage `could not review` and retain valid completed results.
+Never substitute source-based API inference.
 
 ### Bound handoffs and follow-ups
 
@@ -130,8 +158,9 @@ Reviewers return results without posting, restarting shared setup or launching m
 
 Use a retained reviewer ID for a bounded follow-up when supported.
 Send only changed facts or missing evidence for that same task.
-For a one-shot reviewer, collect its required inputs before launch.
+For a one-shot reviewer, collect its phase's permitted inputs before launch.
 If follow-up is still needed, use one replacement for the missing part.
+The [phased API handoff](#protect-api-contexts) governs output-only reviewers.
 Do not repeatedly message a finished one-shot reviewer or repeat completed coverage.
 
 ### Schedule evidence by dependency
@@ -180,7 +209,9 @@ An affected library still needs matching captures even when source inspection pr
 
 ## Public API evidence
 
-Prepare captures once for both public API areas. They must not rediscover build setup.
+Apply [package presence](#package-presence) before capture setup.
+If the complete inventory and routing evidence prove that no library is affected, skip captures.
+Otherwise, prepare captures once for both public API areas. They must not rediscover build setup.
 
 1. Select package/library, features, default-feature mode, target, toolchain and flags.
    Without a caller configuration, use `--all-features` and the host target.
@@ -208,9 +239,10 @@ Prepare captures once for both public API areas. They must not rediscover build 
    path within inherited limits. Do not silently substitute nightly, enable
    bootstrap against caller policy, or repeat the same failed command.
    Return one setup blocker and continue independent source review.
-7. After the output-only API draft, supply matching docs for cited items, owners,
-   traits and applicable modules. Ask `review-public-docs` for missing text, not
-   new findings. Return the bundle to the same API reviewer.
+7. After saving the output-only design draft, request the draft's required docs from
+   [Review Public Docs](../review-public-docs/SKILL.md#3-extract-the-requested-docs).
+   Return its scoped bundle through the [phased API handoff](#protect-api-contexts).
+   Do not request findings from the retrieval skill.
    An empty draft needs no docs.
 
 Keep complete output and errors in artifacts. Supply reviewers with capture paths,

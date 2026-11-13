@@ -114,8 +114,9 @@ the proof required for findings. Unknown relevance requires review, not exclusio
 Compatible source areas can share a reviewer, but each returns distinct coverage.
 Specialist risks still require the relevant expertise.
 
-Output-only API contexts remain separate from source reviewers and from each other.
-API classification receives no docs. The design audit receives docs only after its draft.
+Output-only API contexts remain separate from source reviewers.
+Prefer one clean reviewer for both API areas through the [phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
+Classification and the design draft are fixed before docs arrive.
 Benchmark work follows the caller's measurement-isolation rules.
 
 Every full or focused review uses `simple-english` for its user-facing text.
