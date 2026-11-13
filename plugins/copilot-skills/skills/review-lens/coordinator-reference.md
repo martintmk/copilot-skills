@@ -1,7 +1,117 @@
 # Review Lens coordinator reference
 
-The coordinator owns setup and recovery. Area agents receive the facts they need,
-not this entire file.
+The coordinator owns setup, routing and recovery. Reviewers receive the facts
+they need, not this entire file.
+
+## Evidence-led routing
+
+Route work by its required evidence, not by area names.
+Use the complete initial pass from [Review Lens](SKILL.md#1-pin-facts-and-prepare-shared-evidence), not filenames alone.
+An evidence bundle contains related paths, contracts and unresolved questions.
+Routing selects the owner and evidence needed. It does not replace the area's review procedure.
+
+### Record coverage
+
+Keep one internal record for each of the eleven areas in Review Lens.
+Use artifact references and short reasons rather than copied source or transcripts.
+Record these fields:
+
+| Field | Required content |
+| --- | --- |
+| Applicability | Relevant, absent with evidence, or unknown |
+| Scope | Changed paths, affected packages and the connected contracts or consumers |
+| Evidence | Decisive locations or artifact references, exact revisions or local input digest, and selected configuration |
+| Owner | Coordinator or assigned reviewer, including ownership of any separate scopes |
+| Open questions | Unresolved relevance, required traces, missing evidence and setup blockers |
+| Completion | Pending until the area returns its result, then its status and material limits |
+
+Unknown relevance requires review, not exclusion.
+Use `not applicable` only when complete evidence proves absence under the area's rules.
+Missing captures, inaccessible source and a small diff do not prove absence.
+Do not exclude test review merely because no test changed.
+Follow [Review Tests](../review-tests/SKILL.md).
+The mandatory API, integration-test and benchmark blocks remain required, including proved no-change or inapplicable results.
+
+Assign every changed path to the relevant area scopes.
+Include effects through shared configuration, dependencies, generated interfaces and unchanged callers.
+Keep connected traces together. Do not sample paths or stop after the first finding.
+When evidence reveals another affected path or contract, update its scope and owner.
+
+Before completion, reconcile each area's returned coverage with this record.
+Unfinished traces stay unreviewed, even when the owner found no defects.
+
+### Choose review owners
+
+1. Review small connected source changes in the coordinator.
+   Apply each relevant area skill rather than replacing them with a general checklist.
+2. Keep a single continuous trace with one owner.
+   Do not split it merely to create parallel work or separate area labels.
+3. Delegate substantial independent bundles when their evidence needs separate context.
+   Give each bundle a bounded objective and a clear completion condition.
+   Compatible source areas can share a reviewer when they use the same paths and context.
+   Require a separate result and coverage record for each assigned area.
+4. Escalate complex risks to a reviewer with the relevant expertise.
+   Examples include unsafe invariants, concurrency, cross-package contracts and version-specific recovery behavior.
+   Separate independent specialist work when combined context obscures its proof.
+   Do not add a second reviewer solely to repeat a completed trace.
+5. Select reviewer count from evidence scope, required isolation and inherited runtime limits.
+   Do not impose an arbitrary agent cap or promise a numerical speedup.
+   If a required specialist is unavailable, retain supported work and report the uncovered scope.
+
+Grouping changes ownership, not the proof threshold.
+Use each [area skill](SKILL.md#review-areas) for its evidence rules.
+Keep severity and output shape in the [findings contract](../review-delivery/findings-contract.md).
+
+### Protect API contexts
+
+The source-reading coordinator cannot perform either output-only API review.
+Use separate source-free contexts for `review-public-api` and `review-public-api-changes`.
+Do not reuse a source reviewer or a transcript that contains source.
+Instructing that reviewer to ignore prior source does not restore isolation.
+
+Supply package-presence facts, selected configuration and matching captures.
+Do not pass source excerpts, source diffs, source-derived findings or source-reading discussions.
+The classification context never receives docs.
+The design context receives docs only after its output-only draft, through the
+[API evidence procedure](#public-api-evidence).
+
+If complete inventory proves that no library is affected, record the area-defined results without launching output reviewers.
+The mandatory API report still states the proved result.
+If captures are required but clean contexts are unavailable, mark the affected areas `could not review`.
+Do not substitute source-based API inference.
+
+### Bound handoffs and follow-ups
+
+Give each reviewer only the material needed for its assigned scopes:
+
+- The assigned skills, bounded objective and required [per-area result](../review-delivery/findings-contract.md#area-result-and-final-summary).
+- Exact revisions or local input digest, packages, configuration and owned paths.
+- Applicable repository rules, execution limits and relevant CI or discussion facts.
+- Existing thread IDs, matching artifacts and supplied commands.
+
+Apply the API context restrictions before sending any handoff.
+Do not send full transcripts, raw logs or unrelated reviewers' reasoning.
+Keep full evidence in artifacts and send paths with short diagnostics.
+Reviewers return results without posting, restarting shared setup or launching more reviewers.
+
+Use a retained reviewer ID for a bounded follow-up when supported.
+Send only changed facts or missing evidence for that same task.
+For a one-shot reviewer, collect its required inputs before launch.
+If follow-up is still needed, use one replacement for the missing part.
+Do not repeatedly message a finished one-shot reviewer or repeat completed coverage.
+
+### Schedule evidence by dependency
+
+Start independent source inspection without waiting for API captures or benchmark results.
+Only the areas that need a missing artifact wait for it.
+Keep build and artifact directories separate.
+Run independent bundles in parallel only within inherited execution limits.
+
+The [benchmark measurement policy](../metabench-compare/SKILL.md#2-prepare-and-run-the-comparison) controls measurement isolation.
+If it forbids concurrent work, finish or pause owned work before measurement.
+Resume source inspection after the isolated measurement period.
+Do not stop unrelated processes to make room.
+Artifact preparation does not waive isolation or authorize extra builds.
 
 ## Package presence
 
@@ -56,7 +166,8 @@ Prepare captures once for both public API areas. They must not rediscover build 
    Return one setup blocker and continue independent source review.
 7. After the output-only API draft, supply matching docs for cited items, owners,
    traits and applicable modules. Ask `review-public-docs` for missing text, not
-   new findings. An empty draft needs no docs.
+   new findings. Return the bundle to the same API reviewer.
+   An empty draft needs no docs.
 
 Keep complete output and errors in artifacts. Supply reviewers with capture paths,
 exact configuration, package-presence facts and short diagnostics.
@@ -85,6 +196,8 @@ three-crate limit, scheduling and comparisons. Do not repeat that policy in prom
 
 Send its report and raw artifacts to `review-perf`. Retain the complete report
 for delivery, including blocked or inapplicable results.
+The performance reviewer interprets the supplied results without rerunning benchmarks or expanding crate selection.
+Keep unmeasured cost concerns conditional.
 Missing measurements do not prevent source-based performance review from finishing.
 
 ## When the head moves

@@ -40,7 +40,7 @@ the entry-point guide.
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
 | [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction to an ordered set of Rust crates through sequential child sessions and pull requests, with inherited model configuration, green CI, Teams review announcements, and merge-gated progress. |
-| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with every review area, public API priority and Gungraun comparisons for up to three changed, metabench-enabled crates. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Full Rust reviews with evidence-led routing across eleven areas, isolated public API reviews and mandatory API, integration-test and benchmark reports. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Lost or weakened coverage, unjustified behavior changes, test style and supported test utilities. |
@@ -100,12 +100,23 @@ severity and summaries. `review-delivery` owns posting for both review modes.
 `review-lens` adds the coordination:
 
 1. Pin head, target ref and merge base. Read rules, CI and discussion once.
-2. Prepare shared API captures and test inventories for affected packages.
-3. Run eleven dedicated review areas within the user's model and execution
-   limits. Helpers supply public docs and benchmark measurements.
+2. Read changed tests before implementation, then the remaining complete diff and relevant context.
+   Map affected packages and record evidence, scope, owner and open questions for every area.
+3. Review small connected source changes directly.
+   Delegate substantial independent evidence bundles, not one agent per area name.
+   Reuse shared captures and inventories without delaying independent source inspection.
 4. Repair setup once, finish available coverage and merge findings by root cause.
-5. Deliver missing inline comments and one concise summary. Recover failed
-   writes without repeating finished analysis.
+5. Invoke Review Delivery from the owning session for missing inline comments and one concise summary.
+   Recover failed writes without repeating finished analysis.
+
+Routing accounts for all eleven areas. It does not replace deep review or lower
+the proof required for findings. Unknown relevance requires review, not exclusion.
+Compatible source areas can share a reviewer, but each returns distinct coverage.
+Specialist risks still require the relevant expertise.
+
+Output-only API contexts remain separate from source reviewers and from each other.
+API classification receives no docs. The design audit receives docs only after its draft.
+Benchmark work follows the caller's measurement-isolation rules.
 
 Every full or focused review uses `simple-english` for its user-facing text.
 Fast-path approval and escalation text uses it too.
