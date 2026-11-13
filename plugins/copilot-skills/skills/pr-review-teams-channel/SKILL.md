@@ -103,9 +103,14 @@ Pass one compact assignment:
 
 Supply facts, not placeholders. Keep full bodies and logs in child-owned artifacts.
 Do not add PR creation instructions to a review assignment.
+Match the child's receipt to the assigned revisions and pending writes.
+If receipt fields are missing, request those fields or write recovery from the same child.
+Do not import its full evidence or require another approval of its analysis.
 
 ## Reconcile the rolling report
 
+The child performs this procedure through Review Delivery.
+The coordinator records the confirmed receipt in scheduling state.
 Use one editable top-level GitHub issue comment or unanchored ADO summary thread.
 Identify its comment with the expected provider author and this exact marker:
 `<!-- pr-review-teams-channel:rolling-review -->`.

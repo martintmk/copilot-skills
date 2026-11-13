@@ -20,9 +20,13 @@ write permissions.
 Require merged [findings](findings-contract.md), coverage/outcome, full-review
 revision, current revalidated revision, target ref, merge base, PR identity and
 post/report-only mode. Accept prior report/review/thread IDs and pending writes.
+For local reviews, use the caller's exact input identity, including its recorded input digest.
 For Review Lens, also require the three report blocks and the combined
 `human-review-required` decision with reasons.
-Return missing evidence to the caller, not another review pass.
+Use the retained result and evidence paths, not a second review or approval of the analysis.
+Resolve missing delivery inputs with the caller without importing all artifacts or repeating completed areas.
+Keep long logs in referenced artifacts.
+These limits do not replace the live provider checks below or required write readback.
 
 1. Build the public summary from the current result using the
    [summary contract](findings-contract.md#area-result-and-final-summary).

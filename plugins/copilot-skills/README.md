@@ -109,6 +109,8 @@ severity and summaries. `review-delivery` owns posting for both review modes.
    Launch reviewers only when their phase's required inputs are ready.
 4. Repair setup once, finish available coverage and merge findings by root cause.
 5. Invoke Review Delivery from the owning session for missing inline comments and one concise summary.
+   Reuse retained results and evidence paths without another reviewer or approval of the analysis.
+   Review Delivery owns live provider checks and write readback.
    Recover failed writes without repeating finished analysis.
 
 Routing accounts for all eleven areas. It does not replace deep review or lower

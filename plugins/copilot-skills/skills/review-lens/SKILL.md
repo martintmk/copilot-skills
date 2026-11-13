@@ -133,20 +133,18 @@ not automatically a defect or blocking review.
 
 ## 5. Deliver and retain recovery state
 
-Refresh head and target. Apply
-[head-movement rules](coordinator-reference.md#when-the-head-moves) before delivery.
-Then invoke Review Delivery once with findings, reports, label decision,
-coverage/current revisions, outcome, authorized writes and prior delivery IDs.
-The owning session invokes delivery directly. Do not launch another reviewer for delivery.
-A findings-only refresh still delivers applicable comments inline.
+Invoke [Review Delivery](../review-delivery/SKILL.md#inputs-and-preparation) directly in the owning session with the retained results and authorized writes.
+Do not launch a delivery reviewer or require separate approval of completed analysis.
+Review Delivery owns live provider checks, public summaries, receipts and write recovery.
+If those checks reveal changed scope, apply the [head-movement rules](coordinator-reference.md#when-the-head-moves) before resuming delivery.
+Route delivery failures to its [write recovery](../review-delivery/SKILL.md#ownership-and-recovery), not another analysis round.
 
-Use the [summary contract](../review-delivery/findings-contract.md#area-result-and-final-summary)
-instead of another template. Do not paste internal review artifacts into PR comments.
-The caller receives the provider receipt and remaining gaps, not another copy
-of the report.
+Keep input identity, evidence paths, area scopes/statuses, findings, report blocks and decisions in the existing review record.
+Keep confirmed and pending provider write IDs in that record.
+Return the [delivery result](../review-delivery/SKILL.md#human-review-label-and-completion), not copied transcripts or supporting artifacts.
+Report-only mode still returns the complete public report without provider writes.
 
-Retain findings, reports, revisions and confirmed/pending write IDs for recovery.
+For local inputs, make sure that the input digest matches before delivery.
+Changed inputs make old measurements historical, not current evidence.
 Keep benchmark artifacts outside temporary build directories.
 After consumers finish, remove only owned probes and worktrees.
-For local inputs, confirm the input digest before delivery. Changed inputs make
-old measurements historical, not current evidence.

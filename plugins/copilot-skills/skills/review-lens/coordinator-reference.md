@@ -173,8 +173,12 @@ Give each reviewer only the material needed for its assigned scopes:
 - Existing thread IDs, matching artifacts and supplied commands.
 
 Apply the [test-first](#combine-test-review) and [API context](#protect-api-contexts) restrictions before sending any handoff.
-Do not send full transcripts, raw logs or unrelated reviewers' reasoning.
-Keep full evidence in artifacts and send paths with short diagnostics.
+Reuse relevant fields from the [coverage record](#record-coverage) and [artifact identities](#shared-setup-and-reuse), not separate copies for each handoff.
+Keep full evidence and logs in referenced artifacts.
+Send paths and short diagnostics, not transcripts, full artifact imports or unrelated reviewers' reasoning.
+Read artifacts required by the assigned procedure or a named gap, contradiction or changed input.
+Do not independently re-hash unchanged evidence at each handoff.
+Keep producer freshness checks and the final local-input digest check.
 Reviewers return results without posting, restarting shared setup or launching more reviewers.
 
 Use a retained reviewer ID for a bounded follow-up when supported.
@@ -352,7 +356,7 @@ Let the helper complete selection and native-case discovery once from these inpu
 Its [selection and measurement policy](../metabench-compare/SKILL.md) owns the
 three-crate limit, scheduling and comparisons. Do not repeat that policy in prompts.
 
-Send its report and raw artifacts to `review-perf`. Retain the complete report
+Send its report and paths to raw artifacts to `review-perf`. Retain the complete report
 for delivery, including blocked or inapplicable results.
 The performance reviewer interprets the supplied results without rerunning benchmarks or expanding crate selection.
 Keep unmeasured cost concerns conditional.
