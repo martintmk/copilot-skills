@@ -107,13 +107,15 @@ Keep whole-diff coverage and integration classification as distinct results.
    Include unchanged tests connected to changed behavior or shared inputs.
 2. Require each owner to complete step 1 of [Review Tests](../review-tests/SKILL.md#procedure) before implementation code or explanations.
    The coordinator's earlier pass does not satisfy this requirement for another reviewer.
-   Do not preload implementation explanations, inherited source context or other reviewers' conclusions.
-3. Withhold implementation explanations until the owner records baseline expectations and open questions.
+3. Until the owner records baseline expectations and open questions, withhold implementation code, explanations and other reviewers' conclusions.
    For one-shot reviewers, provide artifact paths and the required reading order rather than an implementation summary.
    If inherited context prevents this order, use a compliant context.
    If none is available, mark affected coverage `could not review`.
 4. Return separate scopes and statuses for both areas, plus the integration report and its human-review decision.
    Merge shared findings by root cause under the [findings contract](../review-delivery/findings-contract.md).
+
+Unlike output-only API review, test review continues into implementation after recording the baseline.
+Do not restart a compliant test reviewer merely because it now holds source context.
 
 When complete inventory proves no integration-test changes, the coordinator can return that report without another agent.
 Missing inventory is a coverage gap, not a no-change result.
@@ -394,6 +396,11 @@ prove that the actual target branch is unchanged.
 | Fast-forward commits after complete coverage | Refresh existing findings, or run a full review if the caller requires it |
 | Target tip only, unchanged merge base and PR diff | Preserve source coverage, refresh CI/integration claims |
 
+For local reviews, a changed input digest requires review of the updated local state before delivery.
+Update affected inventories and artifacts, then reconcile every area's scope and status.
+Reuse completed work only when its inputs and relevant dependencies still match.
+If this work cannot finish, report incomplete coverage without a verdict for the new inputs.
+
 For a findings-only refresh:
 
 1. Read the complete `reviewedHead..currentHead` delta and current affected source.
@@ -410,8 +417,9 @@ For a findings-only refresh:
    revisions. Mark unrechecked blocks historical. Do not make a new label
    decision from stale reports or rerun benchmarks as part of a finding refresh.
 
-Recheck before publication. If the head moves during partial delivery, retain
-confirmed provider IDs and revalidate only pending findings before recovery.
+Recheck before publication.
+If the head moves during partial delivery, retain confirmed provider IDs and apply the table before recovering pending writes.
+A partial delivery does not turn a required fresh review into a findings-only refresh.
 Never publish a stale full report as current by adding a disclaimer.
 Historical publication requires an explicit request and remains comment-only.
 

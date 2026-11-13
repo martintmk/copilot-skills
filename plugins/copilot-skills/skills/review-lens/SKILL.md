@@ -145,6 +145,7 @@ Return the [delivery result](../review-delivery/SKILL.md#human-review-label-and-
 Report-only mode still returns the complete public report without provider writes.
 
 For local inputs, make sure that the input digest matches before delivery.
-Changed inputs make old measurements historical, not current evidence.
+If it differs, follow the [input-movement rules](coordinator-reference.md#when-the-head-moves).
+Do not present prior findings, reports or measurements as current for changed inputs.
 Keep benchmark artifacts outside temporary build directories.
 After consumers finish, remove only owned probes and worktrees.
