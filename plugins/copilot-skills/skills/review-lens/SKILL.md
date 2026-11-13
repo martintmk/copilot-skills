@@ -55,8 +55,9 @@ not another finding area. The report areas return blocks even when nothing chang
 5. Map changed files to affected packages at both revisions. Establish
    [package presence](coordinator-reference.md#package-presence) and configuration.
    Do not expand a leaf change to every workspace library without dependency evidence.
-6. Record per-area applicability, evidence, scope, owner and unresolved questions through
+6. Establish direct and indirect relevance through
    [evidence-led routing](coordinator-reference.md#evidence-led-routing).
+   Record per-area applicability, evidence, scope, owner and unresolved questions.
    This initial pass selects work. It does not complete deep review.
 7. Prepare shared [API evidence](coordinator-reference.md#public-api-evidence),
    the [integration-test inventory](coordinator-reference.md#integration-test-evidence)

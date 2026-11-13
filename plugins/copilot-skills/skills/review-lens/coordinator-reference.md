@@ -6,7 +6,7 @@ they need, not this entire file.
 ## Evidence-led routing
 
 Route work by its required evidence, not by area names.
-Use the complete initial pass from [Review Lens](SKILL.md#1-pin-facts-and-prepare-shared-evidence), not filenames alone.
+Use the complete initial pass from [Review Lens](SKILL.md#1-pin-facts-and-prepare-shared-evidence).
 An evidence bundle contains related paths, contracts and unresolved questions.
 Routing selects the owner and evidence needed. It does not replace the area's review procedure.
 
@@ -18,27 +18,61 @@ Record these fields:
 
 | Field | Required content |
 | --- | --- |
-| Applicability | Relevant, absent with evidence, or unknown |
+| Applicability | Relevant (confirmed connection), absent with evidence, or unknown (unresolved connection) |
 | Scope | Changed paths, affected packages and the connected contracts or consumers |
 | Evidence | Decisive locations or artifact references, exact revisions or local input digest, and selected configuration |
 | Owner | Coordinator or assigned reviewer, including ownership of any separate scopes |
 | Open questions | Unresolved relevance, required traces, missing evidence and setup blockers |
 | Completion | Pending until the area returns its result, then its status and material limits |
 
-Unknown relevance requires review, not exclusion.
-Use `not applicable` only when complete evidence proves absence under the area's rules.
-Missing captures, inaccessible source and a small diff do not prove absence.
-Do not exclude test review merely because no test changed.
-Follow [Review Tests](../review-tests/SKILL.md).
-The mandatory API, integration-test and benchmark blocks remain required, including proved no-change or inapplicable results.
-
 Assign every changed path to the relevant area scopes.
-Include effects through shared configuration, dependencies, generated interfaces and unchanged callers.
 Keep connected traces together. Do not sample paths or stop after the first finding.
 When evidence reveals another affected path or contract, update its scope and owner.
 
 Before completion, reconcile each area's returned coverage with this record.
 Unfinished traces stay unreviewed, even when the owner found no defects.
+
+### Establish applicability
+
+Start from the complete changed-path inventory at the pinned revisions.
+For removals and renames, inspect both old and new ownership, references and discovery paths.
+Do not treat a missing head file or a path-only rename as proof that no contract changed.
+Use filenames and keyword searches to find evidence, never to prove absence.
+
+Follow connections from changed definitions, values and shared inputs.
+Use the table to identify indirect effects, not as another area checklist:
+
+| Changed input | Connection to inspect |
+| --- | --- |
+| Macros or generated code | Macro and derive consumers, expansion inputs, generated items and callers |
+| Types, traits or generic code | Re-exports, aliases, bounds, impls and downstream type or dispatch relationships |
+| Features, build inputs or dependencies | Resolved versions, enabled features, target conditions, build scripts and included files that select or generate code |
+| Values, errors or control flow | Data reaching unchanged signal emitters, error conversions, recovery classification or middleware |
+| Shared fixtures, helpers, snapshots or configuration | Owning test targets and their consumers, including shared inputs outside package `tests/` directories |
+
+Add a consumer only through a specific changed input or contract connection.
+Stop expanding when evidence shows that the area's downstream contract is unaffected in the selected configuration.
+Record that boundary. Do not audit every dependency or workspace package.
+If the boundary is unresolved, record the question instead of assuming either relevance or absence.
+
+Apply these routing decisions separately from completion:
+
+| Applicability | Next action |
+| --- | --- |
+| Relevant | Assign the confirmed connection and remaining traces to an owner. Complete the area's procedure before returning `done`. |
+| Unknown | Resolve the named question with the smallest relevant read or matching artifact. If unresolved, retain the affected coverage gap. |
+| Absent with evidence | Cite the inspected changes, connected boundaries and configuration that rule out relevance at both revisions. Use `not applicable` only under the area's rules. |
+
+Relevant does not mean defective. A relevant area with no findings returns `done`, not `not applicable`.
+Routing uncertainty does not authorize a wider review without a specific connection to investigate.
+Missing or truncated diffs, inaccessible source, incomplete inventories and missing required captures cannot support absence.
+Make no claims about configurations outside the evidence.
+If missing evidence prevents required review, return `could not review` for the affected area.
+
+Do not exclude test review merely because no test changed.
+Follow [Review Tests](../review-tests/SKILL.md).
+The mandatory API, integration-test and benchmark blocks remain required, including proved no-change or inapplicable results.
+Area skills own proof rules and classifications. Routing cannot replace them.
 
 ### Choose review owners
 
@@ -75,7 +109,7 @@ The classification context never receives docs.
 The design context receives docs only after its output-only draft, through the
 [API evidence procedure](#public-api-evidence).
 
-If complete inventory proves that no library is affected, record the area-defined results without launching output reviewers.
+If [package presence](#package-presence) proves that no library is affected, record the area-defined results without launching output reviewers.
 The mandatory API report still states the proved result.
 If captures are required but clean contexts are unavailable, mark the affected areas `could not review`.
 Do not substitute source-based API inference.
@@ -115,9 +149,17 @@ Artifact preparation does not waive isolation or authorize extra builds.
 
 ## Package presence
 
-Map changed files to packages at both revisions. Include consumers only when
-changed shared inputs or exposed dependency types can affect their public surface.
-Record that reason. Workspace membership alone does not make a library affected.
+Map changed files to packages at both revisions.
+Retain the complete package inventory with exact revisions or the local input digest.
+Keep this inventory separate from the smaller affected-package set.
+Workspace membership alone does not make a package affected.
+
+Keep source-review scope separate from the API capture set.
+Use [applicability routing](#establish-applicability) to identify source consumers.
+Their public surface can remain unchanged.
+For API captures, include affected libraries and consumers whose surfaces depend on changed inputs or contracts.
+Record the connection or unresolved question for each included consumer.
+Do not exclude a consumer while its possible surface change remains unresolved.
 
 Use `cargo metadata --locked --no-deps --format-version 1` when permitted.
 Otherwise read the complete workspace/package inventory at each revision.
@@ -129,10 +171,12 @@ Match renamed or moved packages by manifest history, package name and library ta
 | Absent | Present | Added library, every head item is new |
 | Present | Absent | Removed library, every base item is removed |
 | Unknown | Any | Resolve inventory before claiming coverage |
+| Any | Unknown | Resolve inventory before claiming coverage |
 
 Prove absence from a complete inventory, not failed builds or PR descriptions.
 An absent side is a logical empty surface, never fabricated tool output.
-If no library is affected, both API areas can finish without captures.
+Only complete inventory and routing evidence can establish that no library is affected.
+An affected library still needs matching captures even when source inspection predicts no API change.
 
 ## Public API evidence
 
