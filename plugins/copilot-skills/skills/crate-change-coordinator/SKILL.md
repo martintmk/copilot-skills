@@ -1,25 +1,28 @@
 ---
 name: crate-change-coordinator
 description: >
-  Apply one instruction to an ordered set of Rust crates, one crate and one
-  pull request at a time. Run each change in a coordinated child project session
-  that inherits the parent session's model configuration. Wait for the current
-  pull request head to pass CI, announce it in a user-provided Teams review
-  channel, then wait for merge. Summarize relevant feedback and refine saved
-  instructions before archiving the child and starting the next crate.
+  Apply one instruction to an ordered set of Rust crates in user-sized batches,
+  one pull request at a time. Ask how many crates to include per PR if not supplied.
+  Run each batch in a coordinated child project session that inherits the parent
+  session's model configuration. Wait for the current pull request head to pass
+  CI, announce it in a user-provided Teams review channel, then wait for merge.
+  Summarize relevant feedback and refine saved
+  instructions before archiving the child and starting the next batch.
   Use for repeated mechanical changes across crates in one repository.
   Requires a GitHub repository, crate list, Teams channel link and change
-  instruction. Not for parallel changes, stacked PRs, automatic merge or ADO.
+  instruction, plus a positive number of crates per PR. Not for concurrent
+  batches, stacked PRs, automatic merge or ADO.
 ---
 
 # Crate Change Coordinator
 
-Apply one bounded change to several Rust crates. Process the crates in the
-supplied order. Keep only one active child session and one open pull request.
+Apply one bounded change to several Rust crates. A batch is the crates assigned
+to one pull request. Process batches in the supplied crate order.
+Keep only one active child session and one open pull request.
 
 The coordinator owns the queue, child sessions, CI state, Teams announcement,
-merge handoff, and lessons for the remaining work. The child owns the code
-change and its pull request.
+merge handoff, and lessons for the remaining work. The child owns the changes
+for its batch and the batch's pull request.
 
 ## Required input
 
@@ -28,9 +31,17 @@ Collect these values before work starts:
 1. An ordered list of crate package names or manifest paths.
 2. A link to the Teams review channel.
 3. One instruction that applies to every crate.
+4. The number of crates to include in each pull request.
 
-Ask for a missing value. Reject an empty list, duplicate crate, channel name
-without a link, or instruction that does not define a bounded change.
+Ask for each missing value. If the batch size is missing, use `ask_user` to ask:
+"How many crates do you want to include in each pull request?"
+Require a positive integer. Do not silently assume one crate per pull request.
+Reject an empty list, duplicate crate, channel name without a link, or instruction
+that does not define a bounded change.
+
+Split the ordered crate list into consecutive batches of at most the chosen size.
+The final batch can contain fewer crates. A size of one keeps one pull request
+per crate. Do not launch batches in parallel.
 
 Use `cargo metadata --locked --no-deps --format-version 1` to map package names
 to manifest paths. If that command is unavailable, read the workspace manifests.
@@ -45,18 +56,20 @@ automation.
 
 If the current session already owns unrelated work or an automation, create one
 coordinated project session for this skill. Omit its model configuration fields
-so it inherits the caller's configuration. Pass the three input values in its
+so it inherits the caller's configuration. Pass all input values in its
 kickoff prompt.
 
 Keep this state in the coordinator session:
 
 - The ordered crate list and exact instruction.
+- The chosen number of crates per pull request and ordered batches.
 - The resolved package name and manifest path for each crate.
+- The current batch and its assigned crates.
 - The current child session ID.
 - The current pull request number, URL, and head commit.
 - The Teams announcement ID and announced head.
 - The CI failures and feedback revisions already sent to the child.
-- The completed crate and pull request pairs.
+- The completed batches, their crates, and their pull requests.
 - The feedback summary for each completed child, keyed by pull request URL and
   merge commit.
 - The current instruction revision, reusable lessons, evidence links, and
@@ -76,11 +89,11 @@ state location, and current instruction revision. Require it to invoke this
 skill and reload the saved queue and latest instructions before each scheduled
 run. Do not use a workflow that starts a new session on every tick.
 
-## Process one crate
+## Process one batch
 
 ### 1. Start one child
 
-Start a child only when no earlier crate has an active child or unmerged pull
+Start a child only when no earlier batch has an active child or unmerged pull
 request. Require the previous child's learning step and archive to succeed
 before launch.
 
@@ -93,9 +106,11 @@ these fields makes the child inherit the coordinator's LLM configuration.
 
 Give the child the exact handoff in
 [child-session.md](child-session.md). Substitute the repository, default branch,
-crate package, manifest path, user instruction, and current instruction revision.
-Include only learned instructions that apply to this crate, with their evidence
-links and limits. If none apply, write `None`.
+every assigned crate's package name and manifest path, user instruction, and
+current instruction revision.
+Include only learned instructions that apply to the assigned crates, with their
+evidence links and limits. Name the affected crates for each lesson.
+If none apply, write `None`.
 Keep the user instruction verbatim. Label learned instructions as coordinator
 guidance, not user words.
 
@@ -105,7 +120,8 @@ Accept the child's pull request only when all these facts are true:
 
 - The pull request is open and ready for review.
 - Its base is the project default branch.
-- Its changes belong to the assigned crate or directly required shared files.
+- It applies the instruction to every assigned crate that requires a change.
+- Its changes belong to the assigned batch or directly required shared files.
 - Its description says that it is an automated mechanical pull request.
 - Its description contains Summary, Evidence, and Merge Danger sections.
 - The child used `simple-english` before it created or updated the description.
@@ -136,9 +152,9 @@ succeeds. Do not send unchanged signals again or treat pending checks as failure
 The child fixes failures caused by its change and applies `feedback-autonomy`
 before it acts on feedback. Do not duplicate that work in the coordinator.
 
-If the fix needs a decision outside the original instruction, pause this crate
+If the fix needs a decision outside the original instruction, pause this batch
 and relay the child's exact question to the user. Do not answer a human decision
-or ask it twice. Do not skip the crate.
+or ask it twice. Do not skip the batch.
 
 ### 4. Announce the green pull request
 
@@ -146,10 +162,15 @@ Announce only the current green head. Load deferred WorkIQ tools through tool
 search, then use the actual WorkIQ schemas. Resolve the exact team and channel
 from the supplied link. Never select a channel by a similar name.
 
-Invoke `simple-english` before writing this text:
+Invoke `simple-english` before writing this text.
+Use the live PR URL returned by GitHub as a clickable Teams link.
+Match the link format to the WorkIQ message schema.
+Do not send a bare PR number or code-formatted URL.
+Describe the actual change in one sentence from the current diff and PR description.
 
 ```text
-Automated mechanical PR for <crate> is ready for review: <PR URL>
+Automated mechanical PR for <crate list> is ready for review: <PR URL>
+Change: <brief description of the change across the assigned crates>.
 All checks passed for <short head commit>.
 ```
 
@@ -159,14 +180,18 @@ Reuse only this coordinator's confirmed announcement, not another message that
 merely links the same PR.
 
 Otherwise, make one top-level channel-message creation attempt. Save the
-returned message ID and read the message back. If the result is ambiguous,
-reconcile author, PR URL, body and send interval. Do not retry an ambiguous write.
+returned message ID and read the message back.
+Make sure that the saved message includes the clickable PR link, automated
+mechanical label, and change description.
+If the result is ambiguous, reconcile author, PR URL, body and send interval.
+Do not retry an ambiguous write.
 
 If the pull request gets a new head after announcement, wait for green CI again.
-Then update the same Teams message with the new head. Never create a second
-announcement for the same pull request.
+Then update the same Teams message with the new head and current change
+description.
+Never create a second announcement for the same pull request.
 
-An authentication or channel-access failure blocks this crate. Report the
+An authentication or channel-access failure blocks this batch. Report the
 failure and keep the child session open.
 
 ### 5. Wait for merge
@@ -189,7 +214,7 @@ continue to step 6.
 
 ### 6. Learn before advancing
 
-Run this step after every merged child, including the last crate. An idle
+Run this step after every merged child, including the last batch. An idle
 notification or green CI alone does not mean that the child is finished.
 Do not learn from a closed, unmerged pull request as a completed change.
 
@@ -202,7 +227,7 @@ Compare proposed lessons with the merged change and observed results.
 Summarize only feedback relevant to the assigned change or its coordination.
 For each item, record:
 
-- The source link or message ID, source identity, and affected crate.
+- The source link or message ID, source identity, and affected crates.
 - The problem, correction, and observed result, including any evidence gap.
 - Whether the lesson is adopted, deferred, or not reusable, with the reason.
 - For an adopted lesson, the next instruction and the conditions where it applies.
@@ -215,7 +240,7 @@ authorization that covers the remaining work.
 Keep unresolved or conflicting requests out of active instructions.
 If a proposed lesson lacks supporting evidence, defer it without changing
 active instructions.
-If a decision blocks the next crate, ask the user before launching it.
+If a decision blocks the next batch, ask the user before launching it.
 Do not treat a merge, approval, or resolved thread as proof that a suggestion is
 correct or authorized.
 
@@ -224,8 +249,8 @@ Write short, actionable rules that prevent the observed problem on relevant
 remaining crates. Keep crate-specific exceptions scoped to those crates.
 Combine duplicate lessons and replace superseded rules only when evidence
 supports the replacement.
-Preserve the exact user instruction, approval rules, validation limits, CI gate,
-and merge gate.
+Preserve the exact user instruction, chosen batch size, approval rules,
+validation limits, CI gate, and merge gate.
 These refinements belong to this rollout only. Do not rewrite installed skills,
 repository instructions, or global memories.
 
@@ -248,7 +273,7 @@ If required source reads or state or automation writes fail, report the blocker.
 Keep the child open and do not advance until the learning step is complete.
 Make sure that the saved summary and instructions can be read back.
 Then archive the coordinator-owned child with `archive_session`.
-Record the successful archive before starting the next crate.
+Record the successful archive before starting the next batch.
 
 ## Finish
 
@@ -259,4 +284,4 @@ Include a short summary of adopted lessons and deferred decisions.
 Keep the final learning record in session storage.
 
 Never merge a pull request, approve it, change repository protections, process
-two crates at once, or create the next child before the current merge.
+two batches at once, or create the next child before the current merge.

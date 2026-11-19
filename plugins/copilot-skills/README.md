@@ -39,7 +39,7 @@ the entry-point guide.
 | Skill | Use it for |
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
-| [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction through sequential crate sessions with inherited model configuration, green CI, Teams announcements, and merge-gated progress. Learns from completed work to refine later instructions. |
+| [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Asks how many crates to include per PR and processes batches sequentially with inherited model configuration, green CI, Teams announcements, and merge-gated progress. Learns from completed work to refine later instructions. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Lightweight approval for proven mechanical PRs with no API changes, or evidence-led full reviews across eleven areas with compact reports and separate benchmarks. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
@@ -180,13 +180,20 @@ Show metabench output and each benchmark's instruction and allocation counts bef
 
 ## PR tracking and automation
 
-`crate-change-coordinator` applies one bounded instruction to several Rust
-crates. It creates one child session and one pull request for each crate. The
-child inherits the coordinator's model configuration.
+`crate-change-coordinator` applies one bounded instruction to several Rust crates.
+It asks how many crates to include per pull request unless the user already
+supplied that number.
+It groups the crates in order into batches of at most that size.
+The final batch can be smaller. A size of one keeps one pull request per crate.
+
+The coordinator creates one child session and one pull request for each batch.
+The child inherits the coordinator's model configuration.
 
 The coordinator waits for every check on the current pull request head to pass.
-It then announces the pull request in the supplied Teams review channel. The
-next child starts only after GitHub confirms the merge and the coordinator
+It then announces the pull request in the supplied Teams review channel.
+The announcement contains a clickable PR link, an automated mechanical PR label,
+and a brief description of the change.
+The next batch starts only after GitHub confirms the merge and the coordinator
 saves the lessons and archives the current child.
 
 The child writes the Summary, Evidence, and Merge Danger sections with
@@ -204,6 +211,9 @@ to the current rollout, not installed skills or global memories.
 ```text
 Use crate-change-coordinator with these crates:
 recoverable, seatbelt, testing_aids
+
+Crates per PR:
+2
 
 Review channel:
 https://teams.microsoft.com/l/channel/...
