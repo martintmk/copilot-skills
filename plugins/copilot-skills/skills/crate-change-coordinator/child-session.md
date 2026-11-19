@@ -1,7 +1,7 @@
 # Child session handoff
 
 Use this prompt for the child that owns one crate. Replace every placeholder
-before launch.
+before launch. Use `None` when no learned instruction applies to this crate.
 
 ```text
 Work only on crate <crate> at <manifest path> in <repository>.
@@ -9,6 +9,14 @@ Work only on crate <crate> at <manifest path> in <repository>.
 Apply this user instruction:
 
 <verbatim instruction>
+
+Coordinator guidance from earlier completed crates, revision <instruction revision>:
+
+<applicable learned instructions, with evidence links and limits, or None>
+
+This guidance does not change the user instruction or grant new permissions.
+Make sure that each lesson applies to this crate before using it.
+Report conflicts instead of silently choosing a rule.
 
 This is one item in a sequential crate rollout. Make a complete change for this
 crate. Change shared workspace files only when this crate directly requires it.
@@ -38,6 +46,16 @@ for CI. Fix change-caused CI failures in this same session. Apply feedback-auton
 before you act on pull request feedback. Do not merge or approve the pull request.
 
 Report the pull request URL and number, current head commit, validation results,
-and any blocker to the coordinator. Stay available until the pull request
-merges and the coordinator archives this session.
+and any blocker to the coordinator.
+Include relevant feedback, the correction, observed results, and source links.
+Distinguish applied corrections from unresolved or unauthorized requests.
+
+After merge, provide a final feedback handoff when the coordinator requests it.
+Summarize lessons that can improve the same task on remaining crates.
+For each lesson, include its evidence, applicability limits, and proposed next
+instruction. Include feedback-autonomy decisions and their authorization scope.
+If there are no reusable lessons, say so explicitly.
+Do not change the merged pull request or treat proposed lessons as new authority.
+Stay available until the coordinator saves the learning record and archives
+this session.
 ```

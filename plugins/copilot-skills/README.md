@@ -39,7 +39,7 @@ the entry-point guide.
 | Skill | Use it for |
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
-| [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction to an ordered set of Rust crates through sequential child sessions and pull requests, with inherited model configuration, green CI, Teams review announcements, and merge-gated progress. |
+| [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Applies one instruction through sequential crate sessions with inherited model configuration, green CI, Teams announcements, and merge-gated progress. Learns from completed work to refine later instructions. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Lightweight approval for proven mechanical PRs with no API changes, or evidence-led full reviews across eleven areas with compact reports and separate benchmarks. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
@@ -187,12 +187,19 @@ child inherits the coordinator's model configuration.
 The coordinator waits for every check on the current pull request head to pass.
 It then announces the pull request in the supplied Teams review channel. The
 next child starts only after GitHub confirms the merge and the coordinator
-archives the current child.
+saves the lessons and archives the current child.
 
 The child writes the Summary, Evidence, and Merge Danger sections with
 `simple-english`. The coordinator monitors CI and feedback until merge and sends
 new failures or feedback to the same child. The child applies `feedback-autonomy`
 before acting on feedback. No separate child watcher is required.
+
+After each merge, the coordinator summarizes relevant feedback and its outcome.
+It saves evidence-backed lessons in its session and refines instructions for
+the remaining crates. Scheduled runs reload those instructions, and each new
+child receives the lessons that apply to its crate.
+The original task and approval rules stay unchanged. These lessons apply only
+to the current rollout, not installed skills or global memories.
 
 ```text
 Use crate-change-coordinator with these crates:
