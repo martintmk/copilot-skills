@@ -1,12 +1,14 @@
 # Child session handoff
 
-Use this prompt for the child that owns one crate. Replace every placeholder
-before launch. Use `None` when no learned instruction applies to this crate.
+Use this prompt for the child that owns one batch. Replace every placeholder
+before launch. Use `None` when no learned instruction applies to the assigned crates.
 
 ```text
-Work only on crate <crate> at <manifest path> in <repository>.
+Work only on this batch in <repository>:
 
-Apply this user instruction:
+<ordered list of assigned crate package names and manifest paths>
+
+Apply this user instruction to every assigned crate:
 
 <verbatim instruction>
 
@@ -15,29 +17,35 @@ Coordinator guidance from earlier completed crates, revision <instruction revisi
 <applicable learned instructions, with evidence links and limits, or None>
 
 This guidance does not change the user instruction or grant new permissions.
-Make sure that each lesson applies to this crate before using it.
+Make sure that each lesson applies to the affected crate before using it.
 Report conflicts instead of silently choosing a rule.
 
-This is one item in a sequential crate rollout. Make a complete change for this
-crate. Change shared workspace files only when this crate directly requires it.
-Do not change another crate to prepare future queue items.
+This is one batch in a sequential crate rollout.
+Make a complete change for every assigned crate that requires it.
+Report any assigned crate that already satisfies the instruction, with evidence.
+Change shared workspace files only when the assigned batch directly requires it.
+Do not change crates outside this batch to prepare future queue items.
 
-Inspect the repository rules and the crate before editing. Implement the change,
-update directly related tests and documentation, and follow minimal-local-validation
-when comprehensive CI covers this crate. Otherwise run the smallest relevant
-repository checks. Batch validation after the edits and honor explicit user limits.
+Inspect the repository rules and every assigned crate before editing.
+Implement the change and update directly related tests and documentation.
+If comprehensive CI covers the assigned crates, follow minimal-local-validation.
+Otherwise run the smallest relevant repository checks.
+Batch validation after the edits and honor explicit user limits.
 
-Commit and push the change. Create one ready-for-review pull request against
-<default branch>. Do not create a draft or stacked pull request.
+Commit and push the changes.
+Create one ready-for-review pull request for the entire batch against <default branch>.
+Do not split the batch into separate pull requests.
+Do not create a draft or stacked pull request.
 
 Before writing or updating the pull request description, invoke simple-english.
 Keep the Summary, Evidence, and Merge Danger sections concise.
 The Summary must contain this exact sentence:
 
-This is an automated mechanical PR for `<crate>`.
+This is an automated mechanical PR for `<crate list>`.
 
-State the applied change, actual validation, and real merge risk. Do not claim
-that behavior is unchanged unless the evidence proves it.
+List every assigned crate and briefly describe the applied change.
+State the actual validation and real merge risk. Do not claim that behavior is
+unchanged unless the evidence proves it.
 
 After every push on a branch that has a pull request, report the new head to
 the coordinator. The coordinator monitors CI and feedback and sends new work
@@ -52,8 +60,9 @@ Distinguish applied corrections from unresolved or unauthorized requests.
 
 After merge, provide a final feedback handoff when the coordinator requests it.
 Summarize lessons that can improve the same task on remaining crates.
-For each lesson, include its evidence, applicability limits, and proposed next
-instruction. Include feedback-autonomy decisions and their authorization scope.
+For each lesson, include the affected crates, evidence, applicability limits,
+and proposed next instruction.
+Include feedback-autonomy decisions and their authorization scope.
 If there are no reusable lessons, say so explicitly.
 Do not change the merged pull request or treat proposed lessons as new authority.
 Stay available until the coordinator saves the learning record and archives
