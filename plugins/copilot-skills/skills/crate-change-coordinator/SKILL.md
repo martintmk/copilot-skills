@@ -4,7 +4,12 @@ description: >
   Apply one instruction to an ordered set of Rust crates in user-sized batches,
   one pull request at a time. Ask how many crates to include per PR if not supplied.
   Run each batch in a coordinated child project session that inherits the parent
-  session's model configuration. Wait for the current pull request head to pass
+  session's model configuration. Enable GitHub Agent merge to fix PR-caused builds,
+  handle eligible bot feedback and resolve in-scope merge conflicts without
+  routine prompts. If safe autonomous resolution is impossible, wait for human
+  resolution without repeated prompts or skipping the batch.
+  Keep automatic merging disabled.
+  Wait for the current pull request head to pass
   CI, announce it in a user-provided Teams review channel, then wait for merge.
   Summarize relevant feedback and refine saved
   instructions before archiving the child and starting the next batch.
@@ -21,8 +26,15 @@ to one pull request. Process batches in the supplied crate order.
 Keep only one active child session and one open pull request.
 
 The coordinator owns the queue, child sessions, CI state, Teams announcement,
-merge handoff, and lessons for the remaining work. The child owns the changes
-for its batch and the batch's pull request.
+Agent merge setup, merge handoff, and lessons for the remaining work.
+The child owns the changes for its batch and the batch's pull request.
+Agent merge wakes that same child to repair CI and handle authorized feedback.
+It does not replace the coordinator's schedule or authorize merging.
+
+Work autonomously within the task and existing permissions.
+Ask for human help only when safe autonomous resolution is unavailable.
+Finish independent authorized work before waiting for human resolution.
+Waiting preserves the current batch. It is not completion or permission to skip ahead.
 
 ## Required input
 
@@ -54,6 +66,11 @@ Run this skill in one dedicated project session. Before adding a coordinator
 automation, read the current session automation. Never replace an unrelated
 automation.
 
+Read [dependencies.md](dependencies.md) before the first child.
+Make sure that the required skills, app tools, GitHub access and WorkIQ channel
+access are available. Stop and report missing dependencies instead of silently
+running without maintenance or feedback gates.
+
 If the current session already owns unrelated work or an automation, create one
 coordinated project session for this skill. Omit its model configuration fields
 so it inherits the caller's configuration. Pass all input values in its
@@ -67,8 +84,8 @@ Keep this state in the coordinator session:
 - The current batch and its assigned crates.
 - The current child session ID.
 - The current pull request number, URL, and head commit.
+- The Agent merge setup result and any reported blocker or pending human question.
 - The Teams announcement ID and announced head.
-- The CI failures and feedback revisions already sent to the child.
 - The completed batches, their crates, and their pull requests.
 - The feedback summary for each completed child, keyed by pull request URL and
   merge commit.
@@ -82,12 +99,16 @@ instruction revision zero and no lessons.
 Before each action, reload saved state and reconcile it with live session and
 GitHub state.
 
-Use child notifications while work is active. If the coordinator must wait for
-CI or merge, create a same-session automation with a 15-minute cadence. Read the
-automation back and save its ID. Its prompt must include the original input,
+Use child notifications while work is active. If waiting for CI, merge or human
+resolution, create a same-session automation with a 15-minute cadence.
+Read the automation back and save its ID. Its prompt must include the original input,
 state location, and current instruction revision. Require it to invoke this
 skill and reload the saved queue and latest instructions before each scheduled
 run. Do not use a workflow that starts a new session on every tick.
+Keep this schedule while Agent merge is active. The app handles PR maintenance.
+The coordinator still owns announcements, merge detection, learning and the queue.
+During a human wait, use the schedule only to detect changed evidence or human resolution.
+Do not send repeated reminders or restart blocked work on each tick.
 
 ## Process one batch
 
@@ -132,6 +153,10 @@ child report.
 If the child did not create a pull request, send the exact blocker back to the
 same child. Do not start a replacement child or advance the queue.
 
+Before waiting for CI, enable Agent merge on this child's linked pull request.
+Follow [github-maintenance.md](github-maintenance.md) for setup, read-back and
+pause handling. Do not claim autonomous maintenance until setup succeeds.
+
 ### 3. Wait for green CI
 
 A pull request is green only when it is open, has no merge conflict, and every
@@ -142,19 +167,15 @@ skipped, neutral, stale, or unknown results are not green.
 If the head changes, discard the prior green result. Read every check again for
 the new head.
 
-On each wake-up, read current CI results and pull request feedback, including
-review threads, review summaries, and conversation comments. Continue after green
-CI and the Teams announcement while the pull request remains open.
+On each wake-up, read the current PR head, CI results and child status.
+Agent merge owns CI diagnosis, repairs, feedback handling and maintenance retries.
+Do not collect or forward those signals through a second coordinator repair loop.
+The coordinator reads CI only to decide whether it can announce this head.
 
-Send new or changed failures and feedback to the same child with their links
-and current head. Save the sent signal identities and revisions after delivery
-succeeds. Do not send unchanged signals again or treat pending checks as failures.
-The child fixes failures caused by its change and applies `feedback-autonomy`
-before it acts on feedback. Do not duplicate that work in the coordinator.
-
-If the fix needs a decision outside the original instruction, pause this batch
-and relay the child's exact question to the user. Do not answer a human decision
-or ask it twice. Do not skip the batch.
+If autonomous resolution is blocked, follow
+[Wait for human resolution](github-maintenance.md#wait-for-human-resolution).
+Keep the child and current batch until the blocker is resolved.
+Do not answer a human decision, repeat its question or skip the batch.
 
 ### 4. Announce the green pull request
 
@@ -196,9 +217,9 @@ failure and keep the child session open.
 
 ### 5. Wait for merge
 
-Keep the child session open after the announcement. The coordinator continues
-scheduled checks and sends work through step 3. The child owns CI fixes and
-authorized feedback changes.
+Keep the child session open after the announcement.
+Agent merge continues maintenance while the coordinator watches for a new head or merge.
+Honor maintenance pauses. Never turn on its `merge_pr` action.
 
 Read the pull request on each coordinator wake-up. If it remains open, repeat
 step 3 and keep waiting. If it closes without merge, stop the queue and ask the
@@ -272,6 +293,7 @@ an earlier prompt copy.
 If required source reads or state or automation writes fail, report the blocker.
 Keep the child open and do not advance until the learning step is complete.
 Make sure that the saved summary and instructions can be read back.
+Follow [github-maintenance.md](github-maintenance.md) to stop maintenance before archival.
 Then archive the coordinator-owned child with `archive_session`.
 Record the successful archive before starting the next batch.
 
@@ -285,3 +307,9 @@ Keep the final learning record in session storage.
 
 Never merge a pull request, approve it, change repository protections, process
 two batches at once, or create the next child before the current merge.
+
+## References
+
+- [Child session handoff](child-session.md)
+- [GitHub maintenance lifecycle](github-maintenance.md)
+- [Dependencies and standalone packaging](dependencies.md)

@@ -26,6 +26,8 @@ Report any assigned crate that already satisfies the instruction, with evidence.
 Change shared workspace files only when the assigned batch directly requires it.
 Do not change crates outside this batch to prepare future queue items.
 
+Load feedback-autonomy and minimal-local-validation before starting work.
+Keep both policies active during Agent merge ticks.
 Inspect the repository rules and every assigned crate before editing.
 Implement the change and update directly related tests and documentation.
 If comprehensive CI covers the assigned crates, follow minimal-local-validation.
@@ -34,6 +36,7 @@ Batch validation after the edits and honor explicit user limits.
 
 Commit and push the changes.
 Create one ready-for-review pull request for the entire batch against <default branch>.
+Use create_pull_request to link the pull request to this app session.
 Do not split the batch into separate pull requests.
 Do not create a draft or stacked pull request.
 
@@ -48,10 +51,17 @@ State the actual validation and real merge risk. Do not claim that behavior is
 unchanged unless the evidence proves it.
 
 After every push on a branch that has a pull request, report the new head to
-the coordinator. The coordinator monitors CI and feedback and sends new work
-to this session. Do not start a separate watcher or block queued work to wait
-for CI. Fix change-caused CI failures in this same session. Apply feedback-autonomy
-before you act on pull request feedback. Do not merge or approve the pull request.
+the coordinator. The coordinator enables Agent merge for this linked pull request.
+Use the app-provided agent-merge skill for CI repairs, reviews, conflicts and escalation.
+Do not start a separate watcher or repair loop.
+The review switch covers all authors. Apply feedback-autonomy's stricter
+authorship and impact gates to each edit, reply and thread resolution.
+If either policy forbids an action, leave it pending and report the blocker.
+Do not merge or approve the pull request.
+
+Finish independent authorized work before waiting for human resolution.
+Report the remaining human action and keep this batch open until it is resolved.
+Do not repeat unchanged questions or treat an unavailable user as approval.
 
 Report the pull request URL and number, current head commit, validation results,
 and any blocker to the coordinator.
