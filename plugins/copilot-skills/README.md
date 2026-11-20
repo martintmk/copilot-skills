@@ -39,7 +39,7 @@ the entry-point guide.
 | Skill | Use it for |
 | --- | --- |
 | [`engineering-workplan`](skills/engineering-workplan/SKILL.md) | Outcome-driven plans, bounded agent instructions and evidence-based steering for large engineering work, rewrites and migrations. |
-| [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Asks how many crates to include per PR and processes batches sequentially with inherited model configuration, green CI, Teams announcements, and merge-gated progress. Learns from completed work to refine later instructions. |
+| [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Processes user-sized batches sequentially with inherited model configuration and GitHub Agent merge for CI repairs and eligible bot feedback. Keeps automatic merging off. Announces green PRs in Teams and learns after each merge. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Lightweight approval for proven mechanical PRs with no API changes, or evidence-led full reviews across eleven areas with compact reports and separate benchmarks. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
@@ -197,9 +197,23 @@ The next batch starts only after GitHub confirms the merge and the coordinator
 saves the lessons and archives the current child.
 
 The child writes the Summary, Evidence, and Merge Danger sections with
-`simple-english`. The coordinator monitors CI and feedback until merge and sends
-new failures or feedback to the same child. The child applies `feedback-autonomy`
-before acting on feedback. No separate child watcher is required.
+`simple-english`. The coordinator enables native Agent merge on the child's
+linked GitHub PR and reads back its state.
+It enables CI repairs, review handling and in-scope conflict resolution.
+It keeps `merge_pr: false`. Agent merge maintains the PR but does not land it.
+
+The child fixes PR-caused build failures and eligible bot findings without routine prompts.
+It applies `feedback-autonomy` to each edit, reply and thread resolution.
+Human decisions and changes outside the task still require authorization.
+The coordinator keeps its schedule for CI gates, Teams, merge detection and learning.
+Agent merge owns maintenance, retries and escalation in the child.
+The coordinator does not track or dispatch individual repair signals.
+
+When safe autonomous resolution is impossible, the coordinator saves the blocker and waits for human resolution.
+It finishes independent authorized work first and presents the remaining human action once.
+It keeps the same child and batch without repeated prompts, repair loops or a timeout.
+Scheduled runs detect resolution before continuing the rollout.
+The coordinator does not bypass pending human questions or re-enable paused maintenance.
 
 After each merge, the coordinator summarizes relevant feedback and its outcome.
 It saves evidence-backed lessons in its session and refines instructions for
@@ -207,6 +221,13 @@ the remaining crates. Scheduled runs reload those instructions, and each new
 child receives the lessons that apply to its crate.
 The original task and approval rules stay unchanged. These lessons apply only
 to the current rollout, not installed skills or global memories.
+
+The [dependency and packaging guide](skills/crate-change-coordinator/dependencies.md)
+lists the files and capabilities needed to move the coordinator to its own repository.
+The smallest bundle contains this skill, `feedback-autonomy` and `minimal-local-validation`.
+It also requires external `simple-english`, app-provided `agent-merge`, native session
+tools, GitHub access, WorkIQ channel access and the target repository's Rust toolchain.
+Editing or installing the skill does not start a rollout or enable any live Agent merge session.
 
 ```text
 Use crate-change-coordinator with these crates:
