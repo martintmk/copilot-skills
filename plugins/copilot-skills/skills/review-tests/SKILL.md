@@ -20,14 +20,11 @@ belong here.
 
 ## Procedure
 
-1. Establish the [baseline scope](#baseline-scope-and-reading-order).
-   Read baseline tests and changed expectations before implementation code or explanations.
-   Each reviewer must do this, even when the coordinator already inspected the tests.
+1. Establish the [baseline scope](#baseline-scope-and-reading-order) independently of the changed implementation.
    Include test files and functions, inline `mod tests`, doctests, test examples, snapshots, fixtures, property cases and test-only manifests.
    Read unchanged tests connected to changed production behavior or shared test inputs.
-   Save the baseline expectations and open questions before continuing.
-   Read large scopes in bounded ranges. Save each completed test contract before reading its connected implementation.
-   Do not require the entire crate's tests in one context before any source review can start.
+   Choose an efficient reading order, but use base tests, public contracts, callers and approved requirements to identify expected behavior.
+   Changed tests, changed code and author rationale cannot be the sole proof of the baseline.
    Look for deletion and weakening:
    - removed cases or assertions;
    - a specific error becoming `is_err()`, or an exact value becoming
@@ -75,32 +72,21 @@ belong here.
 
 ### Baseline scope and reading order
 
-Start with changed tests and the tests connected to changed product contracts or shared test inputs.
+Start with changed tests and tests connected to changed contracts or shared inputs.
 Include their helpers, fixtures, snapshots, discovery configuration and relevant doctests.
-Save test locations, connected scopes and unresolved discovery boundaries before reading production bodies.
-Complete each known scope's test inventory before exposing its implementation.
-Use names and bounded test-only ranges for discovery.
-Declaration names, attributes and documentation used to locate tests are not implementation exposure.
-Production bodies and implementation explanations are exposure.
-If source and tests share a file, extract the test ranges before opening the complete diff.
-Use location-only searches, then bounded test or doc ranges.
-For nested scopes, use an available syntax-aware extractor without displaying production bodies.
-If a test boundary remains unresolved, do not expose that scope's implementation.
-Do not treat a partial search result as a complete baseline.
+Use any reading order that preserves independent baseline evidence.
+Reading implementation first does not invalidate the review, but implementation claims cannot establish the old contract.
+When evidence conflicts, prefer base behavior and maintainer-approved requirements over changed expectations or PR rationale.
+Record unresolved discovery boundaries instead of treating a partial search as complete.
 
 A test-only change does not require every test of the APIs that it calls.
 Follow an unchanged doctest only when the change affects its contract, discovery or shared inputs.
 Likewise, unchanged product dependencies do not require a whole-workspace baseline.
 Record the concrete connection when expanding the scope.
 
-When a trace reveals another relevant test, record its base expectations before reading its head expectations or connected implementation.
-If that implementation was already exposed, do not claim that a later read restores the required order.
-Keep completed scopes and request a baseline-first review of only the affected scope in a clean context.
-Supply revision and test locations, not implementation explanations or prior conclusions.
-Use the coordinator's [bounded recovery](../review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups), not another whole review.
-Retain independently supported findings from the affected scope, but do not count them as completed baseline-first coverage.
-If recovery is unavailable, name the affected test contract as incomplete.
-Do not invalidate unrelated completed source areas solely because this scope remains incomplete.
+When a trace reveals another relevant test, add its base expectations to the contract evidence.
+If prior context makes the interpretation uncertain, seek another independent source or report the limit.
+Do not restart a whole review only to reproduce a preferred reading order.
 
 ### Finding evidence
 

@@ -1,24 +1,23 @@
 ---
 name: review-public-api-changes
 description: >
-  Produce the mandatory Review Lens report that classifies a Rust library
-  change as breaking public API changes, public API additions, or no API
-  changes. Uses matching cargo-public-api captures and shows callable additions as
-  concise Rust signatures. Requires human-review-required for every public API
-  change. Use for Review Lens or a focused public API change report. Not for
-  API design advice, source review, docs quality, runtime behavior or posting.
+  Classify an affected Rust library surface as breaking public API changes,
+  public API additions, or no API changes. Uses matching cargo-public-api
+  captures and concise signatures. Requires human-review-required for every
+  proved public API change. Use when Review Lens identifies possible library
+  surface impact or for a focused report. Not for API design, runtime behavior
+  or posting.
 ---
 
 # Review Public API Changes
 
 Tell the reviewer exactly how the exported Rust surface changed. This is a
-classification report, not an API design review. Run it for every Review Lens
-review, even when no Rust source changed.
+classification report, not an API design review.
+Run it when changed inputs can affect a Rust library surface.
 
-Use the same full `cargo public-api` captures prepared for
-[`review-public-api`](../review-public-api/SKILL.md). The coordinator owns
-package discovery, revision setup and capture commands. Do not rebuild that
-setup inside this skill.
+Reuse matching full `cargo public-api` captures when another area already
+prepared them. The coordinator owns package discovery and revision setup.
+Do not rebuild matching evidence inside this skill.
 
 ## Evidence boundary
 
@@ -28,8 +27,9 @@ setup inside this skill.
   libraries. A failed capture never proves an empty API.
 - If the coordinator's complete package inventory proves that no library is
   affected, report **No API Changes** without requesting empty captures.
-- Read public API output only. Do not inspect source, manifests, tests, source
-  diffs or rustdoc to infer changes.
+- Base every classification on public API output.
+  Existing source context does not invalidate the result, but cannot fill
+  missing captures or prove an absent surface.
 - Report only. Never edit, post, vote or change labels.
 
 ## Classify the change
@@ -70,9 +70,10 @@ Otherwise return `undetermined`, never `not required` or **No API Changes**.
 
 ## Report
 
-Always return one report. Start with the attribution required by the
-[findings contract](../review-delivery/findings-contract.md), then use this
-shape:
+Return a concise report when this classification applies.
+Start with the attribution required by the
+[findings contract](../review-delivery/findings-contract.md).
+The following shape is an example:
 
 ````markdown
 **Posted by an AI agent**

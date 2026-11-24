@@ -1,555 +1,194 @@
 # Review Lens coordinator reference
 
-The coordinator owns setup, routing and recovery.
-Read the sections needed for the current step.
-Give reviewers the required facts, not this entire file.
+This reference gives strategies for multi-scope reviews.
+It defines evidence outcomes, not one required reasoning process.
+Use only the sections that help the current change.
 
 ## Evidence-led routing
 
-Route work by its required evidence, not by area names.
-Use the complete inventory from [Review Lens](SKILL.md#1-pin-facts-and-prepare-shared-evidence).
-An evidence bundle contains related paths, contracts and unresolved questions.
-Routing assigns work. It does not complete the area's review procedure.
-Initial routing can remain provisional until each source owner finishes its test-first pass and complete diff.
-The coordinator does not repeat delegated source reads. It reconciles returned evidence and path coverage instead.
+Start with the complete changed-path inventory and affected contracts.
+Consider every Review Lens area, then spend effort according to risk, uncertainty and user intent.
+Route connected code, tests and documentation together when they need the same reasoning.
+Do not invoke specialists only to fill an area ledger.
 
 ### Record coverage
 
-Keep one internal review record with an entry for each of the eleven areas.
-Use artifact references and short reasons rather than copied source or transcripts.
-Map areas to the shared path inventory. Do not write a separate path-by-path narrative for every area.
-An input digest identifies reviewed local file contents.
-Record these fields:
+For a small direct review, a short scope note is enough.
+For delegated, blocked or multi-stage work, record:
 
-| Field | Required content |
+| Field | Content |
 | --- | --- |
-| Applicability | Relevant (confirmed connection), absent with evidence, or unknown (unresolved connection) |
-| Scope | Changed paths, affected packages and the connected contracts or consumers |
-| Evidence | Decisive locations or artifact references, exact revisions or local input digest, and selected configuration |
-| Owner | Coordinator or assigned reviewer, including ownership of any separate scopes |
-| Open questions | Unresolved relevance, required traces, missing evidence and setup blockers |
-| Completion | Pending until the area returns its result, then its status and material limits |
+| Inputs | Exact revisions or local input digest |
+| Scope | Changed paths and affected contracts |
+| Evidence | Decisive source, tests, generated output or execution |
+| Status | Covered, blocked or pending, with material limits |
+| Owner | Only when work is delegated or resumed |
 
-Assign every changed path to the relevant area scopes.
-Keep connected traces together. Do not sample paths or stop after the first finding.
-When evidence reveals another affected path or contract, update its scope and owner.
-
-Before completion, reconcile each area's returned coverage with this record.
-Use the [area result format](../review-delivery/findings-contract.md#area-result-and-final-summary) and these completion rules:
-
-| Work | Required evidence for completion |
-| --- | --- |
-| Source-reading areas | Every changed path in scope traced, with material evidence limits stated |
-| API design audit | Matching captures and the required docs for draft claims, unless no library is affected |
-| API classification | Matching captures, unless no library is affected |
-| Integration-test classification | Complete inventory and the contents required by the owner |
-
-Use [package-presence evidence](#package-presence) to prove that no library is affected.
-Missing execution proof limits findings, not completed source coverage.
-Missing source or unfinished traces remain unreviewed, even when no defects were found.
-Use `could not review` for required work that cannot finish.
+Completion requires every changed path and material risk to be covered or named as a gap.
+It does not require a separate entry for every specialist area.
+Missing execution limits runtime claims.
+Missing source or required contract evidence prevents a clean result.
 
 ### Best-effort completion
 
-Best effort is the default when required evidence or execution remains unavailable after bounded recovery.
-It completes supported work instead of waiting indefinitely. It does not redefine missing evidence as completed coverage.
-Keep every area in the coverage record and continue all independent traces.
+Finish independent work when another scope is blocked.
+Preserve valid evidence and try another method when it can add information or resolve the cause.
+Do not repeat a command, reviewer handoff or setup attempt when no relevant input changed.
 
-| Limit | Best-effort action | Remaining boundary |
+| Blocker | Adaptive response | Required boundary |
 | --- | --- | --- |
-| Missing API captures or a clean output-only context | Reuse matching captures or CI artifacts when available. Finish the separate source-based `review-api-design` area from accessible source, callers and docs. | Keep unfinished output-only areas `could not review`. A passing CI badge is not API evidence. |
-| No authorized Linux host for benchmarks | Reuse matching measured results or use an existing authorized host. Otherwise finish source-based performance review and report measurements as blocked. | No measured claim without usable measurements. Missing benchmarks alone do not make finished source coverage incomplete. |
-| Insufficient reviewer context | Save completed scopes and evidence references. Continue through bounded reads, or transfer only unfinished work under the existing owner and context rules. | Do not sample the remaining diff, restart completed scopes or discard supported findings. |
-| Required source or test evidence remains inaccessible | Finish reachable independent scopes and deliver their supported findings. Name the affected paths or contracts that remain unreviewed. | No clean conclusion for unread code or missing baseline contracts. |
+| Tool or setup failure | Diagnose the cause, use another supported tool or repair the prerequisite within existing permissions | Keep inputs and configuration comparable |
+| Reviewer or context limit | Continue directly, narrow the unfinished scope or transfer it with saved evidence | Do not repeat completed work |
+| Missing API or test evidence | Finish independent source review and retain proved observations | Do not claim the missing classification |
+| Benchmark unavailable | Finish source performance review and report measurement limits | Do not make measured claims |
+| Partial publication | Resume through Review Delivery with confirmed write IDs | Do not repeat analysis to repair a write |
 
-Reuse artifacts only under the [identity rules](#shared-setup-and-reuse).
-Apply the [shared repair limit](#repair-shared-setup-once) before another setup attempt.
-For context recovery, follow [bounded handoffs](#bound-handoffs-and-follow-ups) and the [test-first rules](#combine-test-review).
-Best effort grants no new host, installation, upload or provider-write permissions.
-If the caller requires a particular measurement or configuration, retain it as unmet rather than substituting another.
+Install tools or acquire dependencies only when required and permitted.
+Do not change reviewed inputs, lockfiles or requested configurations to make evidence succeed.
+Stop recovery when alternatives no longer add evidence or the expected value does not justify their cost.
 
-When API captures remain missing, reuse the completed source-contract result instead of repeating that review.
-Label any observations `Source-based API observations, not a complete API classification`.
-Keep them separate from the mandatory output-only classification.
-Name the exact symbols and inspected configuration. Link supported defect threads rather than repeating their bodies.
-Source observations cannot complete either output-only area or determine its human-review signal.
-Keep source observations out of the output-only reviewers' evidence and results.
-Retain each area's `required` or `undetermined` decision under the [classification rules](../review-public-api-changes/SKILL.md#human-review-decision).
-Missing evidence never means `not required`.
-Apply [Review Delivery's label rules](../review-delivery/SKILL.md#inputs-and-preparation) without inventing a label requirement from a blocker alone.
-Missing source cannot support this fallback.
+When generated API evidence is missing, source observations can still describe proved contract concerns.
+Label them as source-based and keep the API classification incomplete.
+They cannot determine a clean human-review decision.
 
-Deliver once all independent work finishes and bounded recovery is exhausted or unavailable.
-State completed scope, supported findings and remaining gaps with the smallest missing prerequisite.
-Follow the [summary contract](../review-delivery/findings-contract.md#area-result-and-final-summary) and existing provider-event rules.
-Do not call an incomplete review clean, approve it or give it an overall verdict.
-Do not ask for broader access merely to remove an incomplete status.
-Resume blocked work only when its evidence, prerequisite or explicit request changes.
+Deliver supported findings after useful independent work and recovery finish.
+Name every material gap and the smallest missing prerequisite.
+An incomplete review has no clean verdict or approval.
 
 ### Establish applicability
 
-Start from the complete changed-path inventory at the pinned revisions.
-For removals and renames, inspect both old and new ownership, references and discovery paths.
-Do not treat a missing head file or a path-only rename as proof that no contract changed.
-Use filenames and keyword searches to locate evidence or assign provisional scope, never to prove absence.
+Trace changed definitions, generated inputs, features, dependencies and shared test inputs to their consumers.
+Expand scope through a concrete contract connection.
+Stop where evidence shows that the selected configuration is unaffected.
 
-Each source owner follows connections from changed definitions, values and shared inputs.
-Use these connections to find indirect effects, not as another area checklist:
-
-| Changed input | Connection to inspect |
+| Applicability | Action |
 | --- | --- |
-| Macros or generated code | Macro and derive consumers, expansion inputs, generated items and callers |
-| Types, traits or generic code | Re-exports, aliases, bounds, impls and downstream type or dispatch relationships |
-| Features, build inputs or dependencies | Resolved versions, enabled features, target conditions, build scripts and included files that select or generate code |
-| Values, errors or control flow | Data reaching unchanged signal emitters, error conversions, recovery classification or middleware |
-| Shared fixtures, helpers, snapshots or configuration | Owning test targets and their consumers, including shared inputs outside package `tests/` directories |
+| Relevant | Review the connected scope |
+| Unknown | Resolve the question or retain a coverage gap |
+| Absent with evidence | Record the boundary and skip specialist work |
 
-Add a consumer only through a specific changed input or contract connection.
-Stop following a connection when evidence shows that the downstream contract is unaffected in the selected configuration.
-Record that boundary or the unresolved question.
-Do not audit unrelated dependencies or workspace packages.
-
-Apply these routing decisions separately from completion:
-
-| Applicability | Next action |
-| --- | --- |
-| Relevant | Assign the confirmed connection and remaining traces to an owner. |
-| Unknown | Resolve the named question with the smallest relevant read or matching artifact. If unresolved, retain the affected coverage gap. |
-| Absent with evidence | Cite the inspected changes, connected boundaries and configuration that rule out relevance at both revisions. Use `not applicable` only under the area's rules. |
-
-Relevant does not mean defective. A relevant area with no findings returns `done`, not `not applicable`.
-Missing evidence cannot prove absence. This includes truncated diffs, inaccessible source, incomplete inventories and missing required captures.
-Make no claims about unreviewed configurations.
-
-Do not exclude test review merely because no test changed.
-Follow [Review Tests](../review-tests/SKILL.md).
-Area skills own proof rules and classifications. Routing cannot replace them.
+Filenames, diff size and unchanged test files do not prove absence.
 
 ### Choose review owners
 
-1. Review small connected source changes in the coordinator.
-   Apply each relevant [area skill](SKILL.md#review-areas).
-2. Keep a single continuous trace with one owner.
-   Do not split it merely to create parallel work or separate area labels.
-3. Delegate substantial independent bundles when their evidence needs separate context.
-   Compatible source areas can share a reviewer when they need the same paths and context.
-   Keep a distinct result for each area.
-4. If new evidence reveals independent complexity or an evidence boundary, split only the affected unfinished scope.
-   Name its connection, remaining question and owner.
-   If a continuous trace needs different expertise, transfer unfinished work rather than adding a second owner.
-   Do not add reviewers to seek agreement or repeat completed work.
-5. Select reviewer count from evidence scope, required isolation and inherited runtime limits.
-   Bound context by relevant evidence, not arbitrary agent or token caps.
-   If a required specialist is unavailable, retain supported work and report the uncovered scope.
+Review connected work directly unless delegation provides useful parallelism, isolation or specialist context.
+Keep one owner for a continuous trace by default, but split or transfer work when that improves evidence quality.
+Combine areas that need the same evidence and return distinct findings only when their conclusions differ.
+Do not duplicate completed analysis to seek agreement.
 
-Honor the user's model/effort configuration and tool rules.
-This skill does not authorize model overrides, nested fleets or new permissions.
-Fewer reviewers do not lower proof requirements or establish a measured speedup.
+Inherit the session's model, tools, permissions and execution limits.
+Newer models can choose different decomposition and tool strategies while preserving the evidence outcomes in this file.
 
 ### Combine test review
 
-Prefer one suitable owner for `review-tests` and `review-integration-tests` when they share evidence.
-A one-shot reviewer cannot accept follow-up messages.
+The test contract must be established independently of the changed implementation and changed expectations.
+The reviewer can choose reading order and tools.
+Changed code or author rationale cannot be the sole proof of intended behavior.
+Use base tests, public contracts, requirements and callers to identify preserved, removed or newly approved behavior.
 
-1. Supply both skills and the [integration-test evidence](#integration-test-evidence).
-   Include the baseline tests and changed expectations required by [Review Tests, step 1](../review-tests/SKILL.md#procedure).
-   First locate tests without displaying production bodies or mixed diff hunks.
-   Include inline modules, nested test functions, doctests and shared inputs through their specific changed-contract connections.
-   Follow Review Tests' [scope and recovery rules](../review-tests/SKILL.md#baseline-scope-and-reading-order).
-   Do not expand a test-only fix to every public example of an unchanged API.
-2. Enforce that step for each reviewer, regardless of the coordinator's earlier reading.
-   Withhold implementation code and explanations until the reviewer records baseline expectations and open questions.
-   This includes PR bodies, review bodies, discussion and other reviewers' conclusions.
-   Include inline tests and indented or fenced doctests. A source hunk can mix test and implementation text.
-   For one-shot reviewers, provide artifact paths and the required reading order rather than an implementation summary.
-   Save expectations incrementally by connected scope instead of collecting a whole-library baseline in one response.
-   Continue truncated reads from the missing range before exposing that scope's implementation.
-   If inherited context prevents this order, use a compliant context for the affected unfinished scope.
-   If none is available, mark only affected coverage `could not review`.
-3. Return separate scopes and statuses, plus the integration report and its human-review decision.
-
-Unlike output-only API review, test review continues into implementation after recording the baseline.
-Keep the same reviewer for that work.
-
-When complete inventory proves no integration-test changes, the coordinator can return that report without another agent.
-Missing inventory is a coverage gap, not a no-change result.
+Share relevant evidence between `review-tests` and `review-integration-tests`.
+Return separate classifications when both skills apply.
+Do not require a separate context merely because implementation was already read.
+If prior context creates uncertainty, state the limit and seek independent evidence rather than restarting by default.
 
 ### Protect API contexts
 
-Source-free means no reviewed source code or source-derived reasoning.
-General repository instructions about tools, permissions and review procedure do not violate this boundary.
-Repository implementation descriptions and source-based API conclusions violate this boundary.
-Matching rustdoc is allowed only in the design doc-check phase, to remove or narrow saved claims.
-Assess known inherited material by its content, not its filename or presence alone.
-Use one source-free reviewer for `review-public-api-changes` and `review-public-api` when the runtime supports the phases below.
-The source-reading coordinator and `review-api-design` cannot share this context.
+Public API classification must be justified by complete, matching generated surfaces.
+Source, discussion and docs can explain impact or disprove an interpretation.
+They cannot replace missing generated output or turn an incomplete comparison into no change.
 
-Before preparing captures, inspect the available reviewer's context contract.
-Make sure that it excludes inherited source context and premature item or design docs.
-Do not require a runtime attestation field that the tool does not expose.
-Use its documented context behavior and the actual supplied inputs.
-If that behavior or inherited content is unknown, mark affected API coverage `could not review` and record the uncertainty.
-Do not proceed without an established clean context.
-A new reviewer ID alone does not establish a clean context.
-The [classification](../review-public-api-changes/SKILL.md#evidence-boundary) and [design](../review-public-api/SKILL.md#evidence-boundary) skills define permitted evidence.
+An isolated reviewer context is optional.
+Track which claims come from generated output and which come from source.
+When using `review-public-api`, follow its evidence rules and keep renderer limits explicit.
+Docs can remove or narrow a design concern when they show intended use.
 
-If [package presence](#package-presence) proves that no library is affected, record the area-defined results without launching output reviewers.
-The mandatory API report still states the proved result.
-Otherwise, use this phased handoff:
-
-1. Supply the owner skills, package-presence facts, selected configuration and matching captures.
-   Finalize and save the classification report and its human-review decision without docs.
-2. Draft the design findings from the same captures.
-   Save the output-only draft, its evidence and requested doc paths before supplying any docs.
-   Keep the original draft unchanged for recovery.
-   An empty draft needs no docs, but does not excuse missing captures.
-3. Retrieve matching docs through [Public API evidence](#public-api-evidence).
-   Resume only the design phase under its [doc rules](../review-public-api/SKILL.md#review-rules).
-   Docs can only remove or narrow draft claims. Never reopen classification.
-4. Return a distinct result for each area, including the mandatory API report and human-review decision.
-   A completed classification does not establish completed design coverage.
-
-If the runtime cannot resume a one-shot reviewer, use one clean replacement for the doc phase.
-Supply the design skill, saved draft, matching captures and facts, and scoped docs.
-Do not repeat classification or draft new findings.
-Do not supply docs early merely to fit both phases into one call.
-Do not reuse a docs-exposed context for later output-only work.
-
-If required docs remain unavailable, retain the draft internally and report incomplete design coverage.
-
-If forbidden input reaches a reviewer, stop the phase and discard results produced after exposure.
-Treat unknown context history as exposure.
-Retain only results saved before exposure with a known evidence boundary.
-Apply the [single replacement limit](#bound-handoffs-and-follow-ups) to unfinished work in a clean context.
-Instructions to ignore prior input do not restore isolation.
-
-If a clean context is unavailable, mark the affected coverage `could not review` and retain valid completed results.
-Never substitute source-based API inference for either output-only area's result, classification or human-review signal.
-Separate, labeled [best-effort observations](#best-effort-completion) do not replace those results.
-Do not generate captures solely for a reviewer that cannot consume them.
-Generate them only when another permitted consumer needs them or the blocker changes.
-
-At merge, independent source evidence or a consumer probe can disprove an output-only claim.
-Keep the original result unchanged and record the refuting evidence separately.
-Remove or narrow the delivered claim without feeding that evidence back into the output-only phase.
-Do not add output-only claims or declare missing capture coverage complete from source evidence.
-Retain any material unresolved classification gap and derive the human-review decision from the surviving supported changes.
+If another source disproves an output-based claim, remove or narrow the delivered claim.
+Do not alter the underlying capture or hide a remaining classification gap.
 
 ### Bound handoffs and follow-ups
 
-Give each reviewer only the material needed for its scope:
+Give delegated work a clear objective, exact inputs, material scope, available evidence and required result.
+Include repository rules and execution limits.
+Keep large logs and inventories in artifacts.
 
-- The assigned skills, bounded objective, completion condition and required [per-area result](../review-delivery/findings-contract.md#area-result-and-final-summary).
-- Exact revisions or local input digest, packages, configuration, owned paths and connected contracts.
-- Applicable repository rules, execution limits and relevant CI or discussion facts.
-- Known findings with their evidence and thread IDs, matching artifacts and supplied commands.
-
-Apply the [test-first](#combine-test-review) and [API context](#protect-api-contexts) restrictions before sending any handoff.
-Separate shared facts from reviewer conclusions and unresolved questions.
-Use known findings to avoid duplicate reports, not as proof for another area's claims.
-Reuse the [coverage record](#record-coverage) and [artifact identities](#shared-setup-and-reuse), not separate handoff records.
-Keep full evidence in artifacts. Return the [compact area result](../review-delivery/findings-contract.md#area-result-and-final-summary), not another narrative.
-The coordinator reads that result and referenced coverage evidence, not all captured source again.
-Request a decisive excerpt or missing trace only for a specific gap or contradiction.
-
-Batch independent reads for the same question. Use bounded, non-overlapping ranges for large files and logs.
-Read every assigned change, then follow connected context. Do not reload whole files for another area using the same evidence.
-A truncated result is a gap: continue from the missing range, not from the beginning.
-Keep raw logs, speculative reasoning and unrelated skill instructions out of handoffs.
-Use runtime timestamps for timing analysis. Avoid clock-only calls, repeated fingerprints and custom scripts just to assemble short Markdown results.
-Keep required producer freshness checks and the [final input comparison](#when-the-head-moves).
-
-Reviewers do not post, repeat shared setup or launch reviewers.
-Merge each ready result into the existing coverage record and internal delivery draft.
-Retain findings and report blocks in their final format so delivery does not repeat the assembly.
-A reviewer exit, empty reply or unsupported operation does not establish completion.
-
-If the runtime supports follow-ups, reuse the reviewer ID for the same task.
-Send only changed facts, missing evidence and the exact question or completion condition.
-For a contradiction, include the conflicting claims and their evidence, not another reviewer's full reasoning.
-Resume blocked work only when its input or blocker changes.
-If a replacement is needed, use at most one for the unfinished scope.
-Supply saved valid results and matching evidence under the phase's restrictions.
-Do not chain replacements after the same failure or repeat completed coverage.
-If work remains blocked, retain valid results and mark the unfinished scope `could not review`.
+Let the receiver choose its internal method.
+Request follow-up only for a precise gap, contradiction or changed input.
+Reuse saved valid work and avoid sending another reviewer to repeat the same scope.
 
 ### Schedule evidence by dependency
 
-Prepare the [shared discovery record](#shared-setup-and-reuse) before assigning dependent work.
-Launch a reviewer only when all required inputs for its assigned phase are ready:
-
-| Work | Required inputs |
-| --- | --- |
-| Source inspection | Pinned source, scope, rules and shared discovery relevant to the assigned trace |
-| Test review | Baseline tests and changed expectations under the [test-first handoff](#combine-test-review) |
-| Output-only API phases | Matching complete captures and package-presence facts under the [phased handoff](#protect-api-contexts) |
-| Integration-test classification | The complete [owned test inventory](#integration-test-evidence) and required base/head contents |
-| Benchmark comparison | Shared package and benchmark discovery, followed by the helper's [run prerequisites](../metabench-compare/run-and-report.md#revision-directories-and-prerequisites) |
-| Benchmark follow-up | The helper's report and artifacts, including explicit blocked or partial results |
-
-Keep source-based performance review separate from measured conclusions.
-Finish source performance coverage without waiting for measurements.
-Use a retained reviewer or the coordinator for later measurement interpretation under `review-perf`.
-Do not repeat source review or delay a one-shot source reviewer for the helper's report.
-Known blockers produce coverage limits, not repeated waiting reviewers.
-Keep build and artifact directories separate.
-Run independent bundles in parallel only within inherited execution limits.
-
-When a dependency becomes ready, continue that review phase before unrelated preparation.
-Launch API review when captures are ready. Retrieve its scoped docs when the saved draft returns.
-Do not wait for all source reviewers before handling an independent completed result.
-Prefer completion notifications. Never poll for progress merely to fill a wait.
-Do not block on benchmark preparation while a review result or required follow-up is ready.
-Complete review reconciliation and delivery before starting pending benchmarks.
-If an isolated measurement is already active, its isolation rule takes precedence.
-
-The [benchmark measurement policy](../metabench-compare/SKILL.md#2-prepare-and-run-the-comparison) controls measurement isolation.
-If concurrent work is forbidden, finish or pause owned agents, builds, tests and background commands before measurement.
-This includes API capture and benchmark preparation commands.
-Make sure that no other owned work remains active. If it cannot pause safely, wait for it to finish.
-Resume other work only after the isolated measurement period ends.
-Do not stop unrelated processes to make room.
+Start work when its required inputs are available.
+Handle ready results and material follow-ups before optional preparation.
+Run independent work in parallel when this does not violate measurement isolation or shared-input safety.
+Use completion notifications instead of progress polling.
 
 ## Shared setup and reuse
 
-Inherit the session's permissions and execution limits. A child or worktree is not a sandbox.
-Never switch the shared checkout, rewrite lockfiles or mutate reviewed inputs.
-Do not fetch all dependencies or build the workspace before source review.
+Never mutate reviewed inputs or switch a shared checkout to produce evidence.
+Collect package ownership and reusable discovery once when practical.
+Reuse an artifact when its inputs, scope, configuration and tool behavior match the new use.
+If inputs change, rebuild only dependent evidence.
 
-The coordinator collects package metadata, changed-path ownership and test/benchmark ownership once for both revisions.
-The benchmark helper owns native-case listing and benchmark commands.
-Keep the complete inventories separate from selected review scopes.
-Supply matching records to consumers instead of repeating discovery per area.
-Use [package presence](#package-presence), [integration-test evidence](#integration-test-evidence)
-and [benchmark evidence](#benchmark-evidence) for their scope and ownership rules.
+Producers own their detailed freshness rules:
 
-Record each artifact's identity beside its path:
-
-| Identity | Required evidence |
-| --- | --- |
-| Inputs | Exact revision, plus the input digest for local changes |
-| Scope | Package, manifest, library or target, and inventory coverage |
-| Configuration | Features, default-feature mode, target, flags and relevant environment |
-| Tools | Resolved compiler and Cargo versions, plus generator or measurement tool versions |
-| Result | Producing command, completion status and known gaps |
-
-Reuse an artifact only when every applicable identity field matches the requested work.
-A filename, toolchain alias or unchanged `HEAD` alone does not establish a match.
-Review local inputs in place, including staged, unstaged and untracked changes.
-A clean checkout is not a substitute.
-If inputs change during production, mark the artifact stale and rebuild only dependent evidence.
-Missing identity evidence prevents reuse.
-
-Each evidence owner still controls completeness, freshness and comparability.
-Follow [Public Docs](../review-public-docs/SKILL.md#2-generate-rustdoc-json-once-per-revision) for JSON reuse.
-Follow the [benchmark run contract](../metabench-compare/run-and-report.md) for digests, configuration and measurement reuse.
-Do not apply API feature defaults to benchmarks or treat partial output as complete.
-
-### Repair shared setup once
-
-Record each setup result's host, artifact identity, error and affected consumers.
-The coordinator owns one bounded repair attempt for a shared blocker.
-Consumers reuse that result instead of repeating probes, installation or failed builds.
-Share prerequisite results across packages only when their required setup matches.
-Repair only a diagnosed cause within inherited permissions.
-Before rerunning a failed command, identify the changed input or prerequisite that addresses its failure.
-If nothing changed, retain the blocker without retrying.
-Install only a required missing tool after command evidence and within inherited permissions.
-Do not add `--offline` unless the caller or repository requires it.
-An uncached dependency is not an authorization failure.
-After a missing-dependency failure, use normal lock-preserving dependency acquisition when network access and inherited permissions allow it.
-If acquisition is prohibited or fails, retain that exact blocker for all affected consumers.
-Do not substitute tools to clear a blocker.
-After a repair, regenerate affected evidence before launching its waiting consumers.
-If repair fails, retain the exact cause and continue independent work.
-Do not restart the repair budget per area.
+- `review-public-docs` owns rustdoc JSON generation and reuse.
+- `review-public-api` and `review-public-api-changes` own public-surface evidence.
+- `review-integration-tests` owns integration-test inventory.
+- `metabench-compare` owns benchmark setup, isolation and measurement.
 
 ## Package presence
 
-Map changed files to packages at both revisions.
-Retain the complete package inventory with exact revisions or the local input digest.
-Workspace membership alone does not make a package affected.
+Map affected packages and library targets at base and head.
+Use available metadata, manifests and history.
+Prove absence from a complete inventory, not from a failed build.
+Track added, removed, renamed and moved libraries.
 
-Keep source-review scope separate from the API capture set.
-Use [applicability routing](#establish-applicability) to identify source consumers.
-Their public surface can remain unchanged.
-For API captures, include affected libraries and consumers whose surfaces depend on changed inputs or contracts.
-Record the connection or unresolved question for each included consumer.
-Do not exclude a consumer while its possible surface change remains unresolved.
-
-Use `cargo metadata --locked --no-deps --format-version 1` when permitted.
-Otherwise read the complete workspace/package inventory at each revision.
-Match renamed or moved packages by manifest history, package name and library target.
-
-| Base | Head | Result |
-| --- | --- | --- |
-| Present | Present | Compare both real surfaces |
-| Absent | Present | Added library, every head item is new |
-| Present | Absent | Removed library, every base item is removed |
-| Unknown | Any | Resolve inventory before claiming coverage |
-| Any | Unknown | Resolve inventory before claiming coverage |
-
-Prove absence from a complete inventory, not failed builds or PR descriptions.
-An absent side is a logical empty surface, never fabricated tool output.
-Only complete inventory and routing evidence can establish that no library is affected.
-An affected library still needs matching captures even when source inspection predicts no API change.
+Include consumers only when a changed input can affect their public surface.
+Unresolved connections remain coverage questions.
 
 ## Public API evidence
 
-An API capture is saved `cargo public-api` output.
-Apply [package presence](#package-presence) before capture setup.
-If no library is affected, skip captures under those rules.
-Otherwise, prepare captures once for both public API areas.
+When a Rust library surface can change, provide complete base and head captures for each affected configuration.
+Keep package, features, target, toolchain and rendering behavior comparable.
+Use any supported producer that satisfies the specialist skills' evidence requirements.
+Record tool identity and material renderer limits.
 
-1. Select package/library, features, default-feature mode, target, toolchain and flags.
-   Without a caller configuration, use `--all-features` and the host target.
-   Keep both revisions comparable.
-2. Apply the [shared identity rules](#shared-setup-and-reuse) before reusing captures or JSON.
-   Use separate owned revision and target directories.
-3. Read installed `cargo public-api --help` and version once for the selected setup.
-   Install the official tool only after a missing-tool failure and within permissions:
-   `cargo +stable install cargo-public-api --locked`.
-4. Generate lock-preserving rustdoc JSON with the
-   [public-docs generation procedure](../review-public-docs/SKILL.md#2-generate-rustdoc-json-once-per-revision).
-   Reuse this JSON later for doc retrieval.
-   Make sure that the selected compiler resolves directly.
-   `rustup toolchain list` alone does not establish absence of a custom Microsoft toolchain.
-5. Render full output from saved JSON with the command below.
-   Help can omit supported flags. If support is unclear, try this documented command once against matching saved JSON.
-
-   ```text
-   cargo public-api --rustdoc-json <json-path> --color=never --include function-parameter-names
-   ```
-
-   Save stdout as the full API capture. `--locked` belongs on Cargo's JSON
-   generation command, not on a `cargo-public-api` version that rejects it.
-   Do not use `-sss`, which hides impls needed for absence claims.
-   Record the installed version, exit status and output.
-   An unrecognized flag is a capability limit. Use a documented compatible path or report the blocker, not repeated flag guesses.
-6. If JSON generation fails on `-Z`, use only the selected compiler's supported
-   path within inherited limits. Do not silently substitute nightly, enable
-   bootstrap against caller policy, or repeat the same failed command.
-   Record the failure under [shared setup recovery](#repair-shared-setup-once) and continue independent source review.
-7. At the doc phase of the [API handoff](#protect-api-contexts), request the draft's required docs from
-   [Review Public Docs](../review-public-docs/SKILL.md#3-extract-the-requested-docs).
-   Return its scoped bundle, not findings.
-
-Keep complete output and errors in artifacts. Supply reviewers with capture paths,
-exact configuration, package-presence facts and short diagnostics.
+Do not prescribe one command in the coordinator.
+If capture generation fails, continue independent work and apply [best-effort completion](#best-effort-completion).
 
 ## Integration-test evidence
 
-Prepare the complete inventory defined by [Review Integration Tests](../review-integration-tests/SKILL.md#procedure) once at both revisions.
-Retain ownership links and exact base/head contents, including unchanged tests affected by changed inputs.
-Share it with both test areas through the [test-first handoff](#combine-test-review), without repeating discovery.
-
-Pass established requirements or maintainer decisions separately from PR claims.
-Supply focused commands or matching CI evidence within inherited execution limits.
-Follow the [test evidence rules](../review-tests/SKILL.md#evidence) and [integration classification rules](../review-integration-tests/SKILL.md#procedure).
-
-Keep the full inventory in artifacts, not the public report.
+When integration-test contracts can change, inventory affected targets and their shared inputs at both revisions.
+Include discovery and execution configuration that can add, remove or skip a target.
+Use base expectations as independent evidence.
+Keep full inventories in artifacts.
 
 ## Benchmark evidence
 
-Give `metabench-compare` exact revisions, shared package metadata, benchmark ownership,
-local inputs, repository rules, host and owned paths. Include completed discovery and its gaps.
-Its [selection and measurement policy](../metabench-compare/SKILL.md) owns the
-three-crate limit, native-case discovery, scheduling and comparisons. Do not repeat that policy in prompts.
+Run benchmarks when the user asks or when measured performance evidence is material and an eligible target exists.
+Give `metabench-compare` exact inputs, relevant repository rules and existing discovery.
+The helper chooses commands and owns measurement isolation.
 
-Send its report and paths to raw artifacts to `review-perf`. Retain the complete report
-for delivery, including blocked or inapplicable results.
-The performance reviewer interprets the supplied results without rerunning benchmarks or expanding crate selection.
-Keep unmeasured cost concerns conditional.
-Resolve host availability and execution permission before native-case preparation.
-If blocked, keep selected crates and known targets, with unknown case counts where necessary.
-Do not compile, transfer inputs or request a new environment merely to replace unknown counts in a blocked report.
-
-Deliver the supported review before pending benchmark preparation or isolated execution.
-Keep its `### Benchmarks` block as a [pending or separate-result notice](../review-delivery/findings-contract.md#area-result-and-final-summary).
-Record the benchmark owner, pinned inputs, queued/running state and next action in the existing review record.
-Pending means work remains assigned, not that it was completed or silently dropped.
-Use `blocked` for a known execution blocker and `not applicable` only with the helper's absence evidence.
-Pending measurements alone do not make finished source coverage incomplete or prevent its verdict.
-They cannot support a performance claim.
-
-If measurements already run under an isolation rule, finish the active command or reach a safe pause before delivery.
-Do not overlap delivery work with isolated measurements or stop unrelated processes.
-After delivery, continue the queued comparison under the same measurement policy.
-Do not remove its inputs or artifacts before consumers finish.
-Send the pending owner and state with the review receipt so a coordinating session does not drop the follow-up.
-Use [Review Delivery's benchmark follow-up](../review-delivery/SKILL.md#benchmark-follow-up) for the later report and any supported performance findings.
-Benchmark completion does not trigger a new full review or an automatic vote or label change.
+Do not delay ready review findings for pending measurements.
+Record their owner, inputs and state, then use Review Delivery for an authorized follow-up.
 
 ## When the head moves
 
-Findings-only refresh requires a completed full-review baseline.
-After a lightweight approval, use the [mechanical procedure](mechanical-approval.md#5-deliver-and-retain-evidence) to reassess the complete PR.
-Skipped areas are not previous full coverage.
+Revalidate against the new inputs before publication.
+Use the delta and affected-contract graph to decide what work must repeat.
+Reuse completed work only when its inputs and dependencies still match.
 
-Record source head, target repository/ref, merge base and observed target tip
-separately. The merge base defines the reviewed PR diff. The target tip supplies
-integration context. Stale ADO `lastMergeTargetCommit` or CI metadata does not
-prove that the actual target branch is unchanged.
-
-| Change | Action |
+| Change | Minimum response |
 | --- | --- |
-| Retarget, changed merge base, force push or rebase | Fresh review |
-| New commits after incomplete coverage | Fresh review |
-| Fast-forward commits after complete coverage | Refresh existing findings, or run a full review if the caller requires it |
-| Target tip only, unchanged merge base and PR diff | Preserve source coverage, refresh CI/integration claims |
+| Retarget, merge-base change, rebase or force push | Rebuild scope and reassess affected work |
+| New commits | Review the delta and every contract it can affect |
+| Target-tip-only change | Refresh integration and CI claims |
+| Local input digest change | Review the changed local inputs |
 
-Before local delivery, make sure that the input digest still matches the reviewed state.
-If it changed, review the updated local state before delivery.
-Update affected inventories and artifacts, then reconcile every area's scope and status.
-Reuse completed work only when its inputs and relevant dependencies still match.
-If this work cannot finish, report incomplete coverage without a verdict for the new inputs.
+For an incremental refresh, preserve the original review revision and record the newly assessed revision.
+Revalidate every surviving finding against current code and discussion.
+Remove fixed findings, update moved evidence and mark uncertainty as a limit.
+Refresh compatibility reports only when their evidence still matches.
 
-For a findings-only refresh:
-
-1. Read the complete `reviewedHead..currentHead` delta and current affected source.
-   If this evidence is unavailable, request a fresh review.
-2. Make sure that every merged finding still applies, including pending and previously posted findings.
-   Keep unchanged root causes, update moved evidence, drop fixed causes and
-   report uncertain ones only as limits.
-3. Preserve full-review revision separately from the revalidated current head.
-   Do not search for new findings or claim full coverage of later commits.
-4. Pass surviving findings and their symbol/thread IDs to Review Delivery.
-   It maps them onto the full current PR diff and posts missing inline comments.
-   A refresh changes the vote to comment-only, not the placement of findings.
-5. Keep API/test classifications and benchmark results tied to their assessed
-   revisions. Mark unrechecked blocks historical. Do not make a new label
-   decision from stale reports or rerun benchmarks as part of a finding refresh.
-
-Use Review Delivery's [fresh provider checks](../review-delivery/SKILL.md#inputs-and-preparation) before publication and during write recovery.
-If the head moves during partial delivery, retain confirmed provider IDs and apply the table before recovering pending writes.
-A partial delivery does not turn a required fresh review into a findings-only refresh.
-Never publish a stale full report as current by adding a disclaimer.
-Historical publication requires an explicit request and remains comment-only.
-
-## Routing examples
-
-These examples apply the rules above. They do not waive required evidence.
-
-| Change | Scope and boundary |
-| --- | --- |
-| Private unit test moves child joins to the test thread | Read its baseline assertions, helpers and changed synchronization. Unchanged public doctests need a specific affected contract before inclusion. |
-| A baseline read truncates one helper line | Retrieve that range before source exposure. After exposure, recover only that contract in one clean replacement context. |
-| An API reviewer inherits general `AGENTS.md` workflow rules | This alone is not source exposure. Implementation descriptions or prior API conclusions still violate the boundary. |
-| A lockfile patch leaves test inputs and discovery unchanged | Reconcile dependency consumers for source review. Do not require their entire baseline to classify unchanged integration-test inputs. |
-| API generation fails on an uncached dependency | Attempt one permitted lock-preserving repair. Reuse its result across affected packages rather than imposing an unrequested offline policy. |
-| Gungraun has no authorized Linux host | Return a blocked measurement report without native-case execution. Continue source review and preserve the benchmark limit. |
-
-## Repository notes
-
-Use these only for the named repositories and when consistent with current rules.
-
-| Repository | Notes |
-| --- | --- |
-| `microsoft/oxidizer` | Prefer existing `tick`/`Timestamp`, `anyspawn`/`Spawner`, `seatbelt`, `recoverable`, `testing_aids` and `tracing`. Prefer `jiff` over `chrono`/`time`, and `opentelemetry` without an unneeded SDK. Cite decisive adopted `M-*` rules. |
-| ADO `o365exchange` / `ox-sdk` | Use its equivalents and consumed Oxidizer crates. Keep internal service details out of public-facing output. |
-| Other repositories | Follow local conventions. Do not introduce Oxidizer crates by default. |
-
-For Oxidizer, use targeted commands such as `just package=<crate> test <name>`,
-`cargo build -p <crate>` or `cargo +nightly miri test` only within inherited limits.
-Do not run blanket `just lint`, `just check` or `just format-check`.
-The formatting command can also fail on Windows path-length limits.
+If inputs move during publication, preserve confirmed provider IDs and return pending work for revalidation.
+Never present historical findings or measurements as current without explicit permission.

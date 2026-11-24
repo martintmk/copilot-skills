@@ -4,7 +4,7 @@ description: >
   Review Rust public contracts from source and diffs: construction, visibility,
   traits, macros, features, dependencies, errors and compatibility. Use for
   contract or error-policy changes and Review Lens. Not for runtime defects,
-  naming-only concerns or output-only API audits.
+  naming-only concerns or generated-surface API audits.
 ---
 
 # Review API Design
@@ -103,4 +103,4 @@ Coverage names the crates, modules and API families checked, dependency and
 feature decisions, and error conventions reviewed, even with no findings.
 Missing generated API captures do not prevent this source-based area from finishing when its own evidence is complete.
 For the coordinator's [best-effort fallback](../review-lens/coordinator-reference.md#best-effort-completion), retain source-supported observations with exact symbols and configuration.
-Do not claim a complete exported-surface comparison or replace the separate output-only API reports.
+Do not claim a complete exported-surface comparison or replace generated-surface API classifications.

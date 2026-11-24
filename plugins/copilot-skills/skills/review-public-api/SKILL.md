@@ -1,31 +1,33 @@
 ---
 name: review-public-api
 description: >
-  Audit Rust public API design from complete cargo-public-api output, then use
-  rustdoc to remove or narrow claims. Use for whole-crate output-only audits
-  or changed public items in Review Lens. Not for source, runtime, performance
-  or documentation-quality findings.
+  Audit Rust public API design using complete cargo-public-api output as the
+  contract evidence. Use source and rustdoc for context without filling gaps in
+  the generated surface. Use for whole-crate audits or changed public items in
+  Review Lens. Not for runtime, performance or documentation-quality findings.
 ---
 
 # Review Public API
 
-Judge a library's public surface the way a consumer sees it: from
-`cargo public-api` output alone. Apply idiomatic Rust conventions and the
+Judge a library's public surface the way a consumer sees it.
+Use `cargo public-api` output as the decisive surface evidence.
+Apply idiomatic Rust conventions and the
 API-visible [Pragmatic Rust Guidelines][pragmatic-rust].
 
-Reading only the output keeps the review honest about what users actually get.
-It also sets limits: output cannot prove correctness, validation, panics,
+Generated output keeps claims grounded in what users receive.
+It cannot prove correctness, validation, panics,
 soundness, performance, redaction or docs quality. State these limits once in
 coverage.
 
 ## Evidence boundary
 
-- **Draft from output only.** Do not open source, manifests, lockfiles, build
-  scripts, tests, examples, diffs, history or rendered docs while drafting. Do
-  not use `cargo metadata`, rust-analyzer or code search to find claims.
-- **Docs can only remove or narrow claims.** After the draft, read the
-  rustdoc of the items you criticize. Docs can show a choice was deliberate.
-  They never add findings, raise severity or prove runtime behavior.
+- **Prove surface claims from generated output.** Source context does not invalidate the audit.
+  It cannot replace missing output or establish that an omitted item exists or changed.
+- **Use context to test interpretations.** Source, callers and rustdoc can remove,
+  narrow or explain a concern. They can support impact, but cannot create an
+  API-surface finding that the output does not show.
+- **Track evidence provenance.** Separate generated-surface facts from contextual
+  reasoning and state renderer limits.
 - **Report only.** Never edit, post or vote.
 
 ## Renderer limits
@@ -34,7 +36,7 @@ Full output can still omit Rust syntax. For example, cargo-public-api can hide d
 `Type<T>` without `= DefaultType` does not prove that the default was removed or that callers must supply `T`.
 Require version-specific rendering evidence before treating an omitted property as an API removal.
 If output cannot establish a material changed contract, report that specific limit rather than inventing a break or a clean classification.
-Keep the evidence boundary. Do not inspect source or raw rustdoc JSON to fill the gap.
+Do not inspect source or raw rustdoc JSON to fill a generated-surface gap.
 
 ## Review rules
 
@@ -65,14 +67,13 @@ Keep the evidence boundary. Do not inspect source or raw rustdoc JSON to fill th
    surface. A change review covers changed items and signatures, using
    unchanged neighbors only as context. Separate existing concerns from new
    ones. A crate that emits only its root module is valid output.
-   For change reviews, reuse the [complete comparison](../review-public-api-changes/SKILL.md#classify-the-change) across both output-only areas.
+   For change reviews, reuse the [complete comparison](../review-public-api-changes/SKILL.md#classify-the-change) across both public API areas.
    Retain full captures, but inspect unchanged items only when a changed contract or absence claim needs them.
    This does not narrow a standalone whole-surface audit.
-4. **Draft, then check against docs.** Draft findings with the smallest
-   decisive output excerpts. Request matching rustdoc text for each item the
-   draft depends on, its owner and trait, and applicable module or crate docs.
-   Check every claim, including design questions and claims that an API is
-   already suitable.
+4. **Validate interpretations with context.** Draft surface concerns from the
+   generated output. Use relevant rustdoc, source and callers to test intent and
+   consumer impact. The model can choose when to read them, but the final claim
+   must retain decisive output evidence.
 
    | Docs show | Action |
    | --- | --- |
@@ -80,14 +81,13 @@ Keep the evidence boundary. Do not inspect source or raw rustdoc JSON to fill th
    | the claim's premise is wrong, or the choice is a documented deliberate exception | Remove the claim. |
    | the answer to a design question | Remove the question. |
    | part of the claim is wrong | Keep only the part the output still proves. |
-   | conflicting or missing docs | Keep the claim; note the gap in coverage. |
+   | conflicting or missing context | Keep only what the output proves; note the limit. |
 
    Examples: facade docs can defeat "accidental foreign re-export"; documented
    thread-local intent can refute an assumed `Send` requirement. Rewrite
-   narrowed titles and sections to match what survives. If the draft has claims
-   and the required docs could not be retrieved, report that limit; never
-   return an unchecked draft. This differs from successfully retrieved docs
-   with no explanation. An empty draft needs no docs.
+   narrowed titles and sections to match what survives.
+   Missing context limits interpretation but does not invalidate a finding fully
+   proved by the public surface.
 
 ## Specialist questions
 

@@ -39,7 +39,7 @@ the entry-point guide.
 | Skill | Use it for |
 | --- | --- |
 | [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Processes user-sized batches sequentially with inherited model configuration and GitHub Agent merge for CI repairs and eligible bot feedback. Keeps automatic merging off. Announces green PRs in Teams and learns after each merge. |
-| [`review-lens`](skills/review-lens/SKILL.md) | Lightweight approval for proven mechanical PRs with no API changes, or evidence-led full reviews across eleven areas with compact reports and separate benchmarks. |
+| [`review-lens`](skills/review-lens/SKILL.md) | Lightweight approval for proven mechanical PRs with no API changes, or risk-based reviews that use relevant specialist skills and evidence. |
 | [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
 | [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Test-first review of lost coverage, behavior changes even without test edits, test style and supported test utilities. |
@@ -49,7 +49,7 @@ the entry-point guide.
 | [`review-naming`](skills/review-naming/SKILL.md) | Sibling naming conventions and unnecessary abstractions. |
 | [`review-telemetry`](skills/review-telemetry/SKILL.md) | Signal contracts, OpenTelemetry conventions, cardinality and duplicate instrumentation. |
 | [`review-consistency`](skills/review-consistency/SKILL.md) | Agreement between code, public docs, examples and related guides, including stale defaults or conflicting instructions. |
-| [`review-public-api`](skills/review-public-api/SKILL.md) | An output-only `cargo public-api` audit, with claims checked against rustdoc. |
+| [`review-public-api`](skills/review-public-api/SKILL.md) | A `cargo public-api` audit whose surface claims stay grounded in generated output and are tested against context. |
 | [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | The always-present breaking/additive/no-change public API report, with concise Rust signatures and a human-review signal for any API change. |
 | [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including shared inputs, target discovery and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
@@ -73,38 +73,38 @@ Other changes or incomplete classification evidence continue through the full re
 Skipped specialist areas and benchmarks are not claimed as reviewed.
 Explicit full-review and benchmark requests retain their scope. The Teams coordinator continues to request full reviews.
 
-Area skills own specialist evidence rules. The coordinator supplies revisions,
-shared artifacts and inherited execution limits.
-The [findings contract](skills/review-delivery/findings-contract.md) owns format,
-severity and summaries. `review-delivery` owns posting for both review modes.
+Each layer has one owner:
 
-The [full Review Lens procedure](skills/review-lens/SKILL.md) accounts for all eleven
-areas without requiring eleven agents. It keeps connected source changes with
-one owner and delegates substantial independent work.
+| Owner | Responsibility |
+| --- | --- |
+| Area skills | Specialist evidence and classification rules |
+| Review Lens | Scope, shared evidence, reviewer assignments and recovery |
+| Review Delivery | Publication, rolling reports, votes, labels, owned-thread closure and write recovery |
+| Teams channel coordinator | Channel requests, child scheduling, cooldowns and delivery receipts |
+
+The [findings contract](skills/review-delivery/findings-contract.md) defines format, severity and summaries.
+Use the reviewed repository's own library conventions and validation limits.
+
+The [full Review Lens procedure](skills/review-lens/SKILL.md) considers all review
+areas and applies specialists where the change creates material risk.
+It keeps connected source changes together and delegates when that improves evidence or throughput.
 Shared discovery and matching artifacts avoid repeated setup.
 Unknown relevance remains an open question, not an exclusion.
-Initial routing uses the complete path inventory. Each owner then reads its tests and full source diff without duplicated coordinator reads.
+Initial routing uses the complete path inventory and affected contracts.
 
-The coordinator uses [bounded handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups)
-with access to complete evidence. Ready review results and required follow-ups take priority over optional preparation.
-It assembles the report as results arrive, while raw evidence and path inventories stay in artifacts.
-Each test reviewer follows the
-[test-first order](skills/review-lens/coordinator-reference.md#combine-test-review).
-Baseline discovery uses test-only ranges before mixed source hunks.
-It follows changed contracts rather than every test of an unchanged API.
-Late discoveries receive bounded recovery for the affected scope, not a repeated whole review.
-Both output-only API areas can share one source-free reviewer through the
-[phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
-General repository workflow rules do not count as implementation exposure.
-The coordinator establishes context capability before preparing output-only captures.
+The coordinator uses [bounded handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups) and assembles results as they arrive.
+Test reviewers establish baseline behavior independently of changed code and expectations.
+Public API reviewers prove surface claims from matching generated output.
+Models can choose reading order, context layout, tools and work allocation.
+Raw evidence and complete inventories stay in artifacts.
 The benchmark helper owns [measurement isolation](skills/metabench-compare/SKILL.md#2-prepare-and-run-the-comparison).
 Pending benchmarks do not delay a ready review.
 An unavailable authorized Linux host stops executable benchmark preparation, not source review.
 The review records their state, and [separate delivery](skills/review-delivery/SKILL.md#benchmark-follow-up) carries the later measurements.
 
-[Best-effort completion](skills/review-lens/coordinator-reference.md#best-effort-completion) is the default when prerequisites remain unavailable after bounded recovery.
-It finishes independent areas and retains clearly labeled source-based API observations when generated captures are missing.
-It also preserves completed scopes when reviewer context runs out.
+[Adaptive recovery](skills/review-lens/coordinator-reference.md#best-effort-completion) preserves completed scopes and continues while another approach can add evidence.
+It stops repeated unchanged failures instead of imposing fixed attempt counts.
+When captures remain missing, supported source-based API observations stay separate from the incomplete generated-surface reports.
 Unfinished required areas remain explicit and prevent approval or a complete-review claim.
 Missing benchmark measurements alone do not invalidate completed source coverage.
 
@@ -125,8 +125,9 @@ Fast-path approval and escalation text uses it too.
 | Requester's or poster's own PR | Comment, no verdict. |
 | Report only | Nothing posted. |
 
-Each finding has AI attribution, a concrete title, **Problem**, **Why this matters**
-and **Suggested fix**. Design notes omit only the fix.
+Each finding has AI attribution, a concrete title, the problem, its impact and a suggested fix.
+The default headings are optional when a shorter structure communicates the same facts.
+Design notes request no change.
 The summary has one attribution and links inline threads instead of repeating
 their bodies. Preparation logs, hashes and full file inventories stay in artifacts.
 When resolution is permitted, delivery closes its own informational summary and design-note threads after reading their full discussion.
@@ -134,11 +135,12 @@ It keeps comments visible and leaves unresolved defects, nits, questions and req
 GitHub top-level comments and review bodies have no resolved state.
 The [thread procedure](skills/review-delivery/SKILL.md#close-owned-non-actionable-threads) defines ownership, provider status and recovery rules.
 
-Every full Review Lens summary also includes three reports. The public API report
+When applicable, a Review Lens summary includes compatibility reports.
+The public API report
 states **Breaking Changes**, **Public API Additions** or **No API Changes** and
 groups additions by public family with concise callable signatures.
 The [compact API report](skills/review-public-api-changes/SKILL.md#report) preserves every distinct break without copying whole declarations or repeated impl lists.
-The integration-test report covers package `tests/` targets and their shared inputs.
+The integration-test report covers affected package `tests/` targets and their shared inputs.
 It reports breaking, additive-only, behavior-preserving or no changes.
 Missing inventory cannot establish no changes.
 Unchanged integration-test inputs need complete inventory evidence, not every dependency consumer's test baseline.
@@ -148,7 +150,7 @@ Review delivery adds `human-review-required` for any
 public API change or a breaking integration-test behavior, independently of the
 review verdict.
 
-The benchmark report shows metabench results and before/after instruction and allocation counts for every selected Gungraun case.
+Requested or material benchmark reports show metabench results and before/after instruction and allocation counts for every selected Gungraun case.
 It includes allocated bytes when measured, unavailable measurements and comparison limits.
 [Metabench Compare](skills/metabench-compare/SKILL.md) defines crate selection and execution.
 Its [report contract](skills/metabench-compare/run-and-report.md#side-by-side-results) defines the compact tables and saved artifacts.
@@ -230,7 +232,9 @@ user-provided channel for the project's GitHub or ADO repository.
 One same-session automation polls every 15 minutes from a saved coverage boundary.
 New replies to old roots count. A recent page alone does not prove complete coverage.
 
-Each PR has one owned child and one rolling report. The child owns PR writes.
+Each PR has one owned child and one rolling report.
+The child uses [Review Delivery](skills/review-delivery/SKILL.md#rolling-reports) for PR writes and returns a confirmed receipt.
+The coordinator tracks that receipt without repeating analysis or publication rules.
 New heads, retargeting, changed merge bases and explicit requests make work due.
 Target-tip advancement alone does not repeat an unchanged review.
 The four-hour default cooldown coalesces updates. Finished analysis survives

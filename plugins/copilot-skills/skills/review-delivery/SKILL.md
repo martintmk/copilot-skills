@@ -1,172 +1,153 @@
 ---
 name: review-delivery
 description: >
-  Deliver merged review findings to GitHub, Azure DevOps or a local report.
-  Keep findings inline on current code after new commits, reconcile prior
-  threads, close owned non-actionable threads, and recover partial writes without
-  duplicates. Deliver eligible mechanical approvals without claiming full coverage,
-  and benchmark follow-ups without repeating the review. Owns review events,
-  AI attribution and required human-review labels. Not for generating findings
+  Publish completed review results to GitHub, Azure DevOps or a local report.
+  Owns current inline anchors, rolling reports, votes, human-review labels,
+  owned non-actionable thread closure and partial-write recovery.
+  Use for full or focused reviews, eligible mechanical approvals and benchmark
+  follow-ups. Not for generating findings, scheduling reviews, code changes
   or formatting intermediate area output.
 ---
 
 # Review Delivery
 
-Publish supported findings once at their code locations. Reuse existing threads
-and any caller-owned rolling report. Delivery cannot invent evidence or expand
-write permissions.
+Publish supported findings once at their code locations.
+The caller owns analysis and scheduling. This skill owns publication and its receipt.
+Reuse existing threads and the authorized report location without expanding write permissions.
 
 ## Inputs and preparation
 
-Require review mode, merged [findings](findings-contract.md), coverage/outcome,
-assessed revision, current revalidated revision and post/report-only mode.
-For full and focused reviews, retain the full-review revision separately from later revalidated revisions.
-For PR reviews, also require PR identity, target ref and merge base.
-Accept prior report/review/thread IDs and pending writes.
-Without a PR target, use report-only mode and skip provider checks.
-For local inputs, use the caller's exact input identity, including its recorded input digest.
-For full Review Lens reviews, also require the three report blocks and the combined
-`human-review-required` decision with reasons.
-For `mechanical` mode, require the [lightweight evidence package](../review-lens/mechanical-approval.md#5-deliver-and-retain-evidence)
-instead of a full-review revision, eleven-area coverage and a benchmark report.
-Keep its assessed revision separate from any prior full-review revision.
-In a full review, the benchmark block can state pending under the [summary contract](findings-contract.md#area-result-and-final-summary).
-Do not wait for measurements to deliver otherwise supported review results.
-Use the retained result and evidence paths, not a second review or approval of the analysis.
-Resolve missing delivery inputs with the caller without importing all artifacts or repeating completed areas.
-Keep long logs in referenced artifacts.
-These limits do not replace the live provider checks below or required write readback.
+Require the mode, assessed inputs, current revalidated inputs and explicit post/report-only scope.
+For a PR, include provider identity, target ref and merge base.
+For local inputs, include the caller's input digest.
+Accept saved report/review/thread IDs, pending operations, report location, marker and submission cooldown.
 
-1. Finish the retained delivery draft using the
-   [summary contract](findings-contract.md#area-result-and-final-summary).
-   For mechanical mode, use the [lightweight summary](findings-contract.md#lightweight-mechanical-summary) instead.
-   If no draft exists, compose it from the compact area results.
-   Reuse supported finding text and required report blocks rather than rewriting the whole review.
-   Do not paste internal area narratives, delivery logs or historical proposals.
-2. Invoke `simple-english` for prose. Preserve the contract's exact attribution,
-   headings, code and technical facts. Check serialized bodies after rewriting.
-3. For PR reviews, read current lifecycle, head, target ref, merge base and submitted reviews.
-   If the PR is closed or merged, stop PR writes and return its terminal state.
-   If scope changed, return to the caller's
-   [head-movement procedure](../review-lens/coordinator-reference.md#when-the-head-moves).
-   Never fix a stale review by moving line numbers alone.
-4. Make sure that the label decision agrees with the current mandatory reports.
-   API additions/breaks or integration-test behavioral breaks require the label.
-   Otherwise both reports must be complete for `not required`.
-   Missing evidence means `undetermined` unless a proved change already requires
-   human review. Historical reports cannot supply a new current-head decision.
-   Benchmarks do not decide this signal.
+| Mode | Required results |
+| --- | --- |
+| Full or focused review | Merged findings, coverage, outcome and full-review revision separate from later revalidated revisions |
+| Full Review Lens review | Also any applicable compatibility or benchmark reports and their label decisions |
+| Mechanical approval | The complete [lightweight evidence package](../review-lens/mechanical-approval.md#5-deliver-and-retain-evidence), not full-review coverage |
+| Benchmark follow-up | Pinned benchmark report, `review-perf` interpretation and prior delivery IDs |
 
-Return the ready report or confirmed receipt after the required evidence and publication checks.
-Do not delay it for cleanup of owned temporary build directories.
-Keep cleanup assigned, preserve referenced evidence and report any cleanup failure separately.
+Resolve missing inputs with the caller without importing all artifacts or repeating analysis.
+A pending benchmark block does not delay supported review results.
+Without a PR target, use report-only mode and skip provider reads.
+Report-only mode never authorizes provider writes.
+Before drafting, make sure that supplied label decisions follow the [current-evidence rules](#human-review-label-and-completion).
 
-For a findings-only refresh with historical reports, retain their prior decision
-as historical and make no new label write from it.
+1. Finish the saved draft from compact results under the [findings and summary contract](findings-contract.md).
+   Preserve supported text and required blocks. Keep logs and internal narratives in artifacts.
+2. Invoke `simple-english` for prose without changing exact attribution, headings, code or facts.
+   Make sure that serialized bodies still match the intended text.
+3. Apply the mode-specific rules below, reconcile existing output and choose the permitted action.
+4. Publish through the provider procedure, then return the [confirmed receipt](#human-review-label-and-completion).
+
+Before each provider write, including retries and thread-status changes:
+
+- Read live lifecycle and make sure that the head, target ref and merge base still match the revalidated inputs.
+- Stop writes for a closed or merged PR.
+- If scope changed, return pending work to the caller's [head-movement procedure](../review-lens/coordinator-reference.md#when-the-head-moves).
+- Require permission for that operation and honor its caller-defined cooldown.
+- Reconcile uncertain prior writes under [ownership and recovery](#ownership-and-recovery).
+
+Moving anchors alone does not revalidate stale findings.
+For local reports, make sure that the input digest still matches before returning current results.
 
 ## Lightweight mechanical approval
 
-Accept this mode only from the [Review Lens mechanical procedure](../review-lens/mechanical-approval.md).
-Require its complete eligibility proof, not an incomplete full review renamed as mechanical.
-Both classification reports must be current and complete, with a combined `not required` label decision.
-If evidence fails these conditions, return to the caller without voting.
+Accept only complete proof from the [mechanical procedure](../review-lens/mechanical-approval.md), not an incomplete full review renamed as mechanical.
+Require current, complete API/test reports with combined `not required`.
+Use the [lightweight summary](findings-contract.md#lightweight-mechanical-summary), keeping the reports as supporting evidence.
 
-Use the [lightweight summary](findings-contract.md#lightweight-mechanical-summary).
-Keep API/test reports as supporting evidence rather than posting the full-review blocks.
-Reconcile existing discussion before voting. A substantive unresolved finding blocks this path.
-Apply every restriction in the action table and the caller's narrower write scope.
-
-Immediately before submission, refresh all lightweight prerequisites, including CI, labels and active review holds.
-If eligibility or revisions changed, return to the caller without a pending approval write.
-Use the normal provider write and read-back procedure, including recovery of uncertain writes.
-Do not start a monitor, dismiss reviews or add a human-review label through this path.
+Before submission, refresh every mechanical prerequisite, including CI, labels, discussion and active review holds.
+An unresolved substantive finding or changed eligibility returns this mode to the caller without voting.
+Apply the action table and common write gates.
+Do not start a monitor, dismiss reviews or add a human-review label through this mode.
 
 ## Benchmark follow-up
 
-Accept the helper's pinned report, `review-perf` interpretation, prior delivery IDs and the existing write scope.
 This follow-up does not require the other area reports or another full review.
+Apply the common write gates and these additional limits:
 
-1. Recheck lifecycle, head, target and merge base, or the local input digest.
-   Stop provider writes for a closed or merged PR.
-   If the assessed head, merge base, target ref or local inputs changed, retain the results locally as historical.
-   Do not present them as current or publish historical results without explicit permission.
-   A target-tip change alone follows the existing [head-movement rules](../review-lens/coordinator-reference.md#when-the-head-moves).
-2. Deliver the complete compact benchmark report separately, under its [report contract](../metabench-compare/run-and-report.md#side-by-side-results).
-   In report-only mode, return the artifact without provider writes.
-   Otherwise use one owned benchmark comment or an authorized report location. Reuse its saved ID on recovery.
-   Permission for a fixed comment set or summary edits alone does not authorize an extra comment.
-   If no follow-up location is permitted, retain the artifact and report the delivery limit.
-3. Keep the existing review outcome and API/test label decision.
-   Measurements do not automatically change the verdict, vote or label.
-   If `review-perf` supplies a new supported finding, deliver it through the normal evidence, anchor and permission gates.
-   Reconsider the verdict only from current findings and sufficient coverage, not from benchmark status alone.
-4. Read back writes and retain their IDs under [write recovery](#ownership-and-recovery).
-   If authorized, replace the original pending notice with the report link and assessed revisions.
-   Leave unrelated report content unchanged. Apply the existing non-actionable thread rules.
-   Never insert a new benchmark result into a newer or otherwise mismatched review summary.
+1. If assessed inputs changed, retain measurements locally as historical.
+   Historical publication needs explicit permission and cannot present results as current.
+   A target-tip-only change follows the caller's head-movement rules.
+2. Deliver the complete compact report under the [benchmark contract](../metabench-compare/run-and-report.md#side-by-side-results).
+   Use one owned benchmark comment or an authorized report location.
+   Summary-edit permission alone does not authorize another comment.
+   If no location is permitted, retain the report and state the delivery limit.
+3. Preserve the review outcome and API/test label decision.
+   Measurements alone never change a verdict, vote or label.
+   Route new supported `review-perf` findings through normal evidence, anchor and permission gates.
+   Reconsider a verdict only from current findings and sufficient coverage.
+4. After confirmed delivery, update the matching pending notice only when authorized.
+   Link the report and assessed revisions without changing unrelated content or a newer summary.
 
 ## Reconcile inline findings
 
 Use the full current PR diff, not only the delta since the previous review.
 The commit delta revalidates findings. The cumulative diff supplies anchors.
 
-1. Read existing threads with replies, status and current locations.
-   Match root cause and symbol, including findings already in a top-level report.
-   Return disputed or explicitly deferred findings to the caller with their
-   disposition. Do not repost them as new issues without new evidence.
-2. Reuse an unresolved inline thread that still represents the finding on the
-   current code. Provider line tracking alone is not proof that the finding still applies.
-3. For each new or still-applicable unrepresented finding, locate the smallest
-   relevant block in the current diff. Map renames and moved lines from current source.
-   A report-only finding is not an existing inline comment.
-4. If an old thread is outdated and no longer locates the affected block, create
-   one current inline replacement with a link to it. Do not duplicate threads
-   that the provider already mapped correctly.
-5. If the root cause is fixed, omit it from current findings. If it is uncertain,
-   retain it only as a coverage limit, not a proven defect.
-   Neither decision authorizes resolving or editing another person's thread.
-6. Put full findings in the summary only when no valid anchor exists or an
-   authorized inline write is blocked. State the reason and pending delivery.
-   Refresh, incomplete coverage and new commits are not anchor failures.
+1. Read existing threads, replies, status and locations.
+   Match root cause and symbol, including findings in top-level reports.
+   Return disputed, deferred or uncertain applicability to the caller instead of inventing a new finding or repeating analysis.
+2. Reuse an unresolved thread that represents a revalidated finding on current code.
+   Provider line tracking alone does not prove applicability.
+3. Anchor unrepresented findings to the smallest relevant block in the cumulative diff, accounting for renames and moved lines.
+   If an outdated thread no longer locates the block, link it from one current replacement.
+   Do not replace threads the provider still maps correctly.
+4. Omit findings the caller proved fixed. Keep uncertain claims only as coverage limits.
+   Neither outcome authorizes editing or resolving another person's thread.
+5. Put full findings in the summary only without a valid anchor or when inline delivery is blocked.
+   State the exact limit and pending work. New commits and incomplete coverage are not anchor failures.
 
-Preserve the finding's evidence and correction when its location changes.
-Do not attach it to unrelated code merely to obtain an inline comment.
-Public-API reviewers supply symbols, not source anchors. Delivery can map those
-symbols to the diff without feeding source back into their output-only review.
+Preserve evidence and corrections when locations change. Never anchor to unrelated code.
+Map public API symbols to source anchors without changing the generated-surface evidence.
+
+## Rolling reports
+
+Use the caller's report location and marker under [ownership and recovery](#ownership-and-recovery).
+Recover an existing report ID before creating another.
+Rebuild from current results under the summary contract, not from preparation logs.
+Include the caller's required revision and coverage fields, then its marker.
+
+Count only current applicable findings in unresolved inline threads.
+Link those threads instead of repeating their bodies.
+Include unanchored or pending findings separately with their delivery limits.
+Keep fixed findings out of the count even when their threads remain open.
+Skip identical bodies and unchanged provider actions.
+
+If a separate rolling report is authorized, link it from the submitted review body instead of duplicating it.
+The report does not replace a required provider vote or prove inline delivery.
 
 ## Close owned non-actionable threads
 
-A non-actionable comment reports information without asking for a change, answer or decision.
-Keep summaries and design notes visible, but do not leave their threads open as unfinished review work.
-Non-blocking defects and nits still request changes. Keep their unresolved threads open.
+A non-actionable comment requests no change, answer or decision.
+Keep summaries and design notes visible while closing eligible owned threads.
+Non-blocking defects and nits remain actionable.
 
-1. Require thread-resolution permission within the caller's write scope.
-   Permission to post or edit comments alone does not grant it.
-   Use the [ownership rules](#ownership-and-recovery) to prove that this delivery owns the thread's root comment.
-   AI attribution alone does not prove ownership.
-2. Read the whole current thread, including replies and status.
-   Close an owned summary or design-note thread only when it contains no unresolved finding, question or requested decision.
-   A summary that only links separate finding threads can close. Leave those finding threads open.
-   Keep summaries with unanchored findings, pending finding delivery or requests for human action open.
-   Do not close another person's thread or a thread with an unanswered actionable reply.
-3. After confirming publication, resolve eligible GitHub review threads through a supported thread-resolution operation.
-   GitHub review bodies and top-level issue comments have no resolved state. Leave them visible without a resolution write.
-   For ADO, discover the supported status operation and mark eligible threads `Closed`, not `Fixed`.
-   Do not delete comments or change the review vote to close a thread.
-4. Apply this rule to new comments and owned prior output during reconciliation.
-   Recheck lifecycle and discussion before each status write. Skip already resolved threads.
-   Read back the resolved or closed state before recording completion.
-   If permission, ownership or the operation is unavailable, record the specific delivery limit.
-   Recover uncertain status writes through [write recovery](#ownership-and-recovery), not by reposting comments.
+1. Require explicit thread-resolution scope and proof of root-comment ownership.
+   Comment permission and AI attribution are insufficient.
+2. Read the complete current thread before each status write.
+   Close only an owned summary or design note without unresolved findings, pending finding delivery or unanswered actionable replies.
+   A summary containing only links to separate finding threads can close. Leave those threads open.
+3. After confirmed publication, use supported provider operations:
+   Resolve GitHub review threads. Top-level comments and review bodies have no resolved state.
+   Mark eligible ADO threads `Closed`, not `Fixed`.
+   Never delete comments or change votes to close threads.
+4. Apply the same rule to owned prior output and skip already resolved threads.
+   Read back status before recording completion. Report unavailable permission, ownership or capability as a delivery limit.
 
-This procedure manages the review's own informational output.
-For actions on received feedback, use [Feedback Autonomy](../feedback-autonomy/SKILL.md), including its separate resolution gate.
+Use the common recovery procedure for uncertain status writes.
+Actions on received feedback belong to [Feedback Autonomy](../feedback-autonomy/SKILL.md), not this informational cleanup.
 
 ## Choose the action
 
 Use the [shared severity policy](findings-contract.md#evidence-and-severity).
 Decide from all current findings, including existing unresolved threads.
-Read effective approvals by distinct provider reviewer IDs before voting.
+Resolve PR-author, requester and posting-account identities before voting.
+If these identities are uncertain, withhold the vote and report the limit.
+Read effective approvals by distinct provider reviewer IDs.
 Exclude pending/dismissed GitHub reviews and superseded votes.
 For ADO, count individual positive reviewer votes, not assumed group membership.
 
@@ -181,7 +162,7 @@ For ADO, count individual positive reviewer votes, not assumed group membership.
 | Requester's or posting account's own PR | `COMMENT`, no `Verdict:` | No vote |
 | Report only | No provider writes | No provider writes |
 
-The mechanical row does not claim complete eleven-area coverage.
+The mechanical row does not claim complete full-review coverage.
 Its required evidence must be complete. Missing eligibility proof means no lightweight approval.
 The most restrictive row wins. Preserve serious findings when voting restrictions
 prevent a blocking action. Do not call the review clean or discard those findings.
@@ -189,84 +170,75 @@ An approval sentence does not replace a confirmed provider vote.
 Follow a caller's narrower write scope or submission cooldown.
 No vote means no vote write, not a `NoVote` action that clears an existing vote.
 
-## GitHub
+## Provider publication
 
-Use serialized JSON in a file with `gh api --input`, not shell-quoted Markdown
-or `-f body=@file`. For a new submitted review:
+Discover the available provider operations and schemas at runtime.
+Use the provider's current cumulative diff and exact revalidated revision.
+Prefer native review, comment, vote, label and thread-status operations over hand-built HTTP requests.
+If only a lower-level API is available, follow its discovered schema.
 
-```text
-POST repos/<owner>/<repo>/pulls/<n>/reviews
-{ body, event, commit_id, comments: [{ path, line, side, body }] }
-```
+For inline findings:
 
-Pin `commit_id` to the revalidated head. `RIGHT` uses head lines, `LEFT` removed
-base lines. Anchor within current diff hunks. For ranges, add `start_line` and
-`start_side` with `start_line < line`. Omit them for one line.
-A suggestion replaces exactly its selected range.
+- Anchor to the smallest relevant current diff range.
+- Distinguish added, changed and removed code with the provider's current side and iteration model.
+- Map renamed or moved code from current source.
+- Make a suggestion replace exactly its selected range.
+- If the provider cannot represent a valid anchor, retain that finding in the summary with the limitation.
 
-Recheck head and scope immediately before submission. Read back the submitted
-review and comments, including event, commit, body and locations.
-An `APPROVE` must read back as `APPROVED`. A pending draft is not delivery.
-Fix rejected `422` payloads. Treat `403`/`429` as access/rate limits, not anchor errors.
+For each submitted review, comment, vote, label or status change, read back:
 
-## Azure DevOps
+- Body and provider author.
+- Revision or iteration association.
+- File and range for inline findings.
+- Effective event, vote, label or thread status.
 
-Discover the configured PR, changes, thread and voting schemas. Pass their actual
-organization fields. Use `!<id>` or the canonical PR URL, never `#<id>`.
-
-1. Read the current iteration's cumulative changes against the common commit.
-   In tools exposing `get_changes`, use `compareTo: 0` and paginate.
-2. Create one thread per finding with `filePath`, precise head-side ranges and
-   that file's positive `changeTrackingId`. Supply both comparing iteration IDs
-   when the schema supports them. In this configured schema, common-base comparison uses the current iteration
-   for both `firstComparingIteration` and `secondComparingIteration`.
-   A prior-iteration comparison instead uses its actual left iteration.
-   Discover equivalent fields on other instances instead of assuming this shape.
-3. Use 1-based line and character offsets. Whole-line start is `1`, end is the
-   last line's character count plus one. Never use `0` or a guessed large offset.
-4. Read back body, file/range and iteration association before counting a finding
-   as inline. If fields are omitted, use a supported detail read.
-   If association cannot be confirmed, retain delivery as unverified, not unanchored success.
-5. Write one unanchored summary or update the caller's owned rolling summary.
-   Apply the [non-actionable thread procedure](#close-owned-non-actionable-threads) after confirming its contents.
-   Vote only after required comments are confirmed and the action table permits it.
-   Do not add a reviewer to obtain voting access without separate authorization.
-
-If the schema cannot anchor removed-only code or a specific comparison, retain
-that finding in the summary with the limitation. Do not move all findings there.
-Recheck source and review scope before each write. Record successful IDs because
-ADO threads are not an atomic batch.
+An unsubmitted draft is not delivery.
+Treat permission, rate-limit and schema failures as their actual limits, not as anchor failures.
+Do not add reviewers or change unrelated provider state to obtain voting access.
+When provider writes are not atomic, save each confirmed ID before the next write.
 
 ## Ownership and recovery
 
-Before editing a rolling comment, require its saved ID, marker, PR scope and
-expected provider author. Prefer stable actor IDs. When IDs are omitted, a
-provider-returned login or `uniqueName` must map unambiguously to the authenticated
-posting account. Display names, body attribution and a marker alone do not prove ownership.
-Honor stricter caller identity requirements. Missing proof blocks that edit,
-not independent analysis or other separately authorized actions.
+Before editing owned output, require its saved ID, PR scope, expected author and marker where the output uses one.
+Prefer stable actor IDs. A provider login or `uniqueName` must map unambiguously to the authenticated account when IDs are absent.
+Display names, attribution and a marker alone do not prove ownership.
+Honor stricter caller identity rules. Missing proof blocks that edit, not separately authorized work.
 
-Record each intended operation and returned ID. After a timeout, interruption or
-read-back failure, inspect existing output before retrying. Recover only missing
-or rejected writes. Do not rerun review areas or repost the whole batch.
-If the head moves mid-batch, keep confirmed IDs and return pending items for revalidation.
+Record intended operations before writing and save returned IDs.
+After a timeout, interruption or failed read-back, inspect provider output before retrying.
+Recover only confirmed missing or rejected writes, never an uncertain creation.
+Read back each effect before marking it confirmed.
+If inputs move, keep confirmed IDs and return pending operations for revalidation.
 
-Keep analysis completion separate from delivery completion. An unsupported vote,
-label or anchor is a specific delivery limit, not a reason to erase finished coverage.
-Never replace a live report with a stale preparation artifact.
+Keep analysis completion separate from delivery completion.
+Unsupported votes, labels or anchors are explicit delivery limits, not lost analysis.
+Never rerun review areas, repost a whole batch or replace live output with a stale draft to recover publication.
 
 ## Human-review label and completion
 
-When required and authorized, add the exact `human-review-required` PR label
-without changing other labels. On GitHub, create a missing repository label
-with description `Requires human review` only when permitted.
-On ADO, use only a discovered PR-label operation, never a work-item tag.
-Recheck the head before writing and read the label back.
-Never remove the label. For `undetermined`, make no label change.
-If writes are prohibited or unavailable, state that the required label remains unapplied.
+Combine current applicable API and integration-test decisions:
 
-Report-only returns the complete public report without provider writes.
-After posting, apply the [non-actionable thread procedure](#close-owned-non-actionable-threads).
-Return the report/review URL, finding-to-thread map, confirmed resolution states,
-revision and remaining delivery limits. Do not echo the full posted report.
-Remove owned payload scripts, but retain results needed for recovery.
+| Evidence | Decision |
+| --- | --- |
+| Proven API addition/break or integration-test behavioral break | `required`, even if other evidence is incomplete |
+| Every applicable report is complete without those changes | `not required` |
+| Missing decisive evidence without a proven qualifying change | `undetermined` |
+
+If neither contract is affected, the complete scope evidence can establish `not required` without empty reports.
+Benchmarks do not decide this signal. Historical reports cannot authorize a current label write.
+When required and authorized, add `human-review-required` without changing other labels.
+On GitHub, create a missing repository label with description `Requires human review` only when permitted.
+On ADO, use a discovered PR-label operation, never a work-item tag.
+Never remove this label. For `undetermined`, make no change.
+If the required write is unavailable or prohibited, report the label as unapplied.
+
+After publication, apply the [owned-thread procedure](#close-owned-non-actionable-threads) and return one receipt:
+
+- Report/review URL and confirmed provider IDs.
+- Assessed and revalidated revisions, coverage outcome and finding-to-thread map.
+- Confirmed vote/event, label and resolution states.
+- Pending operations, benchmark owner/state and remaining delivery limits.
+
+Report-only returns the complete public report. After posting, return the receipt without echoing the full report.
+Preserve recovery evidence and remove owned payload scripts.
+Return ready results without waiting for temporary-build cleanup, but keep cleanup assigned and report failures separately.

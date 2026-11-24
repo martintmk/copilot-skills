@@ -15,14 +15,14 @@ Review Delivery owns votes, attribution, permissions and write recovery.
    Defer PR bodies, review bodies and discussion until the relevant test baselines are recorded.
 3. Inventory all changed paths, including renamed, generated and binary inputs.
    If existing evidence already rules out mechanical scope, continue the full review without completing a redundant lightweight pass.
-   Read baseline tests and changed expectations using the [test-first order](coordinator-reference.md#combine-test-review).
+   Establish baseline test behavior independently under the [test evidence guidance](coordinator-reference.md#combine-test-review).
    Then read the complete merge-base-to-head diff, connected source and relevant discussion.
    Recover truncated content from the exact revisions. Unread changes block lightweight approval.
 4. Account for every changed path. Small size, filenames, labels and author claims do not prove eligibility.
 
 Keep the caller's execution limits. Reuse matching evidence before running focused commands.
 Do not install tools, execute PR scripts with credentials or expand permissions to obtain approval.
-Use direct inspection and only the isolated classification context required below, not an eleven-area reviewer fleet.
+Use direct inspection and only the classification work required below, not a full reviewer fleet.
 
 ## 2. Prove a permitted change
 
@@ -62,7 +62,7 @@ A small diff that disables a failing test or bypasses a pipeline gate is not a r
 
 1. Prepare the [package inventory and API evidence](coordinator-reference.md#public-api-evidence).
    Run [Public API Changes](../review-public-api-changes/SKILL.md) with matching base/head evidence.
-   Preserve its output-only boundary in a [source-free context](coordinator-reference.md#protect-api-contexts).
+   Preserve its generated-output evidence boundary under the [API evidence guidance](coordinator-reference.md#protect-api-contexts).
    Run classification only, not the separate API design audit or its doc phase.
    Require `No API Changes` for every affected library and relevant configuration.
    Use the inventory-based no-library case only when its proof is complete.

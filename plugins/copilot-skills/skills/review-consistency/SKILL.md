@@ -6,7 +6,7 @@ description: >
   Use for "check code and docs agree", "review documentation consistency",
   or when review-lens routes a change to documented behavior here.
   Not for prose styling, naming preferences, runtime defect hunting or
-  output-only API audits.
+  generated-surface API audits.
 ---
 
 # Review Consistency

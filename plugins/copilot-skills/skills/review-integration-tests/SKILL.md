@@ -1,20 +1,19 @@
 ---
 name: review-integration-tests
 description: >
-  Produce the mandatory Review Lens report for Rust integration tests in each
-  package's tests directory, including shared inputs and discovery configuration.
+  Classify affected Rust integration-test contracts in package tests
+  directories, including shared inputs and discovery configuration.
   Detects removed, weakened or changed expectations, distinguishes additive-only
   coverage, and requires human-review-required for confirmed behavioral
-  breaks. Use for Review Lens or a focused integration-test change report. Not
-  for inline unit tests, general coverage review, production correctness or
-  posting.
+  breaks. Use when Review Lens identifies possible integration-test impact or
+  for a focused report. Not for inline unit tests, general coverage review,
+  production correctness or posting.
 ---
 
 # Review Integration Tests
 
-Report how package integration tests changed and whether their established
-behavioral contract was broken. Run this area for every Review Lens review,
-including changes that do not touch integration tests.
+Report how affected package integration tests changed and whether their
+established behavioral contract was broken.
 
 This area covers targets below a package's `tests/` directory at either revision.
 Include their fixtures, snapshots, helpers and test-only configuration, even when those inputs live outside `tests/`.
@@ -28,8 +27,8 @@ Leave inline unit tests, doctests and whole-diff behavior review to
    Trace changed shared inputs to their consuming tests, including unchanged test files.
    Inspect target discovery and execution configuration, including `autotests`, `[[test]]`, target paths, `required-features` and `cfg`.
    Compare both revisions before treating a deleted or moved target as absent.
-   Read baseline tests and changed expectations before implementation explanations under the [test-first procedure](../review-tests/SKILL.md#procedure).
-   Apply that reading requirement to affected test contracts, not every test that uses a changed product dependency.
+   Establish baseline expectations independently under the [test evidence rules](../review-tests/SKILL.md#baseline-scope-and-reading-order).
+   The reviewer can choose reading order, but changed implementation and expectations cannot be the sole baseline proof.
    An unchanged-input classification needs complete ownership and discovery evidence, not a whole-consumer test baseline.
    If only product dependency versions change, inspect test-specific dependencies and execution selectors for effects on this inventory.
    Leave unresolved product behavior to the relevant source areas unless it changes a covered expectation, shared input or execution path.
@@ -70,9 +69,10 @@ Otherwise use `undetermined`, not a clean classification.
 
 ## Report
 
-Always return one concise report. Start with the attribution required by the
-[findings contract](../review-delivery/findings-contract.md), then use this
-shape:
+Return one concise report when this classification applies.
+Start with the attribution required by the
+[findings contract](../review-delivery/findings-contract.md).
+The following shape is an example:
 
 ```markdown
 **Posted by an AI agent**

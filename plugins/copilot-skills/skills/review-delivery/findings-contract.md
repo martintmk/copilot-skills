@@ -5,7 +5,7 @@ reviews. Area skills add evidence rules, not another template.
 `review-public-docs` returns data. `metabench-compare` returns measurements.
 Neither produces findings.
 
-## Attribution and comment shape
+## Attribution and finding content
 
 Every separately posted summary or finding starts with one exact attribution
 on its own first line, followed by a blank line:
@@ -17,6 +17,8 @@ on its own first line, followed by a blank line:
 
 Do not prepend a publication note. Embedded report blocks inherit the summary's
 attribution. Remove their repeated attribution, internal status and handoff fields.
+
+This shape is a useful default:
 
 ```markdown
 **Posted by an AI agent · Non-blocking**
@@ -33,12 +35,12 @@ attribution. Remove their repeated attribution, internal status and handoff fiel
 <Specific correction.>
 ```
 
-Use the exact headings in that order, normally one or two sentences each.
-The title names the defect, not just the topic or proposed fix.
-A Design note uses an observation title and omits only **Suggested fix**.
-Its **Problem** explains the evidenced tradeoff without asserting a defect.
+Each actionable finding must make the problem, impact and proposed correction clear.
+The model can use the default headings or a more compact structure that preserves those facts.
+The title names the defect, not only the topic or proposed fix.
+A Design note names the observation and requests no change.
 Clean summaries need no empty finding sections.
-Design notes request no change. Non-blocking issues and nits remain actionable.
+Non-blocking issues and nits remain actionable.
 [Review Delivery](SKILL.md#close-owned-non-actionable-threads) owns their thread status.
 
 One root cause per finding. Name the symbol and keep `path:line` in location
@@ -73,73 +75,58 @@ Never lower a finding's severity or omit it merely to obtain approval.
 
 ## Area result and final summary
 
-Return findings in impact order, followed by one coverage/status line.
-Use `done`, `not applicable` or `could not review`, with a reason for the last two.
-Include reviewed scope and material evidence limits.
-No findings requires only attribution and that line.
+Return findings in impact order with reviewed scope and material limits.
+Use clear status language such as `done`, `not applicable` or `could not review`
+when another skill or caller needs a structured status.
 Area agents do not choose the combined verdict or post their own results.
 Route focused reviews through Review Delivery too.
 
-For a bundled review, return each finding once and one compact scope/status entry per assigned area.
-Reuse evidence references across entries. Keep the complete path inventory and trace details in artifacts.
-Do not add clean-area essays, execution diaries or another copy of the same findings.
+For a bundled review, return each finding once.
+Add compact area statuses only for delegated, blocked or materially limited scopes.
+Keep inventories and trace details in artifacts.
 
-Report areas return their required block, coverage/status and tri-state label
-decision: `required`, `not required` or `undetermined`.
+Applicable API and integration-test classifications return their report,
+coverage and label decision: `required`, `not required` or `undetermined`.
 Keep commands, file inventories, full logs and setup diagnostics in artifacts.
 The public report includes only the evidence needed to understand its classification.
 
-Full Review Lens reviews use the summary below.
+Full Review Lens reviews use the requirements below.
 The [lightweight mechanical summary](#lightweight-mechanical-summary) is a separate mode, not a claim of full coverage.
-The public summary is a current report, not a concatenation of area outputs.
+The public summary is a current report, not a concatenation of area outputs or a fixed template.
 Keep its length proportional to findings and changed contracts, not the number of reviewed paths.
 Do not remove findings, lower severity or hide material limits to meet a length target.
 
-1. Start with one attribution, outcome, reviewed topics and material limits.
+1. Include one attribution, outcome, reviewed scope and material limits.
    For incomplete coverage, add **Warning: Incomplete review**, name missing
    topics with one-clause reasons, and state that no overall verdict is given.
 2. Record full-review and revalidated revisions separately after a findings-only
    refresh. Say that later commits received no new-finding review.
-3. Include exactly one `### Public API changes`, `### Integration tests` and
-   `### Benchmarks` block, in that order. Keep required classifications, concise
-   Rust signatures and meaningful behavioral deltas.
-   If benchmarks are ready, include compact results or link the separately delivered report with its revisions and limits.
-   While an assigned comparison is queued or running, state `Pending`, that state and the pinned revisions.
-   Use the [compact API report](../review-public-api-changes/SKILL.md#report), not the full capture inventory.
-4. Put findings without confirmed inline delivery after those blocks, with the
+3. Include public API or integration-test reports when those contracts were affected.
+   Keep classifications, concise signatures and meaningful behavioral deltas.
+   Use the [compact API report](../review-public-api-changes/SKILL.md#report), not its full capture inventory.
+4. Include benchmark results when requested, measured or material to the review.
+   If assigned measurements are pending, state their pinned inputs and status.
+5. Put findings without confirmed inline delivery in the summary, with the
    anchor or delivery limitation. For confirmed inline findings, give a count
    and thread links, not duplicate bodies.
 
-For unavailable API/test evidence, use **Could not assess** and the reason.
-For a [best-effort review](../review-lens/coordinator-reference.md#best-effort-completion), keep the required opening warning and report-block order above.
-Start the summary with the supported finding count or scoped result, then briefly name the gaps.
-Keep the no-verdict statement when required areas remain unfinished.
-The API block can include separately labeled source-based observations after **Could not assess**.
-Those observations do not replace the classification, complete output-only coverage or determine its human-review signal.
-For benchmarks, retain `partial`, `blocked` or `not applicable` with the reason.
-`Pending` is a delivery state, not a completed benchmark result.
-It does not make finished source performance coverage incomplete or prevent an otherwise supported verdict.
-Do not claim measured performance while it is pending.
-Follow the [benchmark report format](../metabench-compare/run-and-report.md#side-by-side-results).
-The later [benchmark follow-up](SKILL.md#benchmark-follow-up) contains the complete compact results without repeating the full review.
-Keep full metrics and run details in artifacts, not the public summary.
-Unless requested, keep the eleven-area ledger internal.
-Public coverage names the reviewed scope and every material gap without listing every clean area.
-Do not expand the compact report, drop benchmark cases for its assessed revisions or link inaccessible local paths.
-Old report blocks and measurements remain pinned to their assessed revisions
-until their required evidence is refreshed. Never present them as current.
-When rebuilding a current rolling report, remove historical measurement tables from its current benchmark block.
-Keep them in retained artifacts or link an existing authorized historical report with its assessed revisions.
-Do not erase evidence or publish an extra historical comment to shorten the current report.
-For blocked measurements, state the cause, pinned revisions and measured coverage once.
-Keep failed setup histories and repeated unavailable-metric lists in artifacts.
-These limits do not remove rows from a usable complete or partial measurement report.
+For unavailable contract evidence, write **Could not assess** and name the reason.
+A [best-effort review](../review-lens/coordinator-reference.md#best-effort-completion)
+keeps the incomplete warning, supported findings and no-verdict statement.
+Label source-based API observations separately from the generated-surface classification.
+They do not complete that classification or determine its human-review signal.
 
-Remove obsolete preparation claims such as "pending/unposted", "report only" or
-"no provider writes" when publishing. Keep a current pending-benchmark notice and actual delivery limits.
-Do not repair contradictory prose by prepending another disclaimer.
-Internal hashes, agent IDs, permission histories and exhaustive inventories stay
-out of the public summary.
+Describe applicable benchmarks as pending, complete, partial, blocked or not applicable.
+Do not make measured claims without measurements.
+Use the [benchmark report format](../metabench-compare/run-and-report.md#side-by-side-results)
+for completed results and deliver later results through [benchmark follow-up](SKILL.md#benchmark-follow-up).
+
+Keep public output current and concise.
+Do not publish stale reports as current, inaccessible local links, internal IDs,
+permission history, full inventories, logs or setup diagnostics.
+Do not publish an area ledger unless the user asks for it.
+
+One valid incomplete summary is:
 
 ```markdown
 **Posted by an AI agent**
@@ -155,34 +142,28 @@ No overall verdict is given. Tests and benchmarks were not run.
 **Could not assess**
 
 Matching base/head API output is unavailable.
-
-### Integration tests
-
-**No Integration Test Changes**
-
-### Benchmarks
-
-Blocked: Gungraun requires a Linux host.
 ```
 
-Standalone reviews outside Review Lens do not require the three report blocks.
+Standalone reviews outside Review Lens include only information relevant to their scope.
 Requester-owned or posting-account-owned PRs omit public `Verdict:` framing.
 Missing measurements limit performance claims, not finished source-review coverage.
 
 ## Lightweight mechanical summary
 
-Use this shape only after the [mechanical eligibility procedure](../review-lens/mechanical-approval.md) succeeds.
+Use this content only after the [mechanical eligibility procedure](../review-lens/mechanical-approval.md) succeeds.
 Preserve the exact AI attribution. Name the category, decisive evidence and assessed head.
 Use accessible evidence links, not local artifact paths.
 State that this is not a full review and that benchmarks were not run.
-Keep full API/test evidence in artifacts rather than adding the three full-review blocks.
+Keep full API/test evidence in artifacts.
+
+The following is an example:
 
 ```markdown
 **Posted by an AI agent**
 
 Lightweight mechanical approval at <head>: <category and concise evidence>.
 No public API changes. Existing test expectations and coverage are preserved.
-All current checks passed. This is not a full eleven-area review. Benchmarks were not run.
+All current checks passed. This is not a full risk-based review. Benchmarks were not run.
 ```
 
 In report-only mode, use "Eligible for lightweight mechanical approval. No vote submitted." instead of claiming approval.
