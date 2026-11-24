@@ -6,7 +6,6 @@ No public API change is allowed, including compatible additions.
 An unchanged API alone does not make a PR mechanical.
 
 This procedure owns lightweight classification, not monitoring or provider writes.
-Read the linked rules without invoking the monitor skill.
 Review Delivery owns votes, attribution, permissions and write recovery.
 
 ## 1. Establish the scope
@@ -27,8 +26,21 @@ Use direct inspection and only the isolated classification context required belo
 
 ## 2. Prove a permitted change
 
-Apply the [three bounded-impact and coverage invariants](../pr-auto-approve/SKILL.md#three-invariants).
-This path is stricter: it permits no public API additions.
+Require all three invariants for the complete diff:
+
+1. Bounded impact. Permit only the categories below.
+   Small means bounded impact, not few lines.
+   Broad feature work, redesign and bypasses require a full review.
+2. Unchanged contracts. Existing callers, implementers and supported configurations remain compatible.
+   Include source, binary, wire and CLI contracts.
+   Check defaults, exports, features, bounds, required members and enum variants.
+   No public API change is allowed, including additions.
+3. Preserved or expanded tests. Keep integration and end-to-end coverage unchanged or expanded.
+   Preserve baseline cases, assertions and execution across all suites, including fixtures, snapshots, discovery and CI configuration.
+   Never weaken assertions, rewrite expected results, skip tests, narrow matrices, lower thresholds or mask failures with retries, timeouts or suppressions.
+   Unit coverage cannot replace integration or end-to-end coverage.
+
+Green CI and coverage percentages alone prove none of these invariants.
 Every part of the diff must fit one or more categories below.
 Mixed changes qualify only when every part qualifies.
 One disqualifying change is enough to route to full review. Approval still requires proof for the complete diff.
@@ -59,7 +71,7 @@ A small diff that disables a failing test or bypasses a pipeline gate is not a r
 3. Prepare the [integration-test inventory](coordinator-reference.md#integration-test-evidence).
    Run [Integration Tests](../review-integration-tests/SKILL.md).
    Require a complete report with `human-review-required: not required`.
-4. Apply the shared coverage invariant to unit tests, doctests and other suites too.
+4. Apply the [coverage invariant](#2-prove-a-permitted-change) to unit tests, doctests and other suites too.
    Require the combined API/test human-review decision to be `not required`.
 
 Do not run the remaining specialist areas or benchmarks for this path.
@@ -68,10 +80,11 @@ An explicit benchmark or specialist request retains its requested scope instead 
 
 ## 4. Decide without starting a monitor
 
-Use only the opening approval prerequisites in [Decide](../pr-auto-approve/SKILL.md#decide).
-Do not apply its monitor actions, escalation, approval dismissal or stop handling.
+Require all three invariants and an open, non-draft, conflict-free PR.
+Require no active changes-requested review, known substantive finding or `human-review-required` label.
 Use all current GitHub check runs and commit statuses, or the corresponding ADO build, status and policy results.
 Require at least one reported check and successful completion of every reported check.
+Pending, failed, cancelled, skipped, neutral or unknown results block approval even when all required checks pass.
 Bind check evidence to the current head or a verified merge revision.
 Paginate complete results. Map provider states from the discovered schema.
 Treat unavailable or unmappable results as unknown, not success.

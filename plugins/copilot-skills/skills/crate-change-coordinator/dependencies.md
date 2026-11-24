@@ -44,7 +44,7 @@ WorkIQ access must permit reads and message writes in the supplied Teams channel
 Discover capabilities and use the actual schemas rather than assuming a fixed WorkIQ API.
 Report authentication or permission failures without retrying uncertain writes.
 
-`teams-self-message`, `pr-review-teams-channel`, `pr-auto-approve`, `review-lens`
+`teams-self-message`, `pr-review-teams-channel`, `review-lens`
 and `track-pr` are not dependencies.
 Another reviewer or process can use the Teams announcement, but this skill does not require their implementation.
 ADO PRs are unsupported. An external CI provider for a GitHub PR is a separate dependency.

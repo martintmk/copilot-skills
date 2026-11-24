@@ -54,11 +54,7 @@ the entry-point guide.
 | [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including shared inputs, target discovery and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery for full reviews, mechanical approvals and benchmark follow-ups, with current inline anchors and partial-write recovery. |
-| [`pr-auto-approve`](skills/pr-auto-approve/SKILL.md) | Monitor one GitHub PR until merged or handed off for human review; fast-track mechanical changes or proven small pipeline fixes, with compatible APIs, preserved coverage and revocable automated approval. |
-| [`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) | The small, side-effect-free decision: should this PR be automatically reviewed now? |
 | [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | GitHub and ADO reviews from Teams requests, with one child per PR, inline findings, one rolling report, 15-minute polling and a four-hour default cooldown. |
-| [`pr-review-radar`](skills/pr-review-radar/SKILL.md) | Newly discovered PRs worth reviewing, sent to Teams self-chat. |
-| [`pr-feedback-radar`](skills/pr-feedback-radar/SKILL.md) | New unanswered human PR feedback, prioritizing demonstrably blocking requests. |
 | [`feedback-autonomy`](skills/feedback-autonomy/SKILL.md) | Handles eligible automation and same-human PR-author instructions; finishes independent work before batching remaining approvals. |
 | [`minimal-local-validation`](skills/minimal-local-validation/SKILL.md) | Runs `cargo check` only for changed Rust crates, leaves comprehensive validation to CI, and continues queued work or prompts without waiting for checks. |
 | [`teams-self-message`](skills/teams-self-message/SKILL.md) | Delivery to the user's own Teams chat. |
@@ -76,7 +72,6 @@ Absent, pending, failed or unknown checks withhold approval without starting a m
 Other changes or incomplete classification evidence continue through the full review with reusable evidence.
 Skipped specialist areas and benchmarks are not claimed as reviewed.
 Explicit full-review and benchmark requests retain their scope. The Teams coordinator continues to request full reviews.
-This one-time route does not change `pr-auto-approve`, which owns its separate GitHub monitoring lifecycle.
 
 Area skills own specialist evidence rules. The coordinator supplies revisions,
 shared artifacts and inherited execution limits.
@@ -229,54 +224,6 @@ https://teams.microsoft.com/l/channel/...
 Instruction:
 Replace the deprecated tracing helper with the workspace helper.
 ```
-
-`pr-auto-approve` speeds approval of mechanical PRs and minimal, evidence-backed
-fixes for concrete pipeline failures. Small backward-compatible API additions
-are allowed; breaking changes and weakened integration/E2E coverage are not.
-Approval is a real GitHub APPROVE review with a short automation-attributed
-message, not a full Review Lens review.
-
-It monitors one PR until merged or labeled `human-review-required`, rechecking
-new commits and base changes. On escalation, it dismisses its own approval,
-applies the label and posts or updates one short PR comment explaining the
-specific reason human review is required and the action needed. It then cancels
-its owned monitoring trigger. Already-labeled PRs are not monitored, regardless
-of who applied the label; removing it does not automatically resume monitoring.
-Ordinary pending checks wait quietly without adding a human-review label.
-Fast approval requires at least one reported check and every check to complete
-successfully, not just required checks; absent, failed, skipped, neutral or
-unverified checks also wait without escalation solely for their check result.
-There are no inline findings or comment-heavy reviews. Monitoring continues
-after approval with no age cutoff; unmerged closures without the human-review
-label pause PR writes until reopening. Setup confirms a cadence and verifies a
-durable trigger.
-Installing or editing the skill starts nothing; it never merges.
-
-Run each auto-approve monitor in its own session for one PR, separate from the
-Teams review coordinator and its child sessions. Each monitor keeps its own
-per-session state and trigger. The Teams review coordinator keeps its own outcomes and
-automation in its dedicated coordinator session. Neither one clears the
-other's schedule, writes its state or treats the other's reviews as completed work.
-The `human-review-required` label is a GitHub handoff signal, not shared queue
-state.
-
-Review Lens can also apply this handoff label when its mandatory reports find a
-public API change or a breaking integration-test behavior. Auto-approve monitors
-observe the label and stop through their normal terminal path.
-
-```text
-Use pr-auto-approve to monitor https://github.com/OWNER/REPO/pull/NUMBER
-until merged or labeled human-review-required, checking every 10 minutes.
-```
-
-The radars discover and notify, not review or act. Each owns its eligibility
-and notification history; `teams-self-message` owns delivery. Digests use
-`Why review` / `Why respond`, not the code-review finding format.
-
-[`pr-review-eligibility`](skills/pr-review-eligibility/SKILL.md) is a separate,
-side-effect-free policy for label/request-based queues.
-It owns their age, draft, reviewer-count and retry rules.
-It does not gate the Teams channel monitor, which uses explicit channel requests.
 
 [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) watches a
 user-provided channel for the project's GitHub or ADO repository.

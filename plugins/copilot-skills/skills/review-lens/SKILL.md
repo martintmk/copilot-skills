@@ -26,7 +26,7 @@ The complete PR must qualify. A small diff or reassuring title is not proof.
 An explicit full-review request from the user or caller skips this path.
 Focused reviews, branches, commits and working-tree reviews keep their existing scope.
 Explicit benchmark requests retain their requested scope. Report-only mode never authorizes a vote.
-The lightweight path starts no monitor and does not invoke `pr-auto-approve`.
+The lightweight path starts no monitor.
 The procedure below describes the full review path.
 
 ## Review areas
