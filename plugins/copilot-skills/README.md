@@ -95,11 +95,23 @@ with access to complete evidence. Ready review results and required follow-ups t
 It assembles the report as results arrive, while raw evidence and path inventories stay in artifacts.
 Each test reviewer follows the
 [test-first order](skills/review-lens/coordinator-reference.md#combine-test-review).
+Baseline discovery uses test-only ranges before mixed source hunks.
+It follows changed contracts rather than every test of an unchanged API.
+Late discoveries receive bounded recovery for the affected scope, not a repeated whole review.
 Both output-only API areas can share one source-free reviewer through the
 [phased API handoff](skills/review-lens/coordinator-reference.md#protect-api-contexts).
+General repository workflow rules do not count as implementation exposure.
+The coordinator establishes context capability before preparing output-only captures.
 The benchmark helper owns [measurement isolation](skills/metabench-compare/SKILL.md#2-prepare-and-run-the-comparison).
 Pending benchmarks do not delay a ready review.
+An unavailable authorized Linux host stops executable benchmark preparation, not source review.
 The review records their state, and [separate delivery](skills/review-delivery/SKILL.md#benchmark-follow-up) carries the later measurements.
+
+[Best-effort completion](skills/review-lens/coordinator-reference.md#best-effort-completion) is the default when prerequisites remain unavailable after bounded recovery.
+It finishes independent areas and retains clearly labeled source-based API observations when generated captures are missing.
+It also preserves completed scopes when reviewer context runs out.
+Unfinished required areas remain explicit and prevent approval or a complete-review claim.
+Missing benchmark measurements alone do not invalidate completed source coverage.
 
 The owning session invokes Review Delivery directly from the saved results.
 Delivery checks current provider state and reads back writes.
@@ -134,6 +146,7 @@ The [compact API report](skills/review-public-api-changes/SKILL.md#report) prese
 The integration-test report covers package `tests/` targets and their shared inputs.
 It reports breaking, additive-only, behavior-preserving or no changes.
 Missing inventory cannot establish no changes.
+Unchanged integration-test inputs need complete inventory evidence, not every dependency consumer's test baseline.
 An omitted generic default in API output does not prove a breaking change.
 The [renderer limits](skills/review-public-api/SKILL.md#renderer-limits) define that evidence boundary.
 Review delivery adds `human-review-required` for any

@@ -112,6 +112,10 @@ Do not retry deterministic workload failures or edit the reviewed code.
 
 ## Side-by-side results
 
+If no usable measurements exist because execution is blocked, report the cause, pinned revisions, selected crates and known targets.
+State unknown case counts as inventory gaps. The per-case tables below do not apply to that blocked report.
+If any usable measurements exist, keep all measured, failed and missing cases under the rules below.
+
 Read the report schema and native-to-canonical identity mappings from the installed version.
 A canonical identity is the group, benchmark and case name.
 Use the union of inventories and report identities from both revisions.

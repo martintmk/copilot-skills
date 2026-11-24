@@ -111,6 +111,11 @@ Do not remove findings, lower severity or hide material limits to meet a length 
    and thread links, not duplicate bodies.
 
 For unavailable API/test evidence, use **Could not assess** and the reason.
+For a [best-effort review](../review-lens/coordinator-reference.md#best-effort-completion), keep the required opening warning and report-block order above.
+Start the summary with the supported finding count or scoped result, then briefly name the gaps.
+Keep the no-verdict statement when required areas remain unfinished.
+The API block can include separately labeled source-based observations after **Could not assess**.
+Those observations do not replace the classification, complete output-only coverage or determine its human-review signal.
 For benchmarks, retain `partial`, `blocked` or `not applicable` with the reason.
 `Pending` is a delivery state, not a completed benchmark result.
 It does not make finished source performance coverage incomplete or prevent an otherwise supported verdict.
@@ -120,9 +125,15 @@ The later [benchmark follow-up](SKILL.md#benchmark-follow-up) contains the compl
 Keep full metrics and run details in artifacts, not the public summary.
 Unless requested, keep the eleven-area ledger internal.
 Public coverage names the reviewed scope and every material gap without listing every clean area.
-Do not expand the compact report, drop benchmark cases or link inaccessible local paths.
+Do not expand the compact report, drop benchmark cases for its assessed revisions or link inaccessible local paths.
 Old report blocks and measurements remain pinned to their assessed revisions
 until their required evidence is refreshed. Never present them as current.
+When rebuilding a current rolling report, remove historical measurement tables from its current benchmark block.
+Keep them in retained artifacts or link an existing authorized historical report with its assessed revisions.
+Do not erase evidence or publish an extra historical comment to shorten the current report.
+For blocked measurements, state the cause, pinned revisions and measured coverage once.
+Keep failed setup histories and repeated unavailable-metric lists in artifacts.
+These limits do not remove rows from a usable complete or partial measurement report.
 
 Remove obsolete preparation claims such as "pending/unposted", "report only" or
 "no provider writes" when publishing. Keep a current pending-benchmark notice and actual delivery limits.
