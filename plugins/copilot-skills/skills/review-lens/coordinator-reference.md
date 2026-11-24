@@ -49,6 +49,43 @@ Missing execution proof limits findings, not completed source coverage.
 Missing source or unfinished traces remain unreviewed, even when no defects were found.
 Use `could not review` for required work that cannot finish.
 
+### Best-effort completion
+
+Best effort is the default when required evidence or execution remains unavailable after bounded recovery.
+It completes supported work instead of waiting indefinitely. It does not redefine missing evidence as completed coverage.
+Keep every area in the coverage record and continue all independent traces.
+
+| Limit | Best-effort action | Remaining boundary |
+| --- | --- | --- |
+| Missing API captures or a clean output-only context | Reuse matching captures or CI artifacts when available. Finish the separate source-based `review-api-design` area from accessible source, callers and docs. | Keep unfinished output-only areas `could not review`. A passing CI badge is not API evidence. |
+| No authorized Linux host for benchmarks | Reuse matching measured results or use an existing authorized host. Otherwise finish source-based performance review and report measurements as blocked. | No measured claim without usable measurements. Missing benchmarks alone do not make finished source coverage incomplete. |
+| Insufficient reviewer context | Save completed scopes and evidence references. Continue through bounded reads, or transfer only unfinished work under the existing owner and context rules. | Do not sample the remaining diff, restart completed scopes or discard supported findings. |
+| Required source or test evidence remains inaccessible | Finish reachable independent scopes and deliver their supported findings. Name the affected paths or contracts that remain unreviewed. | No clean conclusion for unread code or missing baseline contracts. |
+
+Reuse artifacts only under the [identity rules](#shared-setup-and-reuse).
+Apply the [shared repair limit](#repair-shared-setup-once) before another setup attempt.
+For context recovery, follow [bounded handoffs](#bound-handoffs-and-follow-ups) and the [test-first rules](#combine-test-review).
+Best effort grants no new host, installation, upload or provider-write permissions.
+If the caller requires a particular measurement or configuration, retain it as unmet rather than substituting another.
+
+When API captures remain missing, reuse the completed source-contract result instead of repeating that review.
+Label any observations `Source-based API observations, not a complete API classification`.
+Keep them separate from the mandatory output-only classification.
+Name the exact symbols and inspected configuration. Link supported defect threads rather than repeating their bodies.
+Source observations cannot complete either output-only area or determine its human-review signal.
+Keep source observations out of the output-only reviewers' evidence and results.
+Retain each area's `required` or `undetermined` decision under the [classification rules](../review-public-api-changes/SKILL.md#human-review-decision).
+Missing evidence never means `not required`.
+Apply [Review Delivery's label rules](../review-delivery/SKILL.md#inputs-and-preparation) without inventing a label requirement from a blocker alone.
+Missing source cannot support this fallback.
+
+Deliver once all independent work finishes and bounded recovery is exhausted or unavailable.
+State completed scope, supported findings and remaining gaps with the smallest missing prerequisite.
+Follow the [summary contract](../review-delivery/findings-contract.md#area-result-and-final-summary) and existing provider-event rules.
+Do not call an incomplete review clean, approve it or give it an overall verdict.
+Do not ask for broader access merely to remove an incomplete status.
+Resume blocked work only when its evidence, prerequisite or explicit request changes.
+
 ### Establish applicability
 
 Start from the complete changed-path inventory at the pinned revisions.
@@ -116,13 +153,19 @@ A one-shot reviewer cannot accept follow-up messages.
 
 1. Supply both skills and the [integration-test evidence](#integration-test-evidence).
    Include the baseline tests and changed expectations required by [Review Tests, step 1](../review-tests/SKILL.md#procedure).
+   First locate tests without displaying production bodies or mixed diff hunks.
+   Include inline modules, nested test functions, doctests and shared inputs through their specific changed-contract connections.
+   Follow Review Tests' [scope and recovery rules](../review-tests/SKILL.md#baseline-scope-and-reading-order).
+   Do not expand a test-only fix to every public example of an unchanged API.
 2. Enforce that step for each reviewer, regardless of the coordinator's earlier reading.
    Withhold implementation code and explanations until the reviewer records baseline expectations and open questions.
    This includes PR bodies, review bodies, discussion and other reviewers' conclusions.
    Include inline tests and indented or fenced doctests. A source hunk can mix test and implementation text.
    For one-shot reviewers, provide artifact paths and the required reading order rather than an implementation summary.
-   If inherited context prevents this order, use a compliant context.
-   If none is available, mark affected coverage `could not review`.
+   Save expectations incrementally by connected scope instead of collecting a whole-library baseline in one response.
+   Continue truncated reads from the missing range before exposing that scope's implementation.
+   If inherited context prevents this order, use a compliant context for the affected unfinished scope.
+   If none is available, mark only affected coverage `could not review`.
 3. Return separate scopes and statuses, plus the integration report and its human-review decision.
 
 Unlike output-only API review, test review continues into implementation after recording the baseline.
@@ -133,11 +176,20 @@ Missing inventory is a coverage gap, not a no-change result.
 
 ### Protect API contexts
 
-Source-free means no source code or source-derived reasoning.
+Source-free means no reviewed source code or source-derived reasoning.
+General repository instructions about tools, permissions and review procedure do not violate this boundary.
+Repository implementation descriptions and source-based API conclusions violate this boundary.
+Matching rustdoc is allowed only in the design doc-check phase, to remove or narrow saved claims.
+Assess known inherited material by its content, not its filename or presence alone.
 Use one source-free reviewer for `review-public-api-changes` and `review-public-api` when the runtime supports the phases below.
 The source-reading coordinator and `review-api-design` cannot share this context.
 
-Before launch, make sure that the runtime excludes inherited source context and premature docs.
+Before preparing captures, inspect the available reviewer's context contract.
+Make sure that it excludes inherited source context and premature item or design docs.
+Do not require a runtime attestation field that the tool does not expose.
+Use its documented context behavior and the actual supplied inputs.
+If that behavior or inherited content is unknown, mark affected API coverage `could not review` and record the uncertainty.
+Do not proceed without an established clean context.
 A new reviewer ID alone does not establish a clean context.
 The [classification](../review-public-api-changes/SKILL.md#evidence-boundary) and [design](../review-public-api/SKILL.md#evidence-boundary) skills define permitted evidence.
 
@@ -172,7 +224,10 @@ Apply the [single replacement limit](#bound-handoffs-and-follow-ups) to unfinish
 Instructions to ignore prior input do not restore isolation.
 
 If a clean context is unavailable, mark the affected coverage `could not review` and retain valid completed results.
-Never substitute source-based API inference.
+Never substitute source-based API inference for either output-only area's result, classification or human-review signal.
+Separate, labeled [best-effort observations](#best-effort-completion) do not replace those results.
+Do not generate captures solely for a reviewer that cannot consume them.
+Generate them only when another permitted consumer needs them or the blocker changes.
 
 At merge, independent source evidence or a consumer probe can disprove an output-only claim.
 Keep the original result unchanged and record the refuting evidence separately.
@@ -300,6 +355,10 @@ Repair only a diagnosed cause within inherited permissions.
 Before rerunning a failed command, identify the changed input or prerequisite that addresses its failure.
 If nothing changed, retain the blocker without retrying.
 Install only a required missing tool after command evidence and within inherited permissions.
+Do not add `--offline` unless the caller or repository requires it.
+An uncached dependency is not an authorization failure.
+After a missing-dependency failure, use normal lock-preserving dependency acquisition when network access and inherited permissions allow it.
+If acquisition is prohibited or fails, retain that exact blocker for all affected consumers.
 Do not substitute tools to clear a blocker.
 After a repair, regenerate affected evidence before launching its waiting consumers.
 If repair fails, retain the exact cause and continue independent work.
@@ -401,6 +460,9 @@ Send its report and paths to raw artifacts to `review-perf`. Retain the complete
 for delivery, including blocked or inapplicable results.
 The performance reviewer interprets the supplied results without rerunning benchmarks or expanding crate selection.
 Keep unmeasured cost concerns conditional.
+Resolve host availability and execution permission before native-case preparation.
+If blocked, keep selected crates and known targets, with unknown case counts where necessary.
+Do not compile, transfer inputs or request a new environment merely to replace unknown counts in a blocked report.
 
 Deliver the supported review before pending benchmark preparation or isolated execution.
 Keep its `### Benchmarks` block as a [pending or separate-result notice](../review-delivery/findings-contract.md#area-result-and-final-summary).
@@ -463,6 +525,19 @@ If the head moves during partial delivery, retain confirmed provider IDs and app
 A partial delivery does not turn a required fresh review into a findings-only refresh.
 Never publish a stale full report as current by adding a disclaimer.
 Historical publication requires an explicit request and remains comment-only.
+
+## Routing examples
+
+These examples apply the rules above. They do not waive required evidence.
+
+| Change | Scope and boundary |
+| --- | --- |
+| Private unit test moves child joins to the test thread | Read its baseline assertions, helpers and changed synchronization. Unchanged public doctests need a specific affected contract before inclusion. |
+| A baseline read truncates one helper line | Retrieve that range before source exposure. After exposure, recover only that contract in one clean replacement context. |
+| An API reviewer inherits general `AGENTS.md` workflow rules | This alone is not source exposure. Implementation descriptions or prior API conclusions still violate the boundary. |
+| A lockfile patch leaves test inputs and discovery unchanged | Reconcile dependency consumers for source review. Do not require their entire baseline to classify unchanged integration-test inputs. |
+| API generation fails on an uncached dependency | Attempt one permitted lock-preserving repair. Reuse its result across affected packages rather than imposing an unrequested offline policy. |
+| Gungraun has no authorized Linux host | Return a blocked measurement report without native-case execution. Continue source review and preserve the benchmark limit. |
 
 ## Repository notes
 

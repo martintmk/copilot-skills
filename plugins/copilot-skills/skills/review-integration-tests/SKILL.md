@@ -29,6 +29,10 @@ Leave inline unit tests, doctests and whole-diff behavior review to
    Inspect target discovery and execution configuration, including `autotests`, `[[test]]`, target paths, `required-features` and `cfg`.
    Compare both revisions before treating a deleted or moved target as absent.
    Read baseline tests and changed expectations before implementation explanations under the [test-first procedure](../review-tests/SKILL.md#procedure).
+   Apply that reading requirement to affected test contracts, not every test that uses a changed product dependency.
+   An unchanged-input classification needs complete ownership and discovery evidence, not a whole-consumer test baseline.
+   If only product dependency versions change, inspect test-specific dependencies and execution selectors for effects on this inventory.
+   Leave unresolved product behavior to the relevant source areas unless it changes a covered expectation, shared input or execution path.
 2. Compare existing expectations before counting additions. Look for:
    - deleted cases or assertions without equivalent coverage;
    - exact values or errors replaced by broader matches;
