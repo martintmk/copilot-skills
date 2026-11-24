@@ -65,8 +65,10 @@ Pending measurements do not delay a ready review. Source performance coverage st
    Include added, removed, renamed and local untracked paths.
    Do not rely on a truncated provider diff.
    Route provisionally from this inventory, without rereading source assigned to another owner.
+   Identify test locations under [baseline discovery](coordinator-reference.md#combine-test-review) before displaying mixed source hunks.
 4. Read CI status once. After each scope's test-first pass, supply relevant discussion and existing root causes with thread IDs.
 5. Prepare [shared discovery](coordinator-reference.md#shared-setup-and-reuse) for both revisions.
+   Establish API-context capability and execution prerequisites before expensive capture or benchmark preparation.
    Use [evidence-led routing](coordinator-reference.md#evidence-led-routing) to record relevance, scope, evidence, owner and open questions for every area.
 
 ## 2. Run the areas
@@ -89,6 +91,8 @@ Merge each ready result into the internal draft and [coverage record](coordinato
 Before delivery, reconcile all scopes and evidence. Do not rebuild the report from raw artifacts at the end.
 Use [one shared repair](coordinator-reference.md#repair-shared-setup-once) for a diagnosed setup blocker.
 Use [bounded follow-ups](coordinator-reference.md#bound-handoffs-and-follow-ups) for unfinished work or contradictions.
+If evidence or execution remains unavailable, apply [best-effort completion](coordinator-reference.md#best-effort-completion).
+Finish independent areas and deliver supported findings without waiting for unavailable prerequisites.
 
 | Outcome | Condition | Result |
 | --- | --- | --- |

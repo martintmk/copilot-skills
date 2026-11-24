@@ -101,3 +101,6 @@ Write each finding in the
 [findings contract](../review-delivery/findings-contract.md).
 Coverage names the crates, modules and API families checked, dependency and
 feature decisions, and error conventions reviewed, even with no findings.
+Missing generated API captures do not prevent this source-based area from finishing when its own evidence is complete.
+For the coordinator's [best-effort fallback](../review-lens/coordinator-reference.md#best-effort-completion), retain source-supported observations with exact symbols and configuration.
+Do not claim a complete exported-surface comparison or replace the separate output-only API reports.

@@ -52,7 +52,11 @@ Return a report, not a review verdict.
    A crate with only excluded-file changes is not a candidate.
    Shared workspace changes do not make unchanged consumers eligible.
    Explain that limitation when it affects coverage.
-7. Inventory every metabench target and native case in each selected crate at both revisions.
+7. Check host availability and execution permission under [section 2](#2-prepare-and-run-the-comparison) before executable case discovery or input transfer.
+   If either blocks execution, retain selected crates, known targets and inventory gaps, then return a blocked report.
+   A missing tool follows section 2's permitted installation and failure rules, not an automatic host or permission block.
+   Do not build native listings or enumerate missing measurements case by case when no execution can run.
+   Otherwise, inventory every metabench target and native case in each selected crate at both revisions.
    A native case is a benchmark registered for Gungraun.
    Match moved or renamed packages by manifest history and target ownership.
    Keep added and removed targets or cases in the report.
@@ -99,7 +103,8 @@ An unresolved inventory or stale input prevents `complete` and `not applicable`.
 
 Keep the visible report focused on metabench results and before/after instruction and allocation counts.
 Show allocated bytes when reported. State when allocation measurements are unavailable.
-Use the [compact report format](run-and-report.md#side-by-side-results), including every case, not only regressions.
+Use the [compact report format](run-and-report.md#side-by-side-results), including every measured, failed or missing case, not only regressions.
+When blocked with no usable measurements, report known targets and inventory gaps without per-case missing-metric rows.
 State the revisions and measured coverage briefly. Include limits that affect interpretation.
 Keep selection tables, host details, tool versions, configuration, commands and full metrics in saved artifacts, not the visible report.
 Do not describe unmeasured code as unchanged.
