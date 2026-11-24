@@ -2,7 +2,7 @@
 
 Use this path for bounded, proven changes that need no full Review Lens review.
 Here, a mechanical PR preserves contracts or restores established behavior.
-No public API change is allowed, including compatible additions.
+No public contract change is allowed, including compatible additions.
 An unchanged API alone does not make a PR mechanical.
 
 This procedure owns lightweight classification, not monitoring or provider writes.
@@ -34,7 +34,7 @@ Require all three invariants for the complete diff:
 2. Unchanged contracts. Existing callers, implementers and supported configurations remain compatible.
    Include source, binary, wire and CLI contracts.
    Check defaults, exports, features, bounds, required members and enum variants.
-   No public API change is allowed, including additions.
+   No public contract change is allowed, including additions.
 3. Preserved or expanded tests. Keep integration and end-to-end coverage unchanged or expanded.
    Preserve baseline cases, assertions and execution across all suites, including fixtures, snapshots, discovery and CI configuration.
    Never weaken assertions, rewrite expected results, skip tests, narrow matrices, lower thresholds or mask failures with retries, timeouts or suppressions.
@@ -64,15 +64,18 @@ A small diff that disables a failing test or bypasses a pipeline gate is not a r
    Run [Public API Changes](../review-public-api-changes/SKILL.md) with matching base/head evidence.
    Preserve its generated-output evidence boundary under the [API evidence guidance](coordinator-reference.md#protect-api-contexts).
    Run classification only, not the separate API design audit or its doc phase.
-   Require `No API Changes` for every affected library and relevant configuration.
+   Require `No Generated Surface Changes` for every affected library and relevant configuration.
    Use the inventory-based no-library case only when its proof is complete.
 2. Trace contracts that API captures cannot prove, including defaults, errors, wire formats, CLI behavior and feature selection.
+   Apply the [public contract classification](../review-api-design/SKILL.md#public-contract-classification)
+   without running a full design audit.
+   Require `No Public Contract Changes` from this source-level trace.
    Only a proven regression restoration from [the permitted categories](#2-prove-a-permitted-change) can change product behavior.
 3. Prepare the [integration-test inventory](coordinator-reference.md#integration-test-evidence).
    Run [Integration Tests](../review-integration-tests/SKILL.md).
    Require a complete report with `human-review-required: not required`.
 4. Apply the [coverage invariant](#2-prove-a-permitted-change) to unit tests, doctests and other suites too.
-   Require the combined API/test human-review decision to be `not required`.
+   Require the combined public-contract/generated-surface/test human-review decision to be `not required`.
 
 Do not run the remaining specialist areas or benchmarks for this path.
 Do not mark them `done` or `not applicable`. They were not performed.
@@ -107,7 +110,8 @@ Honor an explicit full-review request even when this path cannot approve.
 ## 5. Deliver and retain evidence
 
 Pass `review mode: mechanical`, the category and its decisive evidence to Review Delivery.
-Include the exact revisions, both classification reports, combined label decision, current prerequisite results and authorized writes.
+Include the exact revisions, all applicable classification reports, combined
+policy decision, current prerequisite results and authorized writes.
 Include prior report/review/thread IDs for recovery.
 Do not claim full-review coverage or supply invented benchmark results.
 

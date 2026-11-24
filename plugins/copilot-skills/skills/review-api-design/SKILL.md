@@ -95,10 +95,35 @@ the exported item and what is wrong with it, give the decisive evidence, the
 consequence for users or maintainers, and the corrected contract. Discuss
 compatibility only when it shows impact or changes the fix.
 
+## Public contract classification
+
+Classify consumer-visible contract changes separately from defects:
+
+| Result | Evidence |
+| --- | --- |
+| **Breaking Public Contract Changes** | A proved base/head change removes or changes what downstream users can build, call, configure, send, receive or rely on |
+| **Public Contract Additions** | A proved base/head change adds a supported consumer choice or behavior |
+| **No Public Contract Changes** | Every applicable source-level contract facet was assessed and remained unchanged |
+| **Could not assess** | Decisive evidence for an applicable facet is missing |
+
+This classification includes contracts that generated Rust surface output cannot
+show, such as Cargo features, supported configurations, wire formats, CLI
+behavior, observable defaults, errors and panics.
+A removed or renamed supported Cargo feature is a breaking public contract change.
+Classify default-feature or dependency-relationship changes from their proved consumer effect.
+A suspicion or possible future effect is not a contract change.
+Name the exact base/head difference and consumer effect.
+
+Set `human-review-required` to `required` for a proved breaking change or
+addition. Set it to `not required` only for **No Public Contract Changes**.
+Use `undetermined` for **Could not assess**.
+The signal is policy, not a defect or severity decision.
+
 ## Report
 
 Write each finding in the
 [findings contract](../review-delivery/findings-contract.md).
+Return the public contract classification and its human-review decision.
 Coverage names the crates, modules and API families checked, dependency and
 feature decisions, and error conventions reviewed, even with no findings.
 Missing generated API captures do not prevent this source-based area from finishing when its own evidence is complete.

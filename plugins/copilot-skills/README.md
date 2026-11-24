@@ -40,8 +40,8 @@ the entry-point guide.
 | --- | --- |
 | [`crate-change-coordinator`](skills/crate-change-coordinator/SKILL.md) | Processes user-sized batches sequentially with inherited model configuration and GitHub Agent merge for CI repairs and eligible bot feedback. Keeps automatic merging off. Announces green PRs in Teams and learns after each merge. |
 | [`review-lens`](skills/review-lens/SKILL.md) | Lightweight approval for proven mechanical PRs with no API changes, or risk-based reviews that use relevant specialist skills and evidence. |
-| [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, and error/panic conventions. |
-| [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including sync/async deadlocks. |
+| [`review-api-design`](skills/review-api-design/SKILL.md) | Changed public contracts, construction, traits, semver coupling, compatibility classification, and error/panic conventions. |
+| [`review-correctness`](skills/review-correctness/SKILL.md) | Behavioral defects proved by focused reproductions or complete source traces, including unsafe/FFI soundness, parsing and deadlocks. |
 | [`review-tests`](skills/review-tests/SKILL.md) | Test-first review of lost coverage, behavior changes even without test edits, test style and supported test utilities. |
 | [`review-resilience`](skills/review-resilience/SKILL.md) | Recovery classification and version-correct resilience middleware. |
 | [`review-perf`](skills/review-perf/SKILL.md) | Measured cost, allocations, hot paths and injectable clocks. |
@@ -50,8 +50,8 @@ the entry-point guide.
 | [`review-telemetry`](skills/review-telemetry/SKILL.md) | Signal contracts, OpenTelemetry conventions, cardinality and duplicate instrumentation. |
 | [`review-consistency`](skills/review-consistency/SKILL.md) | Agreement between code, public docs, examples and related guides, including stale defaults or conflicting instructions. |
 | [`review-public-api`](skills/review-public-api/SKILL.md) | A `cargo public-api` audit whose surface claims stay grounded in generated output and are tested against context. |
-| [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | The always-present breaking/additive/no-change public API report, with concise Rust signatures and a human-review signal for any API change. |
-| [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | The always-present package `tests/` report, including shared inputs, target discovery and a human-review signal for breaking behavioral changes. |
+| [`review-public-api-changes`](skills/review-public-api-changes/SKILL.md) | Generated Rust surface changes from matching `cargo public-api` output, separate from source-level public contracts. |
+| [`review-integration-tests`](skills/review-integration-tests/SKILL.md) | Affected package `tests/` contracts, including shared inputs, target discovery and a human-review signal for breaking behavioral changes. |
 | [`review-public-docs`](skills/review-public-docs/SKILL.md) | A helper that returns scoped public docs from rustdoc JSON; no findings or verdict. |
 | [`review-delivery`](skills/review-delivery/SKILL.md) | GitHub, ADO or local delivery for full reviews, mechanical approvals and benchmark follow-ups, with current inline anchors and partial-write recovery. |
 | [`pr-review-teams-channel`](skills/pr-review-teams-channel/SKILL.md) | GitHub and ADO reviews from Teams requests, with one child per PR, inline findings, one rolling report, 15-minute polling and a four-hour default cooldown. |
@@ -65,9 +65,9 @@ Use `review-lens` for full reviews, or name one area for a focused review.
 For a PR without an explicit full-review request, it first tries
 [lightweight mechanical approval](skills/review-lens/mechanical-approval.md).
 This covers behavior-preserving docs and private edits, additive tests, proven regression repairs and narrow pipeline repairs.
-Every changed path must qualify. No public API change is allowed, including additions.
+Every changed path must qualify. No public contract change is allowed, including additions.
 
-Lightweight approval requires complete API/test evidence, preserved coverage and every current check to pass.
+Lightweight approval requires complete contract and test evidence, preserved coverage and every current check to pass.
 Absent, pending, failed or unknown checks withhold approval without starting a monitor.
 Other changes or incomplete classification evidence continue through the full review with reusable evidence.
 Skipped specialist areas and benchmarks are not claimed as reviewed.
@@ -91,10 +91,13 @@ It keeps connected source changes together and delegates when that improves evid
 Shared discovery and matching artifacts avoid repeated setup.
 Unknown relevance remains an open question, not an exclusion.
 Initial routing uses the complete path inventory and affected contracts.
+Risk signals such as unsafe or FFI boundaries, lock ordering, async
+cancellation, serialization and untrusted parsing raise review depth without
+requiring separate workers.
 
 The coordinator uses [bounded handoffs](skills/review-lens/coordinator-reference.md#bound-handoffs-and-follow-ups) and assembles results as they arrive.
 Test reviewers establish baseline behavior independently of changed code and expectations.
-Public API reviewers prove surface claims from matching generated output.
+Generated-surface reviewers prove claims from matching generated output.
 Models can choose reading order, context layout, tools and work allocation.
 Raw evidence and complete inventories stay in artifacts.
 The benchmark helper owns [measurement isolation](skills/metabench-compare/SKILL.md#2-prepare-and-run-the-comparison).
@@ -128,6 +131,8 @@ Fast-path approval and escalation text uses it too.
 Each finding has AI attribution, a concrete title, the problem, its impact and a suggested fix.
 The default headings are optional when a shorter structure communicates the same facts.
 Design notes request no change.
+The final report separates the defect verdict from policy requirements.
+It also includes a compact coverage receipt with executed, irrelevant and blocked areas.
 The summary has one attribution and links inline threads instead of repeating
 their bodies. Preparation logs, hashes and full file inventories stay in artifacts.
 When resolution is permitted, delivery closes its own informational summary and design-note threads after reading their full discussion.
@@ -136,9 +141,11 @@ GitHub top-level comments and review bodies have no resolved state.
 The [thread procedure](skills/review-delivery/SKILL.md#close-owned-non-actionable-threads) defines ownership, provider status and recovery rules.
 
 When applicable, a Review Lens summary includes compatibility reports.
-The public API report
-states **Breaking Changes**, **Public API Additions** or **No API Changes** and
-groups additions by public family with concise callable signatures.
+The source-level public contract report covers proved changes to features,
+supported configurations, wire formats, CLI behavior, defaults, errors and panics.
+The generated Rust surface report states **Breaking Generated Surface Changes**,
+**Generated Surface Additions** or **No Generated Surface Changes**.
+It groups additions by public family with concise callable signatures.
 The [compact API report](skills/review-public-api-changes/SKILL.md#report) preserves every distinct break without copying whole declarations or repeated impl lists.
 The integration-test report covers affected package `tests/` targets and their shared inputs.
 It reports breaking, additive-only, behavior-preserving or no changes.
@@ -146,9 +153,9 @@ Missing inventory cannot establish no changes.
 Unchanged integration-test inputs need complete inventory evidence, not every dependency consumer's test baseline.
 An omitted generic default in API output does not prove a breaking change.
 The [renderer limits](skills/review-public-api/SKILL.md#renderer-limits) define that evidence boundary.
-Review delivery adds `human-review-required` for any
-public API change or a breaking integration-test behavior, independently of the
-review verdict.
+Review delivery adds `human-review-required` for any proved public contract or
+generated-surface change, or a breaking integration-test behavior.
+This policy is separate from the defect verdict and suppresses automated approval.
 
 Requested or material benchmark reports show metabench results and before/after instruction and allocation counts for every selected Gungraun case.
 It includes allocated bytes when measured, unavailable measurements and comparison limits.

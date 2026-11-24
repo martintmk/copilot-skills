@@ -10,10 +10,12 @@ Start with the complete changed-path inventory and affected contracts.
 Consider every Review Lens area, then spend effort according to risk, uncertainty and user intent.
 Route connected code, tests and documentation together when they need the same reasoning.
 Do not invoke specialists only to fill an area ledger.
+Review breadth is fixed: cover every changed path and material risk or name the gap.
+Review depth scales with the claim. Strong findings need stronger proof than routing decisions or questions.
 
 ### Record coverage
 
-For a small direct review, a short scope note is enough.
+Keep one coverage record. For a small direct review, a short scope note is enough.
 For delegated, blocked or multi-stage work, record:
 
 | Field | Content |
@@ -28,6 +30,8 @@ Completion requires every changed path and material risk to be covered or named 
 It does not require a separate entry for every specialist area.
 Missing execution limits runtime claims.
 Missing source or required contract evidence prevents a clean result.
+Use this record to produce the compact public coverage receipt.
+Do not create a second area ledger or publish worker IDs.
 
 ### Best-effort completion
 

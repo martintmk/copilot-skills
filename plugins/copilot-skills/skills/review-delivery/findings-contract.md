@@ -45,7 +45,7 @@ Non-blocking issues and nits remain actionable.
 
 One root cause per finding. Name the symbol and keep `path:line` in location
 metadata. Use body line references only for another location.
-Output-only API findings use public paths instead of source lines.
+Generated-surface API findings use public paths instead of source lines.
 Use exact-range `suggestion` fences only for a complete replacement of the anchor.
 Include a focused regression test only when useful as permanent coverage.
 Markdown prose and fences start at column zero.
@@ -62,7 +62,19 @@ Only serious correctness, security, data-loss, reliability or materially broken
 user-facing behavior can justify a blocking finding.
 Ordinary bugs, test gaps, design/doc drift and maintainability concerns are
 non-blocking unless their concrete impact meets that bar.
-Intentional API or test changes can require a human-review label without being defects.
+Intentional public contract or test changes can require human review without being defects.
+
+## Verdict and policy
+
+Keep two independent results:
+
+- The **verdict** comes from findings and coverage.
+- The **policy status** records human-review requirements, mechanical
+  eligibility and vote restrictions.
+
+Policy can limit the provider action without changing finding severity or the
+defect verdict. A clean review can still require human review for an intentional
+public contract change. State both results when they differ.
 
 Choose `approve`, `approve with non-blocking comments` or `changes requested`
 from all applicable findings, including existing unresolved threads.
@@ -85,8 +97,9 @@ For a bundled review, return each finding once.
 Add compact area statuses only for delegated, blocked or materially limited scopes.
 Keep inventories and trace details in artifacts.
 
-Applicable API and integration-test classifications return their report,
-coverage and label decision: `required`, `not required` or `undetermined`.
+Applicable public-contract, generated-surface and integration-test
+classifications return their report, coverage and policy decision:
+`required`, `not required` or `undetermined`.
 Keep commands, file inventories, full logs and setup diagnostics in artifacts.
 The public report includes only the evidence needed to understand its classification.
 
@@ -99,14 +112,18 @@ Do not remove findings, lower severity or hide material limits to meet a length 
 1. Include one attribution, outcome, reviewed scope and material limits.
    For incomplete coverage, add **Warning: Incomplete review**, name missing
    topics with one-clause reasons, and state that no overall verdict is given.
-2. Record full-review and revalidated revisions separately after a findings-only
+2. Include a compact coverage receipt from the coordinator's existing record.
+   Name areas executed, ruled not relevant and blocked, with short reasons.
+   Do not include worker IDs, per-file inventories or a second internal ledger.
+3. Record full-review and revalidated revisions separately after a findings-only
    refresh. Say that later commits received no new-finding review.
-3. Include public API or integration-test reports when those contracts were affected.
+4. Include source-level public-contract, generated Rust surface or
+   integration-test reports when those contracts were affected.
    Keep classifications, concise signatures and meaningful behavioral deltas.
    Use the [compact API report](../review-public-api-changes/SKILL.md#report), not its full capture inventory.
-4. Include benchmark results when requested, measured or material to the review.
+5. Include benchmark results when requested, measured or material to the review.
    If assigned measurements are pending, state their pinned inputs and status.
-5. Put findings without confirmed inline delivery in the summary, with the
+6. Put findings without confirmed inline delivery in the summary, with the
    anchor or delivery limitation. For confirmed inline findings, give a count
    and thread links, not duplicate bodies.
 
@@ -134,10 +151,10 @@ One valid incomplete summary is:
 **Warning: Incomplete review**
 
 I reviewed the source-level contract, correctness, tests and documentation.
-Public API output could not be assessed because the required capture failed.
+Generated Rust surface output could not be assessed because the required capture failed.
 No overall verdict is given. Tests and benchmarks were not run.
 
-### Public API changes
+### Generated Rust surface
 
 **Could not assess**
 
@@ -154,7 +171,7 @@ Use this content only after the [mechanical eligibility procedure](../review-len
 Preserve the exact AI attribution. Name the category, decisive evidence and assessed head.
 Use accessible evidence links, not local artifact paths.
 State that this is not a full review and that benchmarks were not run.
-Keep full API/test evidence in artifacts.
+Keep full contract and test evidence in artifacts.
 
 The following is an example:
 
@@ -162,7 +179,7 @@ The following is an example:
 **Posted by an AI agent**
 
 Lightweight mechanical approval at <head>: <category and concise evidence>.
-No public API changes. Existing test expectations and coverage are preserved.
+No public contract or generated surface changes. Existing test expectations and coverage are preserved.
 All current checks passed. This is not a full risk-based review. Benchmarks were not run.
 ```
 

@@ -2,9 +2,9 @@
 name: review-correctness
 description: >
   Find behavioral defects in changed Rust code through focused reproductions
-  or complete source proofs. Covers boundaries, resources, cancellation,
-  concurrency, time and invariants. Use for correctness audits or Review Lens.
-  Not for API design, naming or formatting.
+  or complete source proofs. Covers unsafe and FFI soundness, lock ordering,
+  cancellation, parsing, serialization, resources, time and invariants. Use for
+  correctness audits or Review Lens. Not for API design, naming or formatting.
 ---
 
 # Review Correctness
@@ -42,7 +42,13 @@ this finding's fix instead of a separate finding.
 - **Parsing and version gates:** Off-by-one ranges? A decoder version accepted
   in one place but rejected by a gate? An empty result that looks like success?
   Patch a fixture to the untested value, for example a valid v2 input that
-  returns `Ok` with `callers == None`.
+  returns `Ok` with `callers == None`. For untrusted inputs, trace length and
+  recursion bounds, overflow, canonicalization, trailing data and allocation.
+- **Unsafe and FFI boundaries:** State the safety invariant. Check raw-pointer
+  provenance, aliasing, lifetime and ownership transfer, nullability, lengths,
+  layout and ABI, unwinding, callbacks, manual `Send` or `Sync`, and whether
+  `SAFETY` comments still match the code. Use Miri or another tool when useful,
+  not as the only acceptable proof.
 - **Representation:** Are sizes and indices checked against the real capacity
   or index model? Can decoding accept a shape it cannot represent and then
   iterate it?
@@ -52,6 +58,8 @@ this finding's fix instead of a separate finding.
   `.await`? Are waiters notified on abort? Can dropping a hedge stop a breaker
   from opening? Transports and middleware must handle cancellation.
 - **Concurrency and sync/async bridges:** Locks held across `.await`?
+  Build the acquisition graph when nested locks, callbacks under a lock,
+  reentrancy or changed acquisition order can overlap.
   Thread-affine state moved between threads? Search both synchronous and
   asynchronous code for executor entry points such as `block_on`, including
   methods, free functions and local wrappers. Trace changed `block_on` calls
@@ -65,10 +73,14 @@ this finding's fix instead of a separate finding.
   unverified risk as a question, not as a proven defect.
 - **Time:** Test `duration_since` and similar at every valid system time.
   Saturate instead of panicking.
-- **Invariants and round-trips:** Does every public path keep a fixed-width or
-  round-trip promise, including `FromStr` and `TryFrom`, not just
-  constructors? If docs promise behavior the code breaks, fix the code; never
-  weaken the docs to hide it.
+- **Invariants, serialization and round-trips:** Compare base and head tags,
+  names, defaults, skipped fields, version gates, ordering and numeric
+  representations. Does every public path keep a fixed-width or round-trip
+  promise, including `FromStr` and `TryFrom`, not just constructors? If docs
+  promise behavior the code breaks, fix the code; never weaken the docs to hide it.
+
+An ordinary review checks correctness at untrusted boundaries.
+An explicit exploitability or vulnerability audit belongs to specialist security review.
 
 ## Evidence
 

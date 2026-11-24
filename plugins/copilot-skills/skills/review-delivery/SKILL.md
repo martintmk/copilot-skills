@@ -25,7 +25,7 @@ Accept saved report/review/thread IDs, pending operations, report location, mark
 | Mode | Required results |
 | --- | --- |
 | Full or focused review | Merged findings, coverage, outcome and full-review revision separate from later revalidated revisions |
-| Full Review Lens review | Also any applicable compatibility or benchmark reports and their label decisions |
+| Full Review Lens review | Also applicable public-contract, generated-surface, integration-test or benchmark reports and policy decisions |
 | Mechanical approval | The complete [lightweight evidence package](../review-lens/mechanical-approval.md#5-deliver-and-retain-evidence), not full-review coverage |
 | Benchmark follow-up | Pinned benchmark report, `review-perf` interpretation and prior delivery IDs |
 
@@ -56,7 +56,8 @@ For local reports, make sure that the input digest still matches before returnin
 ## Lightweight mechanical approval
 
 Accept only complete proof from the [mechanical procedure](../review-lens/mechanical-approval.md), not an incomplete full review renamed as mechanical.
-Require current, complete API/test reports with combined `not required`.
+Require current, complete public-contract, generated-surface and test evidence
+with combined `not required`.
 Use the [lightweight summary](findings-contract.md#lightweight-mechanical-summary), keeping the reports as supporting evidence.
 
 Before submission, refresh every mechanical prerequisite, including CI, labels, discussion and active review holds.
@@ -76,7 +77,7 @@ Apply the common write gates and these additional limits:
    Use one owned benchmark comment or an authorized report location.
    Summary-edit permission alone does not authorize another comment.
    If no location is permitted, retain the report and state the delivery limit.
-3. Preserve the review outcome and API/test label decision.
+3. Preserve the defect verdict and contract/test policy decisions.
    Measurements alone never change a verdict, vote or label.
    Route new supported `review-perf` findings through normal evidence, anchor and permission gates.
    Reconsider a verdict only from current findings and sufficient coverage.
@@ -102,7 +103,7 @@ The commit delta revalidates findings. The cumulative diff supplies anchors.
    State the exact limit and pending work. New commits and incomplete coverage are not anchor failures.
 
 Preserve evidence and corrections when locations change. Never anchor to unrelated code.
-Map public API symbols to source anchors without changing the generated-surface evidence.
+Map generated-surface symbols to source anchors without changing their evidence.
 
 ## Rolling reports
 
@@ -154,6 +155,7 @@ For ADO, count individual positive reviewer votes, not assumed group membership.
 | Situation | GitHub event | ADO vote |
 | --- | --- | --- |
 | Proven eligible mechanical path | `APPROVE` | Approved |
+| Human review policy is `required` | `COMMENT` | No vote |
 | Complete, clean or only non-blocking findings | `APPROVE` | Approved, or Approved with suggestions |
 | Complete, serious findings, fewer than two distinct approvals | `REQUEST_CHANGES` | Waiting for author |
 | Serious findings with two or more distinct approvals | `COMMENT` | No vote |
@@ -216,15 +218,17 @@ Never rerun review areas, repost a whole batch or replace live output with a sta
 
 ## Human-review label and completion
 
-Combine current applicable API and integration-test decisions:
+Combine current applicable public-contract, generated-surface and
+integration-test policy decisions:
 
 | Evidence | Decision |
 | --- | --- |
-| Proven API addition/break or integration-test behavioral break | `required`, even if other evidence is incomplete |
+| Proved public contract or generated-surface addition/break, or integration-test behavioral break | `required`, even if other evidence is incomplete |
 | Every applicable report is complete without those changes | `not required` |
 | Missing decisive evidence without a proven qualifying change | `undetermined` |
 
-If neither contract is affected, the complete scope evidence can establish `not required` without empty reports.
+If none of these contracts is affected, complete scope evidence can establish
+`not required` without empty reports.
 Benchmarks do not decide this signal. Historical reports cannot authorize a current label write.
 When required and authorized, add `human-review-required` without changing other labels.
 On GitHub, create a missing repository label with description `Requires human review` only when permitted.
@@ -235,7 +239,8 @@ If the required write is unavailable or prohibited, report the label as unapplie
 After publication, apply the [owned-thread procedure](#close-owned-non-actionable-threads) and return one receipt:
 
 - Report/review URL and confirmed provider IDs.
-- Assessed and revalidated revisions, coverage outcome and finding-to-thread map.
+- Assessed and revalidated revisions, defect verdict and policy status.
+- Compact coverage receipt and finding-to-thread map.
 - Confirmed vote/event, label and resolution states.
 - Pending operations, benchmark owner/state and remaining delivery limits.
 

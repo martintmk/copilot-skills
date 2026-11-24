@@ -1,18 +1,18 @@
 ---
 name: review-public-api-changes
 description: >
-  Classify an affected Rust library surface as breaking public API changes,
-  public API additions, or no API changes. Uses matching cargo-public-api
+  Classify an affected Rust library's generated API surface as breaking
+  changes, additions, or unchanged. Uses matching cargo-public-api
   captures and concise signatures. Requires human-review-required for every
-  proved public API change. Use when Review Lens identifies possible library
-  surface impact or for a focused report. Not for API design, runtime behavior
-  or posting.
+  proved generated-surface change. Use when Review Lens identifies possible
+  library surface impact or for a focused report. Not for source-level contract
+  classification, API design, runtime behavior or posting.
 ---
 
 # Review Public API Changes
 
-Tell the reviewer exactly how the exported Rust surface changed. This is a
-classification report, not an API design review.
+Tell the reviewer exactly how the generated exported Rust surface changed.
+This is one public-contract facet, not the complete contract classification.
 Run it when changed inputs can affect a Rust library surface.
 
 Reuse matching full `cargo public-api` captures when another area already
@@ -26,7 +26,7 @@ Do not rebuild matching evidence inside this skill.
 - Use the supplied package-presence facts for added, removed, moved or renamed
   libraries. A failed capture never proves an empty API.
 - If the coordinator's complete package inventory proves that no library is
-  affected, report **No API Changes** without requesting empty captures.
+  affected, report **No Generated Surface Changes** without requesting empty captures.
 - Base every classification on public API output.
   Existing source context does not invalidate the result, but cannot fill
   missing captures or prove an absent surface.
@@ -47,26 +47,26 @@ Do not rebuild matching evidence inside this skill.
 
    | Result | Include |
    | --- | --- |
-   | **Breaking Changes** | Removed items, reduced visibility, changed signatures, stricter bounds, removed impls, newly required trait items, and additions that break exhaustive construction or matching. Show the old and new signatures when both exist. |
-   | **Public API Additions** | New callable, constructible, implementable or matchable surface that is not already listed as breaking. Show concise Rust signatures. |
-   | **No API Changes** | Base and head expose the same public surface in every reviewed configuration. |
+   | **Breaking Generated Surface Changes** | Removal, reduced visibility, signature or bound changes, removed impls, required trait items, or exhaustive-match breaks. Show before/after signatures. |
+   | **Generated Surface Additions** | New callable, constructible, implementable or matchable surface that is not already listed as breaking. Show concise Rust signatures. |
+   | **No Generated Surface Changes** | Base and head expose the same generated public surface in every reviewed configuration. |
 
-Breaking changes take priority, but a report may contain both **Breaking
-Changes** and **Public API Additions**. Do not describe a changed signature as
-an addition merely because the new signature appears as an added line.
+Breaking changes take priority, but a report can contain both breaking changes
+and additions. Do not describe a changed signature as an addition merely
+because the new signature appears as an added line.
 
 Use the [compact report rules](#report) after classifying the complete delta.
 
 ## Human review decision
 
 Set `human-review-required` to **required** when the report contains either
-**Breaking Changes** or **Public API Additions**. Intentional and approved API
-changes still require the label. Set it to **not required** only for **No API
-Changes**.
+**Breaking Generated Surface Changes** or **Generated Surface Additions**.
+Intentional and approved changes still require the label.
+Set it to **not required** only for **No Generated Surface Changes**.
 
 If required evidence is missing, return `could not review` and name the gap.
 Keep any changes already proved. They still require the label.
-Otherwise return `undetermined`, never `not required` or **No API Changes**.
+Otherwise return `undetermined`, never `not required` or **No Generated Surface Changes**.
 
 ## Report
 
@@ -78,9 +78,9 @@ The following shape is an example:
 ````markdown
 **Posted by an AI agent**
 
-### Public API changes
+### Generated Rust surface
 
-**Public API Additions**
+**Generated Surface Additions**
 
 ```rust
 pub fn parse(input: &str) -> Result<Value, ParseError>;
@@ -92,9 +92,10 @@ Coverage: compared `example` at base and head with all features on the host
 target. Status: done.
 ````
 
-Use **No API Changes** as the complete body result when nothing changed. Keep
-the prose short. Exact public paths and signatures are more useful than a
-general explanation.
+Use **No Generated Surface Changes** when nothing changed.
+Keep the prose short. Exact public paths and signatures are more useful than a
+general explanation. Do not imply that Cargo features, wire formats, CLI
+behavior or other source-level contracts were unchanged.
 
 Preserve every distinct break and meaningful addition or family without copying the complete API listing:
 
